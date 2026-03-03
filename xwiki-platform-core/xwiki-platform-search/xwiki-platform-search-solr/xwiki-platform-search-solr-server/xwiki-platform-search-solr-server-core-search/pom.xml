@@ -57,20 +57,20 @@
   </dependencies>
   <build>
     <plugins>
-      <plugin>
-        <groupId>com.mycila</groupId>
-        <artifactId>license-maven-plugin</artifactId>
-        <configuration>
-          <licenseSets>
-            <licenseSet>
-              <excludes>
-                <!-- Exclude JS files that not under an XWiki license, so that we don't check the license for them -->
-                <exclude>src/**/update-script.js</exclude>
-              </excludes>
-            </licenseSet>
-          </licenseSets>
-        </configuration>
-      </plugin>
+<!--      <plugin>-->
+<!--        <groupId>com.mycila</groupId>-->
+<!--        <artifactId>license-maven-plugin</artifactId>-->
+<!--        <configuration>-->
+<!--          <licenseSets>-->
+<!--            <licenseSet>-->
+<!--              <excludes>-->
+<!--                &lt;!&ndash; Exclude JS files that not under an XWiki license, so that we don't check the license for them &ndash;&gt;-->
+<!--                <exclude>src/**/update-script.js</exclude>-->
+<!--              </excludes>-->
+<!--            </licenseSet>-->
+<!--          </licenseSets>-->
+<!--        </configuration>-->
+<!--      </plugin>-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>

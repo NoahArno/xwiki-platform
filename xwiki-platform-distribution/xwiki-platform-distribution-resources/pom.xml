@@ -47,22 +47,22 @@
        </executions>
       </plugin>
       <!-- Add specific excludes for this module for license checks -->
-      <plugin>
-        <groupId>com.mycila</groupId>
-        <artifactId>license-maven-plugin</artifactId>
-        <configuration>
-          <licenseSets>
-            <licenseSet>
-              <excludes>
-                <!-- Exclude Velocity generated files ending with "vm" since they end with vm but their contents are not
-                     Velocity templates and the license plugin would validate their licenses against the vm style.
-                     TODO: use native extensions instead of "*.vm" -->
-                <exclude>**/copyright.vm</exclude>
-              </excludes>
-            </licenseSet>
-          </licenseSets>
-        </configuration>
-      </plugin>
+<!--      <plugin>-->
+<!--        <groupId>com.mycila</groupId>-->
+<!--        <artifactId>license-maven-plugin</artifactId>-->
+<!--        <configuration>-->
+<!--          <licenseSets>-->
+<!--            <licenseSet>-->
+<!--              <excludes>-->
+<!--                &lt;!&ndash; Exclude Velocity generated files ending with "vm" since they end with vm but their contents are not-->
+<!--                     Velocity templates and the license plugin would validate their licenses against the vm style.-->
+<!--                     TODO: use native extensions instead of "*.vm" &ndash;&gt;-->
+<!--                <exclude>**/copyright.vm</exclude>-->
+<!--              </excludes>-->
+<!--            </licenseSet>-->
+<!--          </licenseSets>-->
+<!--        </configuration>-->
+<!--      </plugin>-->
     </plugins>
   </build>
 </project>

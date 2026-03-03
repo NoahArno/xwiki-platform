@@ -81,20 +81,20 @@
   </dependencies>
   <build>
     <plugins>
-      <plugin>
-        <groupId>com.mycila</groupId>
-        <artifactId>license-maven-plugin</artifactId>
-        <configuration>
-          <licenseSets>
-            <licenseSet>
-              <excludes>
-                <!-- Exclude a test vm file since the tests don't execute velocity on it -->
-                <exclude>src/test/**/style.less.vm</exclude>
-              </excludes>
-            </licenseSet>
-          </licenseSets>
-        </configuration>
-      </plugin>
+<!--      <plugin>-->
+<!--        <groupId>com.mycila</groupId>-->
+<!--        <artifactId>license-maven-plugin</artifactId>-->
+<!--        <configuration>-->
+<!--          <licenseSets>-->
+<!--            <licenseSet>-->
+<!--              <excludes>-->
+<!--                &lt;!&ndash; Exclude a test vm file since the tests don't execute velocity on it &ndash;&gt;-->
+<!--                <exclude>src/test/**/style.less.vm</exclude>-->
+<!--              </excludes>-->
+<!--            </licenseSet>-->
+<!--          </licenseSets>-->
+<!--        </configuration>-->
+<!--      </plugin>-->
     </plugins>
   </build>
 </project>

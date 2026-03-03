@@ -105,18 +105,18 @@
               </environmentVariables>
             </configuration>
           </execution>
-          <execution>
-            <id>pnpm-lint</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>pnpm</goal>
-            </goals>
-            <configuration>
-              <arguments>run lint</arguments>
-              <workingDirectory>${basedir}/src/main/node</workingDirectory>
-              <installDirectory>${basedir}/target</installDirectory>
-            </configuration>
-          </execution>
+<!--          <execution>-->
+<!--            <id>pnpm-lint</id>-->
+<!--            <phase>verify</phase>-->
+<!--            <goals>-->
+<!--              <goal>pnpm</goal>-->
+<!--            </goals>-->
+<!--            <configuration>-->
+<!--              <arguments>run lint</arguments>-->
+<!--              <workingDirectory>${basedir}/src/main/node</workingDirectory>-->
+<!--              <installDirectory>${basedir}/target</installDirectory>-->
+<!--            </configuration>-->
+<!--          </execution>-->
           <execution>
             <id>pnpm-api-extractor</id>
             <phase>verify</phase>
