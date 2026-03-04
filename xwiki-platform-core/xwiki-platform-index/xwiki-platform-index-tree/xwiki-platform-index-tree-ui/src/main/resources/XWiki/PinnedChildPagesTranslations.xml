@@ -24,8 +24,8 @@
   <web>XWiki</web>
   <name>PinnedChildPagesTranslations</name>
   <language/>
-  <defaultLanguage/>
-  <translation>0</translation>
+    <defaultLanguage>en</defaultLanguage>
+    <translation>0</translation>
   <creator>xwiki:XWiki.Admin</creator>
   <parent>XWiki.PinnedChildPagesUIX</parent>
   <author>xwiki:XWiki.Admin</author>
