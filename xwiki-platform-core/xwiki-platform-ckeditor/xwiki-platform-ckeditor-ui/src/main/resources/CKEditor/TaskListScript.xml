@@ -1,0 +1,388 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
+<xwikidoc version="1.6" reference="CKEditor.TaskListScript" locale="">
+  <web>CKEditor</web>
+  <name>TaskListScript</name>
+  <language/>
+  <defaultLanguage/>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <parent>CKEditor.WebHome</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title/>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>xwiki/2.1</syntaxId>
+  <hidden>true</hidden>
+  <content/>
+  <object>
+    <name>CKEditor.TaskListScript</name>
+    <number>0</number>
+    <className>XWiki.JavaScriptExtension</className>
+    <guid>14da5a3a-0657-4042-8844-d689f2382f6a</guid>
+    <class>
+      <name>XWiki.JavaScriptExtension</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cache>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>0</multiSelect>
+        <name>cache</name>
+        <number>5</number>
+        <prettyName>Caching policy</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>long|short|default|forbid</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </cache>
+      <code>
+        <disabled>0</disabled>
+        <name>code</name>
+        <number>2</number>
+        <prettyName>Code</prettyName>
+        <rows>20</rows>
+        <size>50</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </code>
+      <name>
+        <disabled>0</disabled>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Name</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parse>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <name>parse</name>
+        <number>4</number>
+        <prettyName>Parse content</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </parse>
+      <use>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>0</multiSelect>
+        <name>use</name>
+        <number>3</number>
+        <prettyName>Use this extension</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>currentPage|onDemand|always</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </use>
+    </class>
+    <property>
+      <cache>long</cache>
+    </property>
+    <property>
+      <code><![CDATA[(function() {
+  'use strict';
+
+  require(['jquery'], function($) {
+    const TASK_LIST_CLASS = 'task-list';
+    const TASK_ITEM_CLASS = 'task-list-item';
+    const TASK_ITEM_CHECKED_CLASS = 'task-list-item-checked';
+    const TOGGLE_CLASS = 'xwiki-task-list-toggle';
+    const TASK_INDEX_ATTRIBUTE = 'data-xwiki-task-index';
+    const UNCHECKED_MARKER = '[ ] ';
+    const CHECKED_MARKER = '[x] ';
+    const serviceURL = '$escapetool.javascript($xwiki.getURL("CKEditor.TaskListService", "get"))';
+    const csrfToken = '$escapetool.javascript($services.csrf.token)';
+    const styleId = 'xwiki-task-list-style';
+
+    const injectStyle = function() {
+      if (document.getElementById(styleId)) {
+        return;
+      }
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = [
+        'ul.' + TASK_LIST_CLASS + ' { list-style: none; padding-left: 0; }',
+        'ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CLASS + ' { position: relative; padding-left: 2rem; }',
+        'ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CLASS + ' > .' + TOGGLE_CLASS + ' {',
+        '  position: absolute;',
+        '  left: 0;',
+        '  top: 0.1rem;',
+        '  width: 1.25rem;',
+        '  height: 1.25rem;',
+        '  border: 1px solid currentColor;',
+        '  border-radius: 0.2rem;',
+        '  background: transparent;',
+        '  cursor: pointer;',
+        '  padding: 0;',
+        '}',
+        'ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CLASS + ' > .' + TOGGLE_CLASS + '::after {',
+        '  content: "";',
+        '  position: absolute;',
+        '  left: 0.28rem;',
+        '  top: 0.32rem;',
+        '  width: 0.55rem;',
+        '  height: 0.3rem;',
+        '  border-left: 2px solid currentColor;',
+        '  border-bottom: 2px solid currentColor;',
+        '  transform: rotate(-45deg) scale(0);',
+        '  transform-origin: center;',
+        '}',
+        'ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CLASS + '.' + TASK_ITEM_CHECKED_CLASS + ' > .' + TOGGLE_CLASS + '::after {',
+        '  transform: rotate(-45deg) scale(1);',
+        '}',
+        'ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CLASS + '[data-task-saving="true"] > .' + TOGGLE_CLASS + ' { opacity: 0.55; cursor: wait; }'
+      ].join('');
+      document.head.appendChild(style);
+    };
+
+    const getFirstTextNode = function(node, includeChildren) {
+      let child = node.firstChild;
+      while (child) {
+        if (child.nodeType === Node.TEXT_NODE) {
+          return child;
+        }
+        if (includeChildren && child.nodeType === Node.ELEMENT_NODE && child.tagName !== 'UL' && child.tagName !== 'OL') {
+          const descendant = getFirstTextNode(child, true);
+          if (descendant) {
+            return descendant;
+          }
+        }
+        child = child.nextSibling;
+      }
+      return null;
+    };
+
+    const getTaskState = function(listItem) {
+      const textNode = getFirstTextNode(listItem, true);
+      const text = textNode ? textNode.nodeValue : '';
+      if (text.indexOf(UNCHECKED_MARKER) === 0) {
+        return false;
+      }
+      if (text.indexOf(CHECKED_MARKER) === 0) {
+        return true;
+      }
+      if (listItem.classList.contains(TASK_ITEM_CLASS)) {
+        return listItem.classList.contains(TASK_ITEM_CHECKED_CLASS);
+      }
+      return null;
+    };
+
+    const removeVisibleMarker = function(listItem) {
+      const textNode = getFirstTextNode(listItem, true);
+      const text = textNode ? textNode.nodeValue : '';
+      if (!textNode) {
+        return;
+      }
+      if (text.indexOf(UNCHECKED_MARKER) === 0 || text.indexOf(CHECKED_MARKER) === 0) {
+        textNode.nodeValue = text.substring(4);
+      }
+    };
+
+    const setTaskState = function(listItem, checked) {
+      let textNode = getFirstTextNode(listItem, true);
+      if (!textNode) {
+        textNode = document.createTextNode('');
+        listItem.insertBefore(textNode, listItem.firstChild);
+      }
+      const marker = checked ? CHECKED_MARKER : UNCHECKED_MARKER;
+      const text = textNode.nodeValue || '';
+      if (text.indexOf(UNCHECKED_MARKER) === 0 || text.indexOf(CHECKED_MARKER) === 0) {
+        textNode.nodeValue = marker + text.substring(4);
+      } else {
+        textNode.nodeValue = marker + text;
+      }
+    };
+
+    const getButton = function(listItem) {
+      const firstElementChild = listItem.firstElementChild;
+      if (firstElementChild && firstElementChild.classList.contains(TOGGLE_CLASS)) {
+        return firstElementChild;
+      }
+      return null;
+    };
+
+    const updateButton = function(listItem) {
+      const button = getButton(listItem);
+      if (!button) {
+        return;
+      }
+      const checked = listItem.classList.contains(TASK_ITEM_CHECKED_CLASS);
+      button.setAttribute('aria-pressed', checked ? 'true' : 'false');
+      button.setAttribute('title', checked ? 'Mark as not done' : 'Mark as done');
+    };
+
+    const enhanceTaskItem = function(listItem, index) {
+      const checked = getTaskState(listItem);
+      if (checked === null) {
+        listItem.classList.remove(TASK_ITEM_CLASS, TASK_ITEM_CHECKED_CLASS);
+        listItem.removeAttribute(TASK_INDEX_ATTRIBUTE);
+        return false;
+      }
+
+      listItem.classList.add(TASK_ITEM_CLASS);
+      listItem.classList.toggle(TASK_ITEM_CHECKED_CLASS, checked);
+      listItem.setAttribute(TASK_INDEX_ATTRIBUTE, String(index));
+      removeVisibleMarker(listItem);
+
+      let button = getButton(listItem);
+      if (!button) {
+        button = document.createElement('button');
+        button.type = 'button';
+        button.className = TOGGLE_CLASS;
+        button.setAttribute('aria-label', 'Toggle task state');
+        button.addEventListener('click', onToggle);
+        listItem.insertBefore(button, listItem.firstChild);
+      }
+      updateButton(listItem);
+      return true;
+    };
+
+    const enhance = function(root) {
+      let taskIndex = 0;
+      root.querySelectorAll('ul, ol').forEach(function(list) {
+        const directListItems = Array.from(list.children).filter(function(child) {
+          return child.tagName === 'LI';
+        });
+        const taskStates = directListItems.map(getTaskState);
+        const isTaskList = directListItems.length > 0 && taskStates.every(function(state, index) {
+          return state !== null || directListItems[index].textContent.trim() === '';
+        });
+
+        list.classList.toggle(TASK_LIST_CLASS, isTaskList);
+        if (!isTaskList) {
+          directListItems.forEach(function(listItem) {
+            listItem.classList.remove(TASK_ITEM_CLASS, TASK_ITEM_CHECKED_CLASS);
+            listItem.removeAttribute(TASK_INDEX_ATTRIBUTE);
+          });
+          return;
+        }
+
+        directListItems.forEach(function(listItem) {
+          if (enhanceTaskItem(listItem, taskIndex)) {
+            taskIndex += 1;
+          }
+        });
+      });
+    };
+
+    const getAnnotatedHTML = function(documentReference) {
+      return $.get(serviceURL, {
+        taskAction: 'get',
+        documentReference: documentReference
+      });
+    };
+
+    const saveAnnotatedHTML = function(documentReference, html) {
+      return $.post(serviceURL, {
+        taskAction: 'save',
+        documentReference: documentReference,
+        form_token: csrfToken,
+        html: html
+      });
+    };
+
+    const getTaskItems = function(container) {
+      const result = [];
+      container.querySelectorAll('ul, ol').forEach(function(list) {
+        Array.from(list.children).forEach(function(child) {
+          if (child.tagName === 'LI' && getTaskState(child) !== null) {
+            result.push(child);
+          }
+        });
+      });
+      return result;
+    };
+
+    async function onToggle(event) {
+      event.preventDefault();
+      const listItem = event.currentTarget.parentElement;
+      if (!listItem || listItem.dataset.taskSaving === 'true') {
+        return;
+      }
+
+      const documentReference = XWiki.Model.serialize(XWiki.currentDocument.documentReference);
+      const taskIndex = Number(listItem.getAttribute(TASK_INDEX_ATTRIBUTE));
+      const nextChecked = !listItem.classList.contains(TASK_ITEM_CHECKED_CLASS);
+
+      listItem.dataset.taskSaving = 'true';
+      listItem.classList.toggle(TASK_ITEM_CHECKED_CLASS, nextChecked);
+      updateButton(listItem);
+
+      try {
+        const annotatedHTML = await getAnnotatedHTML(documentReference);
+        const container = document.createElement('div');
+        container.innerHTML = annotatedHTML;
+        const taskItems = getTaskItems(container);
+        if (!taskItems[taskIndex]) {
+          throw new Error('Missing task item at index [' + taskIndex + '].');
+        }
+        setTaskState(taskItems[taskIndex], nextChecked);
+        await saveAnnotatedHTML(documentReference, container.innerHTML);
+      } catch (error) {
+        listItem.classList.toggle(TASK_ITEM_CHECKED_CLASS, !nextChecked);
+        updateButton(listItem);
+        console.error('Failed to persist the task list state.', error);
+      } finally {
+        delete listItem.dataset.taskSaving;
+      }
+    }
+
+    $(function() {
+      injectStyle();
+      enhance(document);
+      $(document).on('xwiki:dom:updated', function() {
+        enhance(document);
+      });
+    });
+  });
+})();]]></code>
+    </property>
+    <property>
+      <name>JS</name>
+    </property>
+    <property>
+      <parse>1</parse>
+    </property>
+    <property>
+      <use>always</use>
+    </property>
+  </object>
+</xwikidoc>

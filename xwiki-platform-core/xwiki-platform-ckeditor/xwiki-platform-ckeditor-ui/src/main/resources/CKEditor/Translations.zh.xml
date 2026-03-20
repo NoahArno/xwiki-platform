@@ -94,6 +94,7 @@ ckeditor.plugin.table.header.accessibilityWarning=使用表头标题会让你的
 ### Missing: ckeditor.plugin.toolbar.lists=Lists
 ### Missing: ckeditor.plugin.toolbar.bulletedlist=Bulleted List
 ### Missing: ckeditor.plugin.toolbar.numberedlist=Numbered List
+xwiki-tasklist.toolbar=任务列表
 ### Missing: ckeditor.plugin.toolbar.insert=Insert
 ckeditor.plugin.toolbar.horizontalrule=分割线
 ### Missing: ckeditor.plugin.toolbar.specialchar=Special Character

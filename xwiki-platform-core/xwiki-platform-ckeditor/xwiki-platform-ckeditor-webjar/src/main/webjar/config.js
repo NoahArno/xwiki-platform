@@ -47,6 +47,13 @@ CKEDITOR.editorConfig = function(config) {
         // The XWiki syntax doesn't support parameters for the following elements.
         elements: {br: true, dd: true, dt: true, li: true, tbody: true, figcaption: true}
       },
+      '$4': {
+        // Task lists need classes and data attributes on list items in order to keep the checked state and identity.
+        elements: {li: true},
+        attributes: '*',
+        styles: '*',
+        classes: '*'
+      },
       '$3': {
         // Wiki syntax macros can output any HTML.
         match: CKEDITOR.plugins.xwikiMacro.isMacroOutput,
@@ -181,6 +188,7 @@ CKEDITOR.editorConfig = function(config) {
       'xwiki-source',
       'xwiki-sourcearea',
       'xwiki-syntax',
+      'xwiki-tasklist',
       'xwiki-table',
       'xwiki-toolbar',
       'xwiki-upload',
@@ -235,7 +243,7 @@ CKEDITOR.editorConfig = function(config) {
       lists: {
         toolbar: 'list',
         groups: [
-          {id: 'lists', items: ['bulletedlist', 'numberedlist']},
+          {id: 'lists', items: ['bulletedlist', 'numberedlist', 'xwiki-tasklist']},
           {id: 'indent', items: ['indent', 'outdent']}
         ]
       },
@@ -261,6 +269,10 @@ CKEDITOR.editorConfig = function(config) {
 
       indent: {label: 'indent.indent'},
       outdent: {label: 'indent.outdent'},
+      'xwiki-tasklist': {
+        label: 'xwiki-tasklist.toolbar',
+        icon: 'bulletedlist'
+      },
 
       image: {label: 'common.image'},
       table: {label: 'table.toolbar'},

@@ -103,6 +103,7 @@ ckeditor.plugin.toolbar.basicStyles=Basic Styles
 ckeditor.plugin.toolbar.lists=Lists
 ckeditor.plugin.toolbar.bulletedlist=Bulleted List
 ckeditor.plugin.toolbar.numberedlist=Numbered List
+xwiki-tasklist.toolbar=Task List
 ckeditor.plugin.toolbar.insert=Insert
 ckeditor.plugin.toolbar.horizontalrule=Divider
 ckeditor.plugin.toolbar.specialchar=Special Character
