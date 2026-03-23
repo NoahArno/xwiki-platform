@@ -58,7 +58,7 @@
 #elseif ($taskAction == 'save')
   #if (!$targetDocument)
     $response.sendError(400)
-  #elseif (!$services.csrf.isTokenValid($request.form_token))
+  #elseif (!$services.csrf.isTokenValid("$!request.form_token"))
     $response.sendError(403)
   #elseif (!$targetDocument.hasAccessLevel('edit'))
     $response.sendError(403)

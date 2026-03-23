@@ -25,6 +25,7 @@
   var TASK_LIST_CLASS = 'task-list';
   var TASK_ITEM_CLASS = 'task-list-item';
   var TASK_ITEM_CHECKED_CLASS = 'task-list-item-checked';
+  var TASK_TOGGLE_CLASS = 'xwiki-task-list-toggle';
   var UNCHECKED_MARKER = '[ ] ';
   var CHECKED_MARKER = '[x] ';
   var CLICK_TOGGLE_OFFSET = 24;
@@ -46,10 +47,12 @@
   function addEditorStyle() {
     CKEDITOR.addCss([
       '.cke_editable ul.' + TASK_LIST_CLASS + ' { list-style: none; padding-left: 0; }',
+      '.cke_editable li.' + TASK_ITEM_CLASS + ' { list-style: none; }',
       '.cke_editable ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CLASS + ' {',
       '  position: relative;',
       '  padding-left: 1.8em;',
       '}',
+      '.cke_editable .' + TASK_TOGGLE_CLASS + ' { display: none !important; }',
       '.cke_editable ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CLASS + '::before {',
       '  content: "";',
       '  position: absolute;',
@@ -125,6 +128,7 @@
     }, 50);
 
     editor.on('contentDom', function() {
+      removeTaskToggleButtonsFromEditable(editor);
       normalizeTaskLists(editor);
       attachClickListener(editor);
     });
@@ -271,6 +275,7 @@
       return;
     }
 
+    removeTaskToggleButtonsFromEditable(editor);
     editable.find('ul').toArray().forEach(normalizeTaskList);
     editable.find('ol').toArray().forEach(normalizeTaskList);
   }
@@ -311,6 +316,7 @@
     });
 
     removeClassName(list, TASK_LIST_CLASS);
+    listItems.forEach(removeTaskToggleButtons);
     if (!isTask) {
       listItems.forEach(clearImportedTaskState);
       return list;
@@ -324,6 +330,7 @@
   }
 
   function exportList(list) {
+    getChildListElements(list).forEach(removeTaskToggleButtons);
     if (!hasClassName(list, TASK_LIST_CLASS)) {
       getChildListElements(list).forEach(clearExportedTaskState);
       return list;
@@ -368,6 +375,7 @@
   }
 
   function clearExportedTaskState(listItem) {
+    removeTaskToggleButtons(listItem);
     removeMarkerFromListItem(listItem);
     clearImportedTaskState(listItem);
   }
@@ -434,9 +442,37 @@
     });
   }
 
+  function removeTaskToggleButtons(container) {
+    container.children = (container.children || []).filter(function(child) {
+      return !isTaskToggleButton(child);
+    });
+    container.children.forEach(function(child) {
+      if (child.type === CKEDITOR.NODE_ELEMENT) {
+        removeTaskToggleButtons(child);
+      }
+    });
+  }
+
+  function isTaskToggleButton(element) {
+    return element.type === CKEDITOR.NODE_ELEMENT && element.name === 'button' &&
+      hasClassName(element, TASK_TOGGLE_CLASS);
+  }
+
   function getDirectListItems(list) {
     return list.getChildren().toArray().filter(function(child) {
       return child.type === CKEDITOR.NODE_ELEMENT && child.is('li');
+    });
+  }
+
+  function removeTaskToggleButtonsFromEditable(editor) {
+    var editable = editor.editable();
+
+    if (!editable) {
+      return;
+    }
+
+    editable.find('.' + TASK_TOGGLE_CLASS).toArray().forEach(function(button) {
+      button.remove();
     });
   }
 

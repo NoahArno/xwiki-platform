@@ -120,7 +120,7 @@
       <code><![CDATA[(function() {
   'use strict';
 
-  require(['jquery'], function($) {
+  require(['jquery', 'xwiki-meta'], function($, xwikiMeta) {
     const TASK_LIST_CLASS = 'task-list';
     const TASK_ITEM_CLASS = 'task-list-item';
     const TASK_ITEM_CHECKED_CLASS = 'task-list-item-checked';
@@ -129,7 +129,6 @@
     const UNCHECKED_MARKER = '[ ] ';
     const CHECKED_MARKER = '[x] ';
     const serviceURL = '$escapetool.javascript($xwiki.getURL("CKEditor.TaskListService", "get"))';
-    const csrfToken = '$escapetool.javascript($services.csrf.token)';
     const styleId = 'xwiki-task-list-style';
 
     const injectStyle = function() {
@@ -173,10 +172,12 @@
       document.head.appendChild(style);
     };
 
+    const MARKER_PATTERN = /^(\s*)\[( |x)\]\s/;
+
     const getFirstTextNode = function(node, includeChildren) {
       let child = node.firstChild;
       while (child) {
-        if (child.nodeType === Node.TEXT_NODE) {
+        if (child.nodeType === Node.TEXT_NODE && child.nodeValue.trim() !== '') {
           return child;
         }
         if (includeChildren && child.nodeType === Node.ELEMENT_NODE && child.tagName !== 'UL' && child.tagName !== 'OL') {
@@ -190,14 +191,24 @@
       return null;
     };
 
-    const getTaskState = function(listItem) {
+    const getTaskMarker = function(listItem) {
       const textNode = getFirstTextNode(listItem, true);
       const text = textNode ? textNode.nodeValue : '';
-      if (text.indexOf(UNCHECKED_MARKER) === 0) {
-        return false;
+      const match = text.match(MARKER_PATTERN);
+      if (!match) {
+        return null;
       }
-      if (text.indexOf(CHECKED_MARKER) === 0) {
-        return true;
+      return {
+        checked: match[2] === 'x',
+        markerLength: match[0].length,
+        textNode: textNode
+      };
+    };
+
+    const getTaskState = function(listItem) {
+      const marker = getTaskMarker(listItem);
+      if (marker) {
+        return marker.checked;
       }
       if (listItem.classList.contains(TASK_ITEM_CLASS)) {
         return listItem.classList.contains(TASK_ITEM_CHECKED_CLASS);
@@ -206,26 +217,25 @@
     };
 
     const removeVisibleMarker = function(listItem) {
-      const textNode = getFirstTextNode(listItem, true);
-      const text = textNode ? textNode.nodeValue : '';
-      if (!textNode) {
+      const marker = getTaskMarker(listItem);
+      if (!marker) {
         return;
       }
-      if (text.indexOf(UNCHECKED_MARKER) === 0 || text.indexOf(CHECKED_MARKER) === 0) {
-        textNode.nodeValue = text.substring(4);
-      }
+      marker.textNode.nodeValue = marker.textNode.nodeValue.substring(marker.markerLength);
     };
 
     const setTaskState = function(listItem, checked) {
       let textNode = getFirstTextNode(listItem, true);
+      let markerData;
       if (!textNode) {
         textNode = document.createTextNode('');
         listItem.insertBefore(textNode, listItem.firstChild);
       }
       const marker = checked ? CHECKED_MARKER : UNCHECKED_MARKER;
       const text = textNode.nodeValue || '';
-      if (text.indexOf(UNCHECKED_MARKER) === 0 || text.indexOf(CHECKED_MARKER) === 0) {
-        textNode.nodeValue = marker + text.substring(4);
+      markerData = getTaskMarker(listItem);
+      if (markerData) {
+        textNode.nodeValue = marker + text.substring(markerData.markerLength);
       } else {
         textNode.nodeValue = marker + text;
       }
@@ -311,6 +321,8 @@
     };
 
     const saveAnnotatedHTML = function(documentReference, html) {
+      const csrfToken = xwikiMeta.form_token || $('meta[name="form_token"]').attr('content') ||
+        (window.xcontext && window.xcontext.form_token) || '';
       return $.post(serviceURL, {
         taskAction: 'save',
         documentReference: documentReference,
