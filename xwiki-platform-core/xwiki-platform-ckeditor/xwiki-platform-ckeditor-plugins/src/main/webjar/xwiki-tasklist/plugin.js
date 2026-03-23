@@ -339,8 +339,9 @@
     getChildListElements(list).forEach(function(listItem) {
       var checked = hasClassName(listItem, TASK_ITEM_CHECKED_CLASS);
       ensureMarkerOnListItem(listItem, checked);
-      addClassName(listItem, TASK_ITEM_CLASS);
+      clearImportedTaskState(listItem);
     });
+    removeClassName(list, TASK_LIST_CLASS);
     return list;
   }
 
