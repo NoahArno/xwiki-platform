@@ -18,7 +18,7 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 /* global CKEDITOR, setTimeout */
-/* jshint maxstatements: 50 */
+/* jshint maxstatements: 60 */
 (function() {
   'use strict';
 
@@ -50,32 +50,36 @@
       '.cke_editable li.' + TASK_ITEM_CLASS + ' { list-style: none; }',
       '.cke_editable ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CLASS + ' {',
       '  position: relative;',
-      '  padding-left: 1.8em;',
+      '  padding-left: 2rem;',
       '}',
       '.cke_editable .' + TASK_TOGGLE_CLASS + ' { display: none !important; }',
       '.cke_editable ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CLASS + '::before {',
       '  content: "";',
       '  position: absolute;',
-      '  top: 0.25em;',
+      '  top: 0.1rem;',
       '  left: 0;',
-      '  width: 1em;',
-      '  height: 1em;',
+      '  width: 1.25rem;',
+      '  height: 1.25rem;',
       '  border: 1px solid currentColor;',
       '  border-radius: 0.2em;',
+      '  background: transparent;',
       '  box-sizing: border-box;',
       '}',
       '.cke_editable ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CLASS + '.' +
         TASK_ITEM_CHECKED_CLASS + '::after {',
       '  content: "";',
       '  position: absolute;',
-      '  top: 0.42em;',
-      '  left: 0.2em;',
-      '  width: 0.55em;',
-      '  height: 0.3em;',
+      '  top: 0.38rem;',
+      '  left: 0.32rem;',
+      '  width: 0.62rem;',
+      '  height: 0.36rem;',
       '  border-left: 2px solid currentColor;',
       '  border-bottom: 2px solid currentColor;',
       '  transform: rotate(-45deg);',
       '  box-sizing: border-box;',
+      '}',
+      '.cke_editable ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CHECKED_CLASS + ' {',
+      '  color: #7a7a7a;',
       '}'
     ].join(''));
   }
@@ -282,9 +286,7 @@
 
   function normalizeTaskList(list) {
     var listItems = getDirectListItems(list);
-    var isTask = list.is('ul') && listItems.length > 0 && listItems.every(function(listItem) {
-      return isTaskListItem(listItem) || listItem.getText().trim() === '';
-    });
+    var isTask = list.is('ul') && hasTaskListSemantics(list, listItems);
 
     toggleClass(list, TASK_LIST_CLASS, isTask);
     listItems.forEach(function(listItem) {
@@ -311,9 +313,7 @@
   function importList(list, ordered) {
     var listItems = getChildListElements(list);
     var taskStates = listItems.map(readTaskStateFromListItem);
-    var isTask = !ordered && listItems.length > 0 && taskStates.every(function(state, index) {
-      return state !== null || getElementText(listItems[index]).trim() === '';
-    });
+    var isTask = !ordered && hasImportedTaskListSemantics(list, listItems, taskStates);
 
     removeClassName(list, TASK_LIST_CLASS);
     listItems.forEach(removeTaskToggleButtons);
@@ -462,6 +462,16 @@
     return list.getChildren().toArray().filter(function(child) {
       return child.type === CKEDITOR.NODE_ELEMENT && child.is('li');
     });
+  }
+
+  function hasTaskListSemantics(list, listItems) {
+    return listItems.length > 0 && list.hasClass(TASK_LIST_CLASS);
+  }
+
+  function hasImportedTaskListSemantics(list, listItems, taskStates) {
+    return listItems.length > 0 && (hasClassName(list, TASK_LIST_CLASS) || listItems.some(function(listItem, index) {
+      return taskStates[index] !== null || hasClassName(listItem, TASK_ITEM_CLASS);
+    }));
   }
 
   function removeTaskToggleButtonsFromEditable(editor) {

@@ -139,6 +139,7 @@
       style.id = styleId;
       style.textContent = [
         'ul.' + TASK_LIST_CLASS + ' { list-style: none; padding-left: 0; }',
+        'li.' + TASK_ITEM_CLASS + ' { list-style: none; }',
         'ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CLASS + ' { position: relative; padding-left: 2rem; }',
         'ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CLASS + ' > .' + TOGGLE_CLASS + ' {',
         '  position: absolute;',
@@ -164,10 +165,16 @@
         '  transform: rotate(-45deg) scale(0);',
         '  transform-origin: center;',
         '}',
-        'ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CLASS + '.' + TASK_ITEM_CHECKED_CLASS + ' > .' + TOGGLE_CLASS + '::after {',
+        'ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CLASS + '.' +
+          TASK_ITEM_CHECKED_CLASS + ' > .' + TOGGLE_CLASS + '::after {',
         '  transform: rotate(-45deg) scale(1);',
         '}',
-        'ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CLASS + '[data-task-saving="true"] > .' + TOGGLE_CLASS + ' { opacity: 0.55; cursor: wait; }'
+        'ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CHECKED_CLASS + ' { color: #7a7a7a; }',
+        'ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CLASS +
+          '[data-task-saving="true"] > .' + TOGGLE_CLASS + ' {',
+        '  opacity: 0.55;',
+        '  cursor: wait;',
+        '}'
       ].join('');
       document.head.appendChild(style);
     };
@@ -180,7 +187,8 @@
         if (child.nodeType === Node.TEXT_NODE && child.nodeValue.trim() !== '') {
           return child;
         }
-        if (includeChildren && child.nodeType === Node.ELEMENT_NODE && child.tagName !== 'UL' && child.tagName !== 'OL') {
+        if (includeChildren && child.nodeType === Node.ELEMENT_NODE &&
+            child.tagName !== 'UL' && child.tagName !== 'OL') {
           const descendant = getFirstTextNode(child, true);
           if (descendant) {
             return descendant;
@@ -292,9 +300,12 @@
           return child.tagName === 'LI';
         });
         const taskStates = directListItems.map(getTaskState);
-        const isTaskList = directListItems.length > 0 && taskStates.every(function(state, index) {
-          return state !== null || directListItems[index].textContent.trim() === '';
-        });
+        const isTaskList = directListItems.length > 0 && (
+          list.classList.contains(TASK_LIST_CLASS) ||
+          directListItems.some(function(listItem, index) {
+            return taskStates[index] !== null || listItem.classList.contains(TASK_ITEM_CLASS);
+          })
+        );
 
         list.classList.toggle(TASK_LIST_CLASS, isTaskList);
         if (!isTaskList) {
