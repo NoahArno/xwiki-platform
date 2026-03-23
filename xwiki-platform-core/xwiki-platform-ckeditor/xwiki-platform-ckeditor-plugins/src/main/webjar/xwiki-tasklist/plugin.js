@@ -31,11 +31,14 @@
   var CLICK_TOGGLE_OFFSET = 24;
 
   CKEDITOR.plugins.add('xwiki-tasklist', {
+    icons: 'xwiki-tasklist',
+    hidpi: true,
     requires: 'list,xwiki-localization',
 
     init: function(editor) {
       addEditorStyle();
       addCommand(editor);
+      addToolbarButton(editor);
       bindEditorEvents(editor);
     },
 
@@ -46,18 +49,18 @@
 
   function addEditorStyle() {
     CKEDITOR.addCss([
-      '.cke_editable ul.' + TASK_LIST_CLASS + ' { list-style: none; padding-left: 0; }',
+      '.cke_editable ul.' + TASK_LIST_CLASS + ' { list-style: none; padding-left: 40px; }',
       '.cke_editable li.' + TASK_ITEM_CLASS + ' { list-style: none; }',
       '.cke_editable ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CLASS + ' {',
       '  position: relative;',
-      '  padding-left: 2rem;',
+      '  padding-left: 0;',
       '}',
       '.cke_editable .' + TASK_TOGGLE_CLASS + ' { display: none !important; }',
       '.cke_editable ul.' + TASK_LIST_CLASS + ' > li.' + TASK_ITEM_CLASS + '::before {',
       '  content: "";',
       '  position: absolute;',
       '  top: 0.1rem;',
-      '  left: 0;',
+      '  left: -1.75rem;',
       '  width: 1.25rem;',
       '  height: 1.25rem;',
       '  border: 1px solid currentColor;',
@@ -70,7 +73,7 @@
       '  content: "";',
       '  position: absolute;',
       '  top: 0.38rem;',
-      '  left: 0.32rem;',
+      '  left: -1.43rem;',
       '  width: 0.62rem;',
       '  height: 0.36rem;',
       '  border-left: 2px solid currentColor;',
@@ -82,6 +85,14 @@
       '  color: #7a7a7a;',
       '}'
     ].join(''));
+  }
+
+  function addToolbarButton(editor) {
+    editor.ui.addButton('xwiki-tasklist', {
+      label: editor.localization.get('xwiki-toolbar.tasklist'),
+      command: 'xwiki-tasklist',
+      toolbar: 'paragraph,11'
+    });
   }
 
   function addFilters(editor) {

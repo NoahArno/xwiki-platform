@@ -211,7 +211,7 @@ CKEDITOR.editorConfig = function(config) {
     // * the XWiki Macro button because we have it in the Insert menu
     removeButtons: 'Anchor,BulletedList,Copy,CopyFormatting,Cut,Find,HorizontalRule,Indent,Language,NumberedList,' +
       'Outdent,Paste,PasteFromWord,PasteText,RemoveFormat,SpecialChar,Strike,Subscript,Superscript,Underline,Unlink,' +
-      'officeImporter,xwiki-macro',
+      'officeImporter,xwiki-macro,xwiki-tasklist',
     // We remove the default sourcearea plugin because we use our own xwiki-sourcearea plugin which supports switching
     // to Source while editing in-place. We still bundle the sourcearea plugin because we reuse its icons and
     // translations.
@@ -270,8 +270,9 @@ CKEDITOR.editorConfig = function(config) {
       indent: {label: 'indent.indent'},
       outdent: {label: 'indent.outdent'},
       'xwiki-tasklist': {
-        label: 'xwiki-tasklist.toolbar',
-        icon: 'bulletedlist'
+        label: 'ckeditor.plugin.toolbar.tasklist',
+        icon: 'xwiki-tasklist',
+        command: 'xwiki-tasklist'
       },
 
       image: {label: 'common.image'},

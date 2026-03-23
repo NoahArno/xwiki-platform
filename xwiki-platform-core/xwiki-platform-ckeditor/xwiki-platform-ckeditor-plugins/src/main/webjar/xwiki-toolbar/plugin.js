@@ -48,7 +48,7 @@
             }, menuItems[itemId]);
             var command = item.command;
             editor.addMenuItem(item.id, {
-              label: l10n(editor, item.label),
+              label: getMenuItemLabel(editor, item),
               icon: item.icon || command,
               command: command,
               data: item.data,
@@ -78,11 +78,15 @@
             },
             onMenu: function() {
               var active = {};
+              var panelCSS = editor.ui.instances[menuId]._.menu._.panelDefinition.css;
               activeMenuItems.forEach(function(item) {
+                var icon = item.icon || item.command;
+                var iconRulePrefix = '.cke_button__' + item.command + '_icon';
                 active[item.id] = editor.commands[item.command].state;
-                if (item.icon && active[item.id]) {
-                  editor.ui.instances[menuId]._.menu._.panelDefinition.css.push('.cke_button__' + item.command +
-                    '_icon {' + CKEDITOR.skin.getIconStyle(item.icon) + '}');
+                if (!panelCSS.some(function(rule) {
+                  return rule.indexOf(iconRulePrefix) === 0;
+                })) {
+                  panelCSS.push(iconRulePrefix + ' {' + getMenuItemIconStyle(icon) + '}');
                 }
               });
               return active;
@@ -119,5 +123,32 @@
       });
       return value || key;
     }
+  };
+
+  var getMenuItemLabel = function(editor, item) {
+    if (item.command === 'xwiki-tasklist') {
+      return isChineseLocale(editor) ? '待办列表' : 'Task List';
+    }
+    return l10n(editor, item.label);
+  };
+
+  var getMenuItemIconStyle = function(icon) {
+    if (icon === 'xwiki-tasklist') {
+      return [
+        'background-image:url(' + CKEDITOR.getUrl(
+          CKEDITOR.plugins.getPath('xwiki-tasklist') + 'icons/xwiki-tasklist.png'
+        ) + ')',
+        'background-size:16px 16px',
+        'background-position:0 0',
+        'background-repeat:no-repeat'
+      ].join(';');
+    }
+    return CKEDITOR.skin.getIconStyle(icon);
+  };
+
+  var isChineseLocale = function(editor) {
+    var locale = (editor.getContentLocale && editor.getContentLocale()) ||
+      document.documentElement.lang || document.documentElement.dataset.xwikiLocale || '';
+    return locale.toLowerCase().indexOf('zh') === 0;
   };
 })();
