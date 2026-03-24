@@ -40,6 +40,145 @@
   <object>
     <name>Macros.Button</name>
     <number>0</number>
+    <className>XWiki.StyleSheetExtension</className>
+    <guid>ab5f865d-a917-4437-a4d2-79212fa5d1e3</guid>
+    <class>
+      <name>XWiki.StyleSheetExtension</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cache>
+        <cache>0</cache>
+        <defaultValue>long</defaultValue>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>cache</name>
+        <number>5</number>
+        <prettyName>Caching policy</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>long|short|default|forbid</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </cache>
+      <code>
+        <contenttype>PureText</contenttype>
+        <disabled>0</disabled>
+        <editor>PureText</editor>
+        <name>code</name>
+        <number>2</number>
+        <prettyName>Code</prettyName>
+        <rows>20</rows>
+        <size>50</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </code>
+      <contentType>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>contentType</name>
+        <number>6</number>
+        <prettyName>Content Type</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>CSS|LESS</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </contentType>
+      <name>
+        <disabled>0</disabled>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Name</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parse>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <name>parse</name>
+        <number>4</number>
+        <prettyName>Parse content</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </parse>
+      <use>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>use</name>
+        <number>3</number>
+        <prettyName>Use this extension</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>currentPage|onDemand|always</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </use>
+    </class>
+    <property>
+      <cache>long</cache>
+    </property>
+    <property>
+      <code>.button-macro-wrapper .button-macro {
+  border: 1px solid transparent;
+  color: #fff;
+}
+.button-macro-wrapper .button-macro:hover,
+.button-macro-wrapper .button-macro:focus {
+  color: #fff;
+  text-decoration: none;
+}
+.button-macro-wrapper .button-macro-color-blue { background-color: #337ab7; border-color: #2e6da4; }
+.button-macro-wrapper .button-macro-color-gray { background-color: #777; border-color: #666; }
+.button-macro-wrapper .button-macro-color-green { background-color: #5cb85c; border-color: #4cae4c; }
+.button-macro-wrapper .button-macro-color-magenta { background-color: #c2185b; border-color: #ad1457; }
+.button-macro-wrapper .button-macro-color-orange { background-color: #f57c00; border-color: #ef6c00; }
+.button-macro-wrapper .button-macro-color-purple { background-color: #7b1fa2; border-color: #6a1b9a; }
+.button-macro-wrapper .button-macro-color-red { background-color: #d9534f; border-color: #d43f3a; }
+.button-macro-wrapper .button-macro-color-turquoise { background-color: #17a2b8; border-color: #138496; }
+.button-macro-wrapper .button-macro-color-yellow { background-color: #f0ad4e; border-color: #eea236; color: #222; }
+.button-macro-wrapper .button-macro-color-yellow:hover,
+.button-macro-wrapper .button-macro-color-yellow:focus { color: #222; }</code>
+    </property>
+    <property>
+      <contentType>CSS</contentType>
+    </property>
+    <property>
+      <name/>
+    </property>
+    <property>
+      <parse/>
+    </property>
+    <property>
+      <use>always</use>
+    </property>
+  </object>
+  <object>
+    <name>Macros.Button</name>
+    <number>0</number>
     <className>XWiki.WikiMacroClass</className>
     <guid>92f2496b-c2bb-4d6d-95d4-f6e26d98cb18</guid>
     <class>
@@ -258,14 +397,17 @@
 #set ($size = "$!params.size")
 #set ($display = "$!params.display")
 #set ($icon = "$!params.icon")
-#set ($buttonClasses = ['btn'])
+#set ($buttonClasses = ['btn', 'button-macro'])
 #set ($colorClassMap = {
-  'DEFAULT': 'btn-default',
-  'BLUE': 'btn-primary',
-  'GREEN': 'btn-success',
-  'CYAN': 'btn-info',
-  'YELLOW': 'btn-warning',
-  'RED': 'btn-danger'
+  'BLUE': 'button-macro-color-blue',
+  'GRAY': 'button-macro-color-gray',
+  'GREEN': 'button-macro-color-green',
+  'MAGENTA': 'button-macro-color-magenta',
+  'ORANGE': 'button-macro-color-orange',
+  'PURPLE': 'button-macro-color-purple',
+  'RED': 'button-macro-color-red',
+  'TURQUOISE': 'button-macro-color-turquoise',
+  'YELLOW': 'button-macro-color-yellow'
 })
 #set ($sizeClassMap = {
   'SMALL': 'btn-sm',
@@ -273,25 +415,37 @@
   'LARGE': 'btn-lg'
 })
 #set ($iconMap = {
-  'CHECK': 'check',
-  'INFO': 'info',
-  'WARNING': 'warning',
-  'STAR': 'star',
-  'PLUS': 'add',
-  'PENCIL': 'pencil',
-  'TRASH': 'trash',
-  'SEARCH': 'search',
-  'HOME': 'home',
-  'COG': 'cog',
-  'ENVELOPE': 'envelope',
-  'USER': 'user',
+  'TEXT': 'file-text',
   'LINK': 'link',
   'DOWNLOAD': 'download',
-  'RIGHT': 'right'
+  'MAIL': 'envelope',
+  'HOME': 'home',
+  'IDEA': 'lightbulb',
+  'INFO': 'info',
+  'QUESTION': 'question',
+  'STAR': 'star',
+  'SETTINGS': 'cog',
+  'ADD': 'add',
+  'EDIT': 'pencil',
+  'DELETE': 'delete',
+  'NEWS': 'rss',
+  'BLOG': 'rss',
+  'LOCATION': 'globe',
+  'NOTIFICATION': 'bell',
+  'CALENDAR': 'calendar',
+  'REMINDER': 'bell',
+  'PHONE': 'phone',
+  'TRASH': 'trash',
+  'SEARCH': 'search',
+  'FACEBOOK': 'facebook',
+  'LINKEDIN': 'linkedin',
+  'TWITTER': 'twitter',
+  'HTML': 'code',
+  'LABEL': 'tag'
 })
 #set ($colorClass = $colorClassMap.get($color))
 #if ("$!colorClass" == '')
-  #set ($colorClass = 'btn-primary')
+  #set ($colorClass = 'button-macro-color-blue')
 #end
 #set ($discard = $buttonClasses.add($colorClass))
 #set ($sizeClass = $sizeClassMap.get($size))

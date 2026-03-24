@@ -27,10 +27,13 @@ package org.xwiki.rendering.macro.button;
  */
 public enum ButtonColor
 {
-    DEFAULT,
     BLUE,
+    GRAY,
     GREEN,
-    CYAN,
-    YELLOW,
-    RED
+    MAGENTA,
+    ORANGE,
+    PURPLE,
+    RED,
+    TURQUOISE,
+    YELLOW
 }
