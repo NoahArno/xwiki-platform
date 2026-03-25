@@ -249,11 +249,7 @@
       <async_enabled>0</async_enabled>
     </property>
     <property>
-      <code>{{html clean="false"}}&lt;span class="xwiki-excerpt-boundary xwiki-excerpt-boundary-start" style="display:none !important" aria-hidden="true"&gt;&lt;/span&gt;{{/html}}
-(% class="xwiki-excerpt-macro" %)(((
-{{wikimacrocontent/}}
-)))
-{{html clean="false"}}&lt;span class="xwiki-excerpt-boundary xwiki-excerpt-boundary-end" style="display:none !important" aria-hidden="true"&gt;&lt;/span&gt;{{/html}}</code>
+      <code>{{wikimacrocontent/}}</code>
     </property>
     <property>
       <contentDescription>Excerpt content.</contentDescription>

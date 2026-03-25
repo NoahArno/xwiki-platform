@@ -264,13 +264,16 @@
     #set ($output = "{{warning}}The referenced page [$safeReference] does not exist.{{/warning}}")
     #set ($xcontext.macro.result = $services.rendering.parse($output, $xwiki.currentContentSyntaxId).children)
   #else
-    #set ($renderedContent = "$!targetDoc.renderedContent")
-    #set ($pattern = $regextool.compile('(?s)&lt;span class=\"xwiki-excerpt-boundary xwiki-excerpt-boundary-start\"[^&gt;]*&gt;&lt;/span&gt;(.*?)&lt;span class=\"xwiki-excerpt-boundary xwiki-excerpt-boundary-end\"[^&gt;]*&gt;&lt;/span&gt;'))
-    #set ($matcher = $pattern.matcher($renderedContent))
-    #if ($matcher.find())
-      #set ($excerptHTML = $matcher.group(1).trim())
-      #set ($output = "{{html clean='false'}}$excerptHTML{{/html}}")
-      #set ($xcontext.macro.result = $services.rendering.parse($output, $xwiki.currentContentSyntaxId).children)
+    #set ($excerptContent = '')
+    #foreach ($macroBlock in $targetDoc.getDocument().getXDOM().getBlocks('class:MacroBlock', 'DESCENDANT'))
+      #if ($macroBlock.id == 'excerpt')
+        #set ($excerptContent = "$!macroBlock.content")
+        #break
+      #end
+    #end
+    #if ($excerptContent != '')
+      #set ($targetSyntax = $targetDoc.syntax.toIdString())
+      #set ($xcontext.macro.result = $services.rendering.parse($excerptContent, $targetSyntax).children)
     #else
       #set ($safeReference = $services.rendering.escape($reference, 'xwiki/2.1'))
       #set ($output = "{{warning}}No excerpt macro was found in [$safeReference].{{/warning}}")
