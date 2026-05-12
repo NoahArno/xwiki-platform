@@ -1,0 +1,212 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
+<xwikidoc version="1.4" reference="XWiki.SpaceManager" locale="">
+  <web>XWiki</web>
+  <name>SpaceManager</name>
+  <language/>
+  <defaultLanguage/>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <parent>XWiki.WebHome</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title>Space Manager</title>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>xwiki/2.1</syntaxId>
+  <hidden>true</hidden>
+  <content>{{velocity}}
+#set ($action = "$!request.action")
+#set ($spaceDescriptorClassName = 'XWiki.SpaceDescriptorClass')
+#set ($isGuest = $xcontext.user == 'XWiki.XWikiGuest')
+#set ($isWikiAdmin = $services.security.authorization.hasAccess('admin', $xcontext.databaseReference))
+#set ($peopleRootReference = $services.model.createDocumentReference($xcontext.database, ['People'], 'WebHome'))
+#set ($spacesRootReference = $services.model.createDocumentReference($xcontext.database, ['Spaces'], 'WebHome'))
+
+#macro (ensureDocument $reference $title $content $parent)
+  #if (!$xwiki.exists($reference))
+    #set ($targetDocument = $xwiki.getDocument($reference))
+    #set ($discard = $targetDocument.setTitle($title))
+    #set ($discard = $targetDocument.setContent($content))
+    #set ($discard = $targetDocument.setSyntaxId('xwiki/2.1'))
+    #if ("$!parent" != '')
+      #set ($discard = $targetDocument.setParent($parent))
+    #end
+    #set ($discard = $targetDocument.saveAsAuthor('Initialize space structure'))
+  #end
+#end
+
+#macro (ensurePeopleRoot)
+  #ensureDocument($peopleRootReference 'People' '= People =\n\nUsers personal spaces are created under this section.\n\n{{documentTree root="document:People.WebHome" showTranslations="false" showAttachments="false" /}}' 'Main.WebHome')
+#end
+
+#macro (ensureSpacesRoot)
+  #ensureDocument($spacesRootReference 'Spaces' '= Spaces =\n\nTeam spaces are created under this section.\n\n{{documentTree root="document:Spaces.WebHome" showTranslations="false" showAttachments="false" /}}' 'Main.WebHome')
+#end
+
+#macro (createSpaceDescriptor $document $spaceKey $spaceType $displayName $description $ownerReference $visibility $navigationRoot $blogRoot)
+  #set ($descriptor = $document.getObject($spaceDescriptorClassName, true))
+  #set ($discard = $document.use($descriptor))
+  #set ($discard = $document.set('spaceKey', $spaceKey))
+  #set ($discard = $document.set('spaceType', $spaceType))
+  #set ($discard = $document.set('displayName', $displayName))
+  #set ($discard = $document.set('description', $description))
+  #set ($discard = $document.set('owner', $ownerReference))
+  #set ($discard = $document.set('visibility', $visibility))
+  #set ($discard = $document.set('navigationRoot', $navigationRoot))
+  #set ($discard = $document.set('blogRoot', $blogRoot))
+  #set ($discard = $document.set('archived', 0))
+#end
+
+#macro (createPersonalSpace $userReference)
+  #set ($userDocumentName = $userReference.name.replaceAll('[^\\p{Alnum}_-]', ''))
+  #set ($userDisplayName = $xwiki.getUserName($services.model.serialize($userReference, 'default'), false))
+  #if ("$!userDisplayName" == '')
+    #set ($userDisplayName = $userDocumentName)
+  #end
+  #set ($spaceReference = $services.model.createDocumentReference($xcontext.database, ['People', $userDocumentName], 'WebHome'))
+  #set ($blogReference = $services.model.createDocumentReference($xcontext.database, ['People', $userDocumentName, 'Blog'], 'WebHome'))
+  #set ($draftsReference = $services.model.createDocumentReference($xcontext.database, ['People', $userDocumentName, 'Drafts'], 'WebHome'))
+  #set ($notesReference = $services.model.createDocumentReference($xcontext.database, ['People', $userDocumentName, 'Notes'], 'WebHome'))
+  #set ($aboutReference = $services.model.createDocumentReference($xcontext.database, ['People', $userDocumentName, 'About'], 'WebHome'))
+  #ensurePeopleRoot()
+  #if (!$xwiki.exists($spaceReference))
+    #set ($spaceDocument = $xwiki.getDocument($spaceReference))
+    #set ($discard = $spaceDocument.setTitle("${userDisplayName} Personal Space"))
+    #set ($discard = $spaceDocument.setParent('People.WebHome'))
+    #set ($discard = $spaceDocument.setSyntaxId('xwiki/2.1'))
+    #set ($discard = $spaceDocument.setContent("= ${userDisplayName} Personal Space =\n\nThis is the personal home page for **${userDisplayName}**.\n\n* [[Blog&gt;&gt;${services.model.serialize($blogReference, 'default')}]]\n* [[Drafts&gt;&gt;${services.model.serialize($draftsReference, 'default')}]]\n* [[Notes&gt;&gt;${services.model.serialize($notesReference, 'default')}]]\n* [[About&gt;&gt;${services.model.serialize($aboutReference, 'default')}]]"))
+    #createSpaceDescriptor($spaceDocument "PERSONAL_${userDocumentName.toUpperCase()}" 'personal' "${userDisplayName} Personal Space" "Personal space for ${userDisplayName}." $services.model.serialize($userReference, 'default') 'internal' $services.model.serialize($spaceReference, 'default') $services.model.serialize($blogReference, 'default'))
+    #set ($discard = $spaceDocument.saveAsAuthor('Initialize personal space'))
+  #end
+  #ensureDocument($blogReference 'Blog' "= Blog =\n\nWrite personal updates and articles here." $services.model.serialize($spaceReference, 'default'))
+  #ensureDocument($draftsReference 'Drafts' "= Drafts =\n\nUse this section for work in progress pages." $services.model.serialize($spaceReference, 'default'))
+  #ensureDocument($notesReference 'Notes' "= Notes =\n\nUse this section for personal notes." $services.model.serialize($spaceReference, 'default'))
+  #ensureDocument($aboutReference 'About' "= About =\n\nDescribe the purpose of this personal space." $services.model.serialize($spaceReference, 'default'))
+  $response.sendRedirect($xwiki.getURL($spaceReference))
+#end
+
+#macro (createTeamSpace $spaceKey $spaceName $ownerReference)
+  #set ($normalizedSpaceName = $spaceName.replaceAll('[^\\p{Alnum}_-]', ''))
+  #if ("$!normalizedSpaceName" == '')
+    #set ($normalizedSpaceName = $spaceKey.replaceAll('[^\\p{Alnum}_-]', ''))
+  #end
+  #set ($teamRootReference = $services.model.createDocumentReference($xcontext.database, ['Spaces', $normalizedSpaceName], 'WebHome'))
+  #set ($blogReference = $services.model.createDocumentReference($xcontext.database, ['Spaces', $normalizedSpaceName, 'Blog'], 'WebHome'))
+  #set ($pagesReference = $services.model.createDocumentReference($xcontext.database, ['Spaces', $normalizedSpaceName, 'Pages'], 'WebHome'))
+  #set ($meetingNotesReference = $services.model.createDocumentReference($xcontext.database, ['Spaces', $normalizedSpaceName, 'MeetingNotes'], 'WebHome'))
+  #set ($decisionsReference = $services.model.createDocumentReference($xcontext.database, ['Spaces', $normalizedSpaceName, 'Decisions'], 'WebHome'))
+  #ensureSpacesRoot()
+  #if (!$xwiki.exists($teamRootReference))
+    #set ($teamRootDocument = $xwiki.getDocument($teamRootReference))
+    #set ($discard = $teamRootDocument.setTitle($spaceName))
+    #set ($discard = $teamRootDocument.setParent('Spaces.WebHome'))
+    #set ($discard = $teamRootDocument.setSyntaxId('xwiki/2.1'))
+    #set ($discard = $teamRootDocument.setContent("= ${spaceName} =\n\nThis page is the home page for the **${spaceName}** team space.\n\n* [[Pages&gt;&gt;${services.model.serialize($pagesReference, 'default')}]]\n* [[Meeting Notes&gt;&gt;${services.model.serialize($meetingNotesReference, 'default')}]]\n* [[Decisions&gt;&gt;${services.model.serialize($decisionsReference, 'default')}]]\n* [[Blog&gt;&gt;${services.model.serialize($blogReference, 'default')}]]"))
+    #createSpaceDescriptor($teamRootDocument $spaceKey 'team' $spaceName "Team space for ${spaceName}." "$!ownerReference" 'internal' $services.model.serialize($teamRootReference, 'default') $services.model.serialize($blogReference, 'default'))
+    #set ($discard = $teamRootDocument.saveAsAuthor('Initialize team space'))
+  #end
+  #ensureDocument($pagesReference 'Pages' "= Pages =\n\nUse this section for team documentation." $services.model.serialize($teamRootReference, 'default'))
+  #ensureDocument($meetingNotesReference 'Meeting Notes' "= Meeting Notes =\n\nUse this section for meeting minutes." $services.model.serialize($teamRootReference, 'default'))
+  #ensureDocument($decisionsReference 'Decisions' "= Decisions =\n\nUse this section for architectural and organizational decisions." $services.model.serialize($teamRootReference, 'default'))
+  #ensureDocument($blogReference 'Blog' "= Blog =\n\nUse this section for team announcements and updates." $services.model.serialize($teamRootReference, 'default'))
+  $response.sendRedirect($xwiki.getURL($teamRootReference))
+#end
+
+#if ($action == 'viewPersonalSpace')
+  #if ($isGuest)
+    {{error}}Guests cannot create or access personal spaces.{{/error}}
+  #else
+    #set ($requestedUser = "$!request.user")
+    #if ("$!requestedUser" == '')
+      #set ($requestedUser = $xcontext.userReference.name)
+    #end
+    #set ($userReference = $services.model.createDocumentReference($xcontext.database, 'XWiki', $requestedUser))
+    #set ($isOwnSpace = $xcontext.userReference.name == $requestedUser)
+    #if ($isOwnSpace || $isWikiAdmin)
+      #createPersonalSpace($userReference)
+    #else
+      #set ($targetReference = $services.model.createDocumentReference($xcontext.database, ['People', $requestedUser], 'WebHome'))
+      #if ($xwiki.exists($targetReference))
+        $response.sendRedirect($xwiki.getURL($targetReference))
+      #else
+        {{error}}The requested personal space does not exist yet.{{/error}}
+      #end
+    #end
+  #end
+#elseif ($action == 'createTeamSpace')
+  #if (!$isWikiAdmin)
+    {{error}}Only wiki administrators can create team spaces.{{/error}}
+  #else
+    #set ($spaceKey = "$!request.spaceKey".trim())
+    #set ($spaceName = "$!request.spaceName".trim())
+    #set ($owner = "$!request.owner".trim())
+    #if ($spaceKey == '' || $spaceName == '')
+      {{error}}Both space key and display name are required.{{/error}}
+    #else
+      #createTeamSpace($spaceKey $spaceName $owner)
+    #end
+  #end
+#else
+= Space Manager =
+
+This page provides the first implementation of the Confluence-like space model on top of XWiki nested pages.
+
+{{info}}
+Current implementation scope:
+
+* personal space lazy creation
+* team space bootstrapping
+* space descriptor object initialization
+{{/info}}
+
+== Personal Space ==
+
+#if ($isGuest)
+Guests cannot initialize personal spaces.
+#else
+[[Open my personal space&gt;&gt;${xwiki.getURL('XWiki.SpaceManager', 'view', "action=viewPersonalSpace&amp;user=${escapetool.url($xcontext.userReference.name)}")}]]
+#end
+
+#if ($isWikiAdmin)
+== Create Team Space ==
+
+{{html clean="false"}}
+&lt;form method="get" action="$xwiki.getURL('XWiki.SpaceManager')" class="xform"&gt;
+  &lt;input type="hidden" name="action" value="createTeamSpace" /&gt;
+  &lt;dl&gt;
+    &lt;dt&gt;&lt;label for="spaceKey"&gt;Space Key&lt;/label&gt;&lt;/dt&gt;
+    &lt;dd&gt;&lt;input id="spaceKey" class="form-control" type="text" name="spaceKey" /&gt;&lt;/dd&gt;
+    &lt;dt&gt;&lt;label for="spaceName"&gt;Display Name&lt;/label&gt;&lt;/dt&gt;
+    &lt;dd&gt;&lt;input id="spaceName" class="form-control" type="text" name="spaceName" /&gt;&lt;/dd&gt;
+    &lt;dt&gt;&lt;label for="owner"&gt;Owner (optional)&lt;/label&gt;&lt;/dt&gt;
+    &lt;dd&gt;&lt;input id="owner" class="form-control" type="text" name="owner" placeholder="XWiki.UserName" /&gt;&lt;/dd&gt;
+  &lt;/dl&gt;
+  &lt;p&gt;&lt;button type="submit" class="btn btn-primary"&gt;Create team space&lt;/button&gt;&lt;/p&gt;
+&lt;/form&gt;
+{{/html}}
+#end
+#end
+{{/velocity}}</content>
+</xwikidoc>

@@ -47,6 +47,7 @@ user.profile.groups.title=用户组
 user.profile.groups.description=这里列出了您的用户所属的所有组。
 user.profile.groups.table.group=组
 platform.core.profile.category.groups=组
+platform.core.profile.category.personalSpace=个人空间
 user.profile.notifications=通知
 user.profile.network.unfollow.question=您确定要取消关注此用户吗？
 user.profile.network.unfollow.question.yes=是的，取消关注
