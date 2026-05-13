@@ -180,6 +180,50 @@
 #navigationPanelHeader($services.localization.render('xe.panels.navigation'))
 ## Escape special characters in macro parameter values.
 #set ($openToDoc = $doc.documentReference.toString().replaceAll('([~"])', '~$1'))
+#set ($extraParams = '')
+#set ($spaceSegments = [])
+#set ($spacePath = '')
+#set ($currentSpaceReference = $doc.documentReference.lastSpaceReference)
+#if ($currentSpaceReference)
+  #set ($spacePath = $services.model.serialize($currentSpaceReference, 'local'))
+  #if ("$!spacePath" != '')
+    #set ($spaceSegments = $spacePath.split('\\.'))
+  #end
+#end
+## Confluence-like team space: Spaces.&lt;SpaceName&gt;.*
+#if ($spaceSegments.size() &gt;= 2 &amp;&amp; $spaceSegments[0] == 'Spaces')
+  #set ($treeRootReference = $services.model.createDocumentReference($xcontext.database,
+    [$spaceSegments[0], $spaceSegments[1]], 'WebHome'))
+  #if ($xwiki.exists($treeRootReference))
+    #set ($serializedRootReference = $services.model.serialize($treeRootReference, 'default'))
+    #set ($escapedRootReference = $services.rendering.escape($serializedRootReference, 'xwiki/2.1'))
+    #set ($extraParams = "root='document:$escapedRootReference'")
+  #end
+## Confluence-like personal space: People.&lt;UserName&gt;.*
+#elseif ($spaceSegments.size() &gt;= 2 &amp;&amp; $spaceSegments[0] == 'People')
+  #set ($treeRootReference = $services.model.createDocumentReference($xcontext.database,
+    [$spaceSegments[0], $spaceSegments[1]], 'WebHome'))
+  #if ($xwiki.exists($treeRootReference))
+    #set ($serializedRootReference = $services.model.serialize($treeRootReference, 'default'))
+    #set ($escapedRootReference = $services.rendering.escape($serializedRootReference, 'xwiki/2.1'))
+    #set ($extraParams = "root='document:$escapedRootReference'")
+  #end
+## When viewing a user profile page, if the target user has a personal space, use it as the navigation root.
+#elseif ($doc.getObject('XWiki.XWikiUsers'))
+  #set ($profileUserName = $stringtool.trim("$!doc.documentReference.name"))
+  #if ($profileUserName != '')
+    #set ($personalSpaceReference = $services.model.createDocumentReference($xcontext.database,
+      ['People', $profileUserName], 'WebHome'))
+  #else
+    #set ($personalSpaceReference = $NULL)
+  #end
+  #if ($personalSpaceReference &amp;&amp; $xwiki.exists($personalSpaceReference))
+    #set ($serializedRootReference = $services.model.serialize($personalSpaceReference, 'default'))
+    #set ($escapedRootReference = $services.rendering.escape($serializedRootReference, 'xwiki/2.1'))
+    #set ($extraParams = "root='document:$escapedRootReference'")
+    #set ($openToDoc = $serializedRootReference.replaceAll('([~"])', '~$1'))
+  #end
+#end
 ## Apply the configured page exclusions.
 #set ($config = $xwiki.getDocument('PanelsCode.NavigationConfiguration'))
 #set ($exclusions = $collectiontool.set)
@@ -233,7 +277,7 @@
 #end
 #set ($exclusions = $stringtool.join($exclusions, ','))
 {{documentTree showTranslations="false" showAttachments="false" compact="true" openTo="document:$openToDoc"
-  exclusions="$exclusions" /}}
+  exclusions="$exclusions" $extraParams /}}
 #panelfooter()
 {{/velocity}}</content>
     </property>

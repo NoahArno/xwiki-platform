@@ -47,6 +47,7 @@
   #set ($isOwnProfile = $xcontext.userReference.name == $profileUserName)
   #set ($isWikiAdmin = $services.security.authorization.hasAccess('admin', $xcontext.databaseReference))
   #set ($spaceManagerURL = $xwiki.getURL('XWiki.SpaceManager', 'view', "action=viewPersonalSpace&amp;user=${escapetool.url($profileUserName)}"))
+  #set ($personalSpaceURL = $xwiki.getURL($personalSpaceReference))
 
 = Personal Space =
 
@@ -65,7 +66,9 @@ This personal space is initialized.
 This personal space has not been initialized yet.
 {{/warning}}
 
-[[Create and open personal space&gt;&gt;${spaceManagerURL}]]
+{{html clean="false"}}
+&lt;a href="$escapetool.xml($spaceManagerURL)" class="btn btn-primary"&gt;Create and open personal space&lt;/a&gt;
+{{/html}}
   #else
 {{info}}
 This personal space has not been initialized yet.

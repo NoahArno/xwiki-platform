@@ -53,7 +53,7 @@
     #if ("$!parent" != '')
       #set ($discard = $targetDocument.setParent($parent))
     #end
-    #set ($discard = $targetDocument.saveAsAuthor('Initialize space structure'))
+    #set ($discard = $targetDocument.saveWithProgrammingRights('Initialize space structure'))
   #end
 #end
 
@@ -80,7 +80,9 @@
 #end
 
 #macro (createPersonalSpace $userReference)
-  #set ($userDocumentName = $userReference.name.replaceAll('[^\\p{Alnum}_-]', ''))
+  #set ($userDocument = $xwiki.getDocument($userReference))
+  #set ($userDocumentName = $userDocument.documentReference.name.replaceAll('[^\\p{Alnum}_-]', ''))
+  #set ($personalSpaceKey = $stringtool.upperCase("PERSONAL_${userDocumentName}"))
   #set ($userDisplayName = $xwiki.getUserName($services.model.serialize($userReference, 'default'), false))
   #if ("$!userDisplayName" == '')
     #set ($userDisplayName = $userDocumentName)
@@ -97,8 +99,8 @@
     #set ($discard = $spaceDocument.setParent('People.WebHome'))
     #set ($discard = $spaceDocument.setSyntaxId('xwiki/2.1'))
     #set ($discard = $spaceDocument.setContent("= ${userDisplayName} Personal Space =\n\nThis is the personal home page for **${userDisplayName}**.\n\n* [[Blog&gt;&gt;${services.model.serialize($blogReference, 'default')}]]\n* [[Drafts&gt;&gt;${services.model.serialize($draftsReference, 'default')}]]\n* [[Notes&gt;&gt;${services.model.serialize($notesReference, 'default')}]]\n* [[About&gt;&gt;${services.model.serialize($aboutReference, 'default')}]]"))
-    #createSpaceDescriptor($spaceDocument "PERSONAL_${userDocumentName.toUpperCase()}" 'personal' "${userDisplayName} Personal Space" "Personal space for ${userDisplayName}." $services.model.serialize($userReference, 'default') 'internal' $services.model.serialize($spaceReference, 'default') $services.model.serialize($blogReference, 'default'))
-    #set ($discard = $spaceDocument.saveAsAuthor('Initialize personal space'))
+    #createSpaceDescriptor($spaceDocument $personalSpaceKey 'personal' "${userDisplayName} Personal Space" "Personal space for ${userDisplayName}." $services.model.serialize($userReference, 'default') 'internal' $services.model.serialize($spaceReference, 'default') $services.model.serialize($blogReference, 'default'))
+    #set ($discard = $spaceDocument.saveWithProgrammingRights('Initialize personal space'))
   #end
   #ensureDocument($blogReference 'Blog' "= Blog =\n\nWrite personal updates and articles here." $services.model.serialize($spaceReference, 'default'))
   #ensureDocument($draftsReference 'Drafts' "= Drafts =\n\nUse this section for work in progress pages." $services.model.serialize($spaceReference, 'default'))
@@ -125,7 +127,7 @@
     #set ($discard = $teamRootDocument.setSyntaxId('xwiki/2.1'))
     #set ($discard = $teamRootDocument.setContent("= ${spaceName} =\n\nThis page is the home page for the **${spaceName}** team space.\n\n* [[Pages&gt;&gt;${services.model.serialize($pagesReference, 'default')}]]\n* [[Meeting Notes&gt;&gt;${services.model.serialize($meetingNotesReference, 'default')}]]\n* [[Decisions&gt;&gt;${services.model.serialize($decisionsReference, 'default')}]]\n* [[Blog&gt;&gt;${services.model.serialize($blogReference, 'default')}]]"))
     #createSpaceDescriptor($teamRootDocument $spaceKey 'team' $spaceName "Team space for ${spaceName}." "$!ownerReference" 'internal' $services.model.serialize($teamRootReference, 'default') $services.model.serialize($blogReference, 'default'))
-    #set ($discard = $teamRootDocument.saveAsAuthor('Initialize team space'))
+    #set ($discard = $teamRootDocument.saveWithProgrammingRights('Initialize team space'))
   #end
   #ensureDocument($pagesReference 'Pages' "= Pages =\n\nUse this section for team documentation." $services.model.serialize($teamRootReference, 'default'))
   #ensureDocument($meetingNotesReference 'Meeting Notes' "= Meeting Notes =\n\nUse this section for meeting minutes." $services.model.serialize($teamRootReference, 'default'))
@@ -138,20 +140,24 @@
   #if ($isGuest)
     {{error}}Guests cannot create or access personal spaces.{{/error}}
   #else
-    #set ($requestedUser = "$!request.user")
+    #set ($requestedUser = $stringtool.trim("$!request.user"))
     #if ("$!requestedUser" == '')
-      #set ($requestedUser = $xcontext.userReference.name)
+      #set ($requestedUser = $stringtool.trim("$!xcontext.userReference.name"))
     #end
-    #set ($userReference = $services.model.createDocumentReference($xcontext.database, 'XWiki', $requestedUser))
-    #set ($isOwnSpace = $xcontext.userReference.name == $requestedUser)
-    #if ($isOwnSpace || $isWikiAdmin)
-      #createPersonalSpace($userReference)
+    #if ($requestedUser == '')
+      {{error}}Cannot determine the target user for the personal space.{{/error}}
     #else
-      #set ($targetReference = $services.model.createDocumentReference($xcontext.database, ['People', $requestedUser], 'WebHome'))
-      #if ($xwiki.exists($targetReference))
-        $response.sendRedirect($xwiki.getURL($targetReference))
+      #set ($userReference = $services.model.createDocumentReference($xcontext.database, 'XWiki', $requestedUser))
+      #set ($isOwnSpace = $xcontext.userReference.name == $requestedUser)
+      #if ($isOwnSpace || $isWikiAdmin)
+        #createPersonalSpace($userReference)
       #else
-        {{error}}The requested personal space does not exist yet.{{/error}}
+        #set ($targetReference = $services.model.createDocumentReference($xcontext.database, ['People', $requestedUser], 'WebHome'))
+        #if ($xwiki.exists($targetReference))
+          $response.sendRedirect($xwiki.getURL($targetReference))
+        #else
+          {{error}}The requested personal space does not exist yet.{{/error}}
+        #end
       #end
     #end
   #end
@@ -159,9 +165,9 @@
   #if (!$isWikiAdmin)
     {{error}}Only wiki administrators can create team spaces.{{/error}}
   #else
-    #set ($spaceKey = "$!request.spaceKey".trim())
-    #set ($spaceName = "$!request.spaceName".trim())
-    #set ($owner = "$!request.owner".trim())
+    #set ($spaceKey = $stringtool.trim("$!request.spaceKey"))
+    #set ($spaceName = $stringtool.trim("$!request.spaceName"))
+    #set ($owner = $stringtool.trim("$!request.owner"))
     #if ($spaceKey == '' || $spaceName == '')
       {{error}}Both space key and display name are required.{{/error}}
     #else
@@ -186,7 +192,9 @@ Current implementation scope:
 #if ($isGuest)
 Guests cannot initialize personal spaces.
 #else
-[[Open my personal space&gt;&gt;${xwiki.getURL('XWiki.SpaceManager', 'view', "action=viewPersonalSpace&amp;user=${escapetool.url($xcontext.userReference.name)}")}]]
+{{html clean="false"}}
+&lt;a href="$escapetool.xml($xwiki.getURL('XWiki.SpaceManager', 'view', "action=viewPersonalSpace&amp;user=${escapetool.url($xcontext.userReference.name)}"))" class="btn btn-primary"&gt;Open my personal space&lt;/a&gt;
+{{/html}}
 #end
 
 #if ($isWikiAdmin)
