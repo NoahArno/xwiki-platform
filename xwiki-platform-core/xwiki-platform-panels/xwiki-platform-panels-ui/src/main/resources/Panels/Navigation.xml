@@ -236,10 +236,11 @@
 #set ($spaceRefs = $doc.documentReference.spaceReferences)
 #if ($spaceRefs.size() > 0)
   #set ($topLevelSpace = $spaceRefs.get(0).name)
-  #set ($spaceWebHomeRef = $services.model.resolveDocument("${topLevelSpace}.WebHome"))
-  #set ($spaceWebHomeDoc = $xwiki.getDocument($spaceWebHomeRef))
-  #if ($spaceWebHomeDoc.getObject('SpaceCode.SpaceClass'))
-    #set ($spaceRoot = "space:${escapetool.xml($topLevelSpace)}")
+  #set ($spaceHomeFull = "${topLevelSpace}.WebHome")
+  #set ($spaceHomeDoc = $xwiki.getDocument($spaceHomeFull))
+  #set ($spaceClassObj = $spaceHomeDoc.getObject('SpaceCode.SpaceClass'))
+  #if ($spaceClassObj)
+    #set ($spaceRoot = "document:${xcontext.database}:${topLevelSpace}.WebHome")
   #end
 #end
 #set ($exclusions = $stringtool.join($exclusions, ','))
