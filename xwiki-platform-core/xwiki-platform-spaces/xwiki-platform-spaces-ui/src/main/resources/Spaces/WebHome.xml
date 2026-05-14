@@ -50,7 +50,7 @@ $services.localization.render('spaces.directory.createNew') [[$services.localiza
 #set ($spaceList = $services.query.xwql($xwql).execute())
 #if ($spaceList.size() &gt; 0)
   (% class="table" %)
-  |= Space Key |= Space Name |= Type |= Owner
+  |= $services.localization.render('spaces.directory.col.key') |= $services.localization.render('spaces.directory.col.name') |= $services.localization.render('spaces.directory.col.type') |= $services.localization.render('spaces.directory.col.owner')
   #foreach ($spaceName in $spaceList)
     #set ($dotIndex = $spaceName.lastIndexOf('.'))
     #if ($dotIndex &gt; 0)
@@ -64,10 +64,7 @@ $services.localization.render('spaces.directory.createNew') [[$services.localiza
     #set ($spaceDisplayName = $!spaceObj.getProperty('name').value)
     #set ($spaceType = $!spaceObj.getProperty('type').value)
     #set ($spaceOwner = $!spaceObj.getProperty('owner').value)
-    | [[$escapetool.xml($spaceKey)>>$spaceHomePage]]
-    | $!escapetool.xml($spaceDisplayName)
-    | $!escapetool.xml($spaceType)
-    | $!escapetool.xml($spaceOwner)
+    | [[$escapetool.xml($spaceKey)>>$spaceHomePage]] | $!escapetool.xml($spaceDisplayName) | $services.localization.render("spaces.type.$!spaceType") | $!escapetool.xml($spaceOwner)
   #end
 #else
   {{warning}}$services.localization.render('spaces.directory.empty'){{/warning}}

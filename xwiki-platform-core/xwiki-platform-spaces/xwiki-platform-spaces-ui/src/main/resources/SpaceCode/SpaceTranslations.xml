@@ -36,28 +36,32 @@
   <syntaxId>plain/1.0</syntaxId>
   <hidden>true</hidden>
   <parent>SpaceCode.WebHome</parent>
-  <content>spaces.title=Spaces
-spaces.directory.title=Space Directory
-spaces.directory.createNew=Create Space
-spaces.create.title=Create New Space
-spaces.create.name=Space Name
-spaces.create.key=Space Key
-spaces.create.description=Description
-spaces.create.submit=Create Space
-spaces.switcher.label=Spaces
-spaces.switcher.viewAll=View all spaces...
-spaces.switcher.createSpace=Create space...
-spaces.personal.title=Personal Space
-spaces.personal.welcome=Welcome to your personal space, {0}. This is your own area for notes, drafts, and personal documentation.
-spaces.personal.pages=Your Pages
-spaces.personal.recentChanges=Recent Changes
-spaces.create.success=Space "{0}" created successfully. [[Go to {1}]]
-spaces.create.error.exists=Space key "{0}" already exists. Please choose a different key.
-spaces.create.gotoSpace=Go to Space
-spaces.directory.empty=No spaces have been created yet. Create your first space to get started.
-spaces.type.public=Public
-spaces.type.private=Private
-spaces.type.personal=Personal</content>
+  <content>spaces.title=空间
+spaces.directory.title=空间目录
+spaces.directory.createNew=创建新空间：
+spaces.directory.col.key=空间标识
+spaces.directory.col.name=空间名称
+spaces.directory.col.type=类型
+spaces.directory.col.owner=所有者
+spaces.directory.empty=暂无空间，请先创建一个空间。
+spaces.create.title=创建新空间
+spaces.create.name=空间名称
+spaces.create.key=空间标识
+spaces.create.description=描述
+spaces.create.submit=创建空间
+spaces.create.success=空间 "{0}" 创建成功。[[前往 {1}]]
+spaces.create.error.exists=空间标识 "{0}" 已存在，请使用其他标识。
+spaces.create.gotoSpace=前往空间
+spaces.switcher.label=空间
+spaces.switcher.viewAll=查看所有空间...
+spaces.switcher.createSpace=创建空间...
+spaces.type.public=公开
+spaces.type.private=私有
+spaces.type.personal=个人
+spaces.personal.title=个人空间
+spaces.personal.welcome=欢迎来到你的个人空间，{0}。这是你自己的笔记、草稿和个人文档区域。
+spaces.personal.pages=你的页面
+spaces.personal.recentChanges=最近修改</content>
   <object>
     <name>SpaceCode.SpaceTranslations</name>
     <number>0</number>
