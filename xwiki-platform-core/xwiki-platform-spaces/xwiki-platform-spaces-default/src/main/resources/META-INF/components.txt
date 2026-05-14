@@ -1,0 +1,2 @@
+org.xwiki.platform.spaces.internal.SpaceClassDocumentInitializer
+org.xwiki.platform.spaces.internal.SpaceManager

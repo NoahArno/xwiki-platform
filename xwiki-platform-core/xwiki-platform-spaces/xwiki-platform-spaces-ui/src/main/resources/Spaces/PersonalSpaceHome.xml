@@ -1,0 +1,123 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
+<xwikidoc version="1.5" reference="Spaces.PersonalSpaceHome" locale="">
+  <web>Spaces</web>
+  <name>PersonalSpaceHome</name>
+  <language/>
+  <defaultLanguage/>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <parent>Spaces.WebHome</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title/>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>xwiki/2.1</syntaxId>
+  <hidden>true</hidden>
+  <enforceRequiredRights>true</enforceRequiredRights>
+  <content>{{velocity}}
+## Personal space home page — auto-initializes on first access.
+## This page serves as the template/content for ~username.WebHome pages.
+##
+## Get the username from the current space name (remove the leading tilde)
+#set ($spaceRefs = $doc.documentReference.spaceReferences)
+#if ($spaceRefs.size() &gt; 0)
+  #set ($topSpace = $spaceRefs.get(0).name)
+#else
+  #set ($topSpace = '')
+#end
+##
+## Auto-initialize: if this is a ~username space and no SpaceClass object exists, create one.
+#if ($topSpace.startsWith('~') &amp;&amp; !$doc.getObject('SpaceCode.SpaceClass'))
+  #set ($userName = $topSpace.substring(1))
+  #set ($spaceObj = $doc.newObject('SpaceCode.SpaceClass'))
+  $!spaceObj.set('name', "Personal Space of ${userName}")
+  $!spaceObj.set('key', $topSpace)
+  $!spaceObj.set('description', "Personal space for user ${userName}")
+  $!spaceObj.set('type', 'personal')
+  $!spaceObj.set('owner', "xwiki:XWiki.${userName}")
+  #set ($discard = $doc.save('Auto-initialized personal space'))
+#end
+##
+## Display personal space home content
+#set ($userName = $topSpace.substring(1))
+#set ($userDoc = $xwiki.getDocument("XWiki.${userName}"))
+#set ($displayName = "$!userDoc.display('name')")
+#if ($displayName == '')
+  #set ($displayName = $userName)
+#end
+= $services.localization.render('spaces.personal.title'): $escapetool.xml($displayName) =
+
+{{info}}
+$services.localization.render('spaces.personal.welcome', [$escapetool.xml($displayName)])
+{{/info}}
+
+== $services.localization.render('spaces.personal.pages') ==
+
+{{documentTree showTranslations="false" showAttachments="false" compact="true"
+  root="space:${escapetool.xml($topSpace)}" /}}
+
+== $services.localization.render('spaces.personal.recentChanges') ==
+
+{{recentlyModified count="10" spaces="${escapetool.xml($topSpace)}" /}}
+{{/velocity}}</content>
+  <object>
+    <name>Spaces.PersonalSpaceHome</name>
+    <number>0</number>
+    <className>XWiki.RequiredRightClass</className>
+    <guid>g1h2i3j4-a004-8000-c000-000000000005</guid>
+    <class>
+      <name>XWiki.RequiredRightClass</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <level>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>level</name>
+        <number>1</number>
+        <prettyName>Level</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators> ,|</separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>edit|script|wiki_admin|programming</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </level>
+    </class>
+    <property>
+      <level>edit</level>
+    </property>
+  </object>
+</xwikidoc>

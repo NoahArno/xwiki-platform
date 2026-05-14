@@ -231,9 +231,20 @@
   #set ($discard = $exclusions.add($exclusionReference.type.lowerCase + ':'
     + $services.model.serialize($exclusionReference, 'local')))
 #end
+## Space navigation isolation: when inside a Confluence space, scope the tree to that space.
+#set ($spaceRoot = '')
+#set ($spaceRefs = $doc.documentReference.spaceReferences)
+#if ($spaceRefs.size() > 0)
+  #set ($topLevelSpace = $spaceRefs.get(0).name)
+  #set ($spaceWebHomeRef = $services.model.resolveDocument("${topLevelSpace}.WebHome"))
+  #set ($spaceWebHomeDoc = $xwiki.getDocument($spaceWebHomeRef))
+  #if ($spaceWebHomeDoc.getObject('SpaceCode.SpaceClass'))
+    #set ($spaceRoot = "space:${escapetool.xml($topLevelSpace)}")
+  #end
+#end
 #set ($exclusions = $stringtool.join($exclusions, ','))
 {{documentTree showTranslations="false" showAttachments="false" compact="true" openTo="document:$openToDoc"
-  exclusions="$exclusions" /}}
+  exclusions="$exclusions" root="$spaceRoot" /}}
 #panelfooter()
 {{/velocity}}</content>
     </property>

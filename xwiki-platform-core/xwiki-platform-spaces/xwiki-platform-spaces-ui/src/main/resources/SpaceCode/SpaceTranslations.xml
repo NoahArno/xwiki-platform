@@ -1,0 +1,96 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
+<xwikidoc version="1.1">
+  <web>SpaceCode</web>
+  <name>SpaceTranslations</name>
+  <language/>
+  <defaultLanguage>en</defaultLanguage>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title/>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>plain/1.0</syntaxId>
+  <hidden>true</hidden>
+  <parent>SpaceCode.WebHome</parent>
+  <content>spaces.title=Spaces
+spaces.directory.title=Space Directory
+spaces.directory.createNew=Create Space
+spaces.create.title=Create New Space
+spaces.create.name=Space Name
+spaces.create.key=Space Key
+spaces.create.description=Description
+spaces.create.submit=Create Space
+spaces.switcher.label=Spaces
+spaces.switcher.viewAll=View all spaces...
+spaces.switcher.createSpace=Create space...
+spaces.personal.title=Personal Space
+spaces.personal.welcome=Welcome to your personal space, {0}. This is your own area for notes, drafts, and personal documentation.
+spaces.personal.pages=Your Pages
+spaces.personal.recentChanges=Recent Changes
+spaces.create.success=Space "{0}" created successfully. [[Go to {1}]]
+spaces.create.error.exists=Space key "{0}" already exists. Please choose a different key.
+spaces.create.gotoSpace=Go to Space
+spaces.directory.empty=No spaces have been created yet. Create your first space to get started.
+spaces.type.public=Public
+spaces.type.private=Private
+spaces.type.personal=Personal</content>
+  <object>
+    <name>SpaceCode.SpaceTranslations</name>
+    <number>0</number>
+    <className>XWiki.TranslationDocumentClass</className>
+    <guid>a1b2c3d4-e001-4000-8000-000000000001</guid>
+    <class>
+      <name>XWiki.TranslationDocumentClass</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <scope>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>0</multiSelect>
+        <name>scope</name>
+        <number>1</number>
+        <prettyName>Scope</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators> ,|</separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>GLOBAL|WIKI|USER|ON_DEMAND</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </scope>
+    </class>
+    <property>
+      <scope>WIKI</scope>
+    </property>
+  </object>
+</xwikidoc>
