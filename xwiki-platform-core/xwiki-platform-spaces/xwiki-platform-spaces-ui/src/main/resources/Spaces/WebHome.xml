@@ -46,8 +46,8 @@
 $services.localization.render('spaces.directory.createNew') [[$services.localization.render('spaces.create.title')>>Spaces.CreateSpace]]
 {{/info}}
 
-#set ($hql = "select distinct doc.space from XWikiDocument doc, doc.object(SpaceCode.SpaceClass) as obj where doc.name = 'WebHome' order by doc.space asc")
-#set ($spaceList = $services.query.hql($hql).execute())
+#set ($xwql = "select distinct doc.space from Document doc, doc.object(SpaceCode.SpaceClass) as obj where doc.name = 'WebHome' order by doc.space asc")
+#set ($spaceList = $services.query.xwql($xwql).execute())
 #if ($spaceList.size() &gt; 0)
   (% class="table" %)
   |= Space Key |= Space Name |= Type |= Owner

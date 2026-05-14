@@ -36,7 +36,6 @@
   <minorEdit>false</minorEdit>
   <syntaxId>xwiki/2.1</syntaxId>
   <hidden>true</hidden>
-  <enforceRequiredRights>true</enforceRequiredRights>
   <content/>
   <object>
     <name>Spaces.SpaceSwitcherUIX</name>
@@ -161,8 +160,8 @@
 #if ($xcontext.action == 'view')
   #template('menus_macros.vm')
   ## Get all spaces in the current wiki
-  #set ($hql = "select distinct doc.space from XWikiDocument doc, doc.object(SpaceCode.SpaceClass) as obj where doc.name = 'WebHome' order by doc.space asc")
-  #set ($spaceList = $services.query.hql($hql).execute())
+  #set ($xwql = "select distinct doc.space from Document doc, doc.object(SpaceCode.SpaceClass) as obj where doc.name = 'WebHome' order by doc.space asc")
+  #set ($spaceList = $services.query.xwql($xwql).execute())
   ## Determine current space (top-level space of the current document)
   #set ($spaceRefs = $doc.documentReference.spaceReferences)
   #set ($currentTopSpace = '')
