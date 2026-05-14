@@ -36,7 +36,6 @@
   <minorEdit>false</minorEdit>
   <syntaxId>xwiki/2.1</syntaxId>
   <hidden>true</hidden>
-  <enforceRequiredRights>true</enforceRequiredRights>
   <content>{{velocity}}
 #set($title = $services.localization.render('spaces.create.title'))
 #set($discard = $doc.setTitle($title))
@@ -84,41 +83,4 @@
   {{/html}}
 #end
 {{/velocity}}</content>
-  <object>
-    <name>Spaces.CreateSpace</name>
-    <number>0</number>
-    <className>XWiki.RequiredRightClass</className>
-    <guid>e1f2g3h4-a002-6000-a000-000000000003</guid>
-    <class>
-      <name>XWiki.RequiredRightClass</name>
-      <customClass/>
-      <customMapping/>
-      <defaultViewSheet/>
-      <defaultEditSheet/>
-      <defaultWeb/>
-      <nameField/>
-      <validationScript/>
-      <level>
-        <cache>0</cache>
-        <disabled>0</disabled>
-        <displayType>select</displayType>
-        <freeText>forbidden</freeText>
-        <largeStorage>0</largeStorage>
-        <multiSelect>0</multiSelect>
-        <name>level</name>
-        <number>1</number>
-        <prettyName>Level</prettyName>
-        <relationalStorage>0</relationalStorage>
-        <separator> </separator>
-        <separators> ,|</separators>
-        <size>1</size>
-        <unmodifiable>0</unmodifiable>
-        <values>edit|script|wiki_admin|programming</values>
-        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
-      </level>
-    </class>
-    <property>
-      <level>edit</level>
-    </property>
-  </object>
 </xwikidoc>
