@@ -156,15 +156,18 @@
     <property>
       <content>{{velocity}}{{html clean="false"}}
 #if ($xcontext.userReference)
-  #set ($personalSpace = "$!xcontext.userReference.name")
-  #set ($personalHome = "${personalSpace}.WebHome")
+  #set ($profileUserId = "$!doc.documentReference.name")
+  #set ($personalHome = "${profileUserId}.WebHome")
   #set ($spaceDoc = $xwiki.getDocument($personalHome))
-  #set ($hasPersonalSpace = !$spaceDoc.isNew() &amp;&amp; $spaceDoc.getObject('SpaceCode.SpaceClass'))
+  #set ($spaceObj = $spaceDoc.getObject('SpaceCode.SpaceClass'))
+  #set ($hasPersonalSpace = !$spaceDoc.isNew() &amp;&amp; $spaceObj
+    &amp;&amp; "$!spaceObj.getProperty('type').value" == 'personal')
+  #set ($isOwnProfile = $profileUserId == "$!xcontext.userReference.name")
   #if ($hasPersonalSpace)
     &lt;a href="$xwiki.getURL($personalHome)" class="btn btn-default"&gt;
       $services.icon.renderHTML('user') $services.localization.render('spaces.personal.goTo')
     &lt;/a&gt;
-  #else
+  #elseif ($isOwnProfile)
     &lt;a href="$xwiki.getURL('Spaces.MyPersonalSpace')" class="btn btn-primary"&gt;
       $services.icon.renderHTML('add') $services.localization.render('spaces.personal.create')
     &lt;/a&gt;

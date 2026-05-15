@@ -243,6 +243,15 @@
     #set ($spaceRoot = "document:${xcontext.database}:${topLevelSpace}.WebHome")
   #end
 #end
+## Exclude top level personal spaces from the global Home navigation to avoid clutter.
+#if ($spaceRoot == '')
+  #set ($statement = "select doc.space from Document doc, doc.object(SpaceCode.SpaceClass) as obj "
+    + "where doc.name = 'WebHome' and obj.type = :spaceType")
+  #set ($query = $services.query.xwql($statement).bindValue('spaceType', 'personal').addFilter('hidden/space'))
+  #foreach ($result in $query.execute())
+    #set ($discard = $exclusions.add("space:$services.model.escape($result, 'SPACE')"))
+  #end
+#end
 #set ($exclusions = $stringtool.join($exclusions, ','))
 {{documentTree showTranslations="false" showAttachments="false" compact="true" openTo="document:$openToDoc"
   exclusions="$exclusions" root="$spaceRoot" /}}
