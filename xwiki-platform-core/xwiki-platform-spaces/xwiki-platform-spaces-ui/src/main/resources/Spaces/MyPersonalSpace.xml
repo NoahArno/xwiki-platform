@@ -20,9 +20,9 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 -->
 
-<xwikidoc version="1.5" reference="Spaces.PersonalSpaceHome" locale="">
+<xwikidoc version="1.5" reference="Spaces.MyPersonalSpace" locale="">
   <web>Spaces</web>
-  <name>PersonalSpaceHome</name>
+  <name>MyPersonalSpace</name>
   <language/>
   <defaultLanguage/>
   <translation>0</translation>
@@ -37,10 +37,24 @@
   <syntaxId>xwiki/2.1</syntaxId>
   <hidden>true</hidden>
   <content>{{velocity}}
-= $services.localization.render('spaces.personal.title') =
-
-{{info}}
-$services.localization.render('spaces.personal.standard')
-{{/info}}
+## Manually enable a standard space for the current user.
+#if (!$xcontext.userReference)
+  $response.sendRedirect($xwiki.getURL('Main.WebHome', 'login'))
+#else
+  #set ($employeeId = $xcontext.userReference.name)
+  #set ($spaceKey = $employeeId)
+  #set ($spaceHome = "${spaceKey}.WebHome")
+  #set ($spaceDoc = $xwiki.getDocument($spaceHome))
+  #if ($spaceDoc.isNew())
+    #set ($spaceObj = $spaceDoc.newObject('SpaceCode.SpaceClass'))
+    $!spaceObj.set('name', $employeeId)
+    $!spaceObj.set('key', $spaceKey)
+    $!spaceObj.set('description', $services.localization.render('spaces.personal.description', [$employeeId]))
+    $!spaceObj.set('type', 'personal')
+    $!spaceObj.set('owner', $services.model.serialize($xcontext.userReference, 'default'))
+    #set ($discard = $spaceDoc.save('Enable personal space'))
+  #end
+  $response.sendRedirect($xwiki.getURL($spaceHome))
+#end
 {{/velocity}}</content>
 </xwikidoc>
