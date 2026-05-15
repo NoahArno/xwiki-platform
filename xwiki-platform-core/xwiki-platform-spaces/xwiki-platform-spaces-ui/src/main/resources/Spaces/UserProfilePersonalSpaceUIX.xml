@@ -157,15 +157,20 @@
       <content>{{velocity}}{{html clean="false"}}
 #if ($xcontext.userReference)
   #set ($profileUserId = "$!doc.documentReference.name")
-  #set ($personalHome = "${profileUserId}.WebHome")
+  #set ($personalSpaceName = $services.localization.render('spaces.personal.name', [$profileUserId]))
+  #set ($personalHome = "${personalSpaceName}.WebHome")
   #set ($spaceDoc = $xwiki.getDocument($personalHome))
   #set ($spaceObj = $spaceDoc.getObject('SpaceCode.SpaceClass'))
   #set ($hasPersonalSpace = !$spaceDoc.isNew() &amp;&amp; $spaceObj
     &amp;&amp; "$!spaceObj.getProperty('type').value" == 'personal')
   #set ($isOwnProfile = $profileUserId == "$!xcontext.userReference.name")
   #if ($hasPersonalSpace)
+    #set ($label = $services.localization.render('spaces.personal.goToOthers'))
+    #if ($isOwnProfile)
+      #set ($label = $services.localization.render('spaces.personal.goTo'))
+    #end
     &lt;a href="$xwiki.getURL($personalHome)" class="btn btn-default"&gt;
-      $services.icon.renderHTML('user') $services.localization.render('spaces.personal.goTo')
+      $services.icon.renderHTML('user') $label
     &lt;/a&gt;
   #elseif ($isOwnProfile)
     &lt;a href="$xwiki.getURL('Spaces.MyPersonalSpace')" class="btn btn-primary"&gt;
@@ -182,7 +187,8 @@
       <name>org.xwiki.platform.spaces.userprofile</name>
     </property>
     <property>
-      <parameters>priority=0</parameters>
+      <parameters>priority=0
+id=personalspace</parameters>
     </property>
     <property>
       <scope>wiki</scope>
