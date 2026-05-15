@@ -156,18 +156,9 @@
     <property>
       <content>{{velocity}}{{html clean="false"}}
 ## Space Switcher Dropdown for the top menu.
-## Displays a dropdown listing all Confluence-like spaces in the current wiki.
+## Displays quick links for the spaces area.
 #if ($xcontext.action == 'view')
   #template('menus_macros.vm')
-  ## Get all spaces in the current wiki
-  #set ($xwql = "select distinct doc.space from Document doc, doc.object(SpaceCode.SpaceClass) as obj where doc.name = 'WebHome' order by doc.space asc")
-  #set ($spaceList = $services.query.xwql($xwql).execute())
-  ## Determine current space (top-level space of the current document)
-  #set ($spaceRefs = $doc.documentReference.spaceReferences)
-  #set ($currentTopSpace = '')
-  #if ($spaceRefs.size() &gt; 0)
-    #set ($currentTopSpace = $spaceRefs.get(0).name)
-  #end
   ## Render dropdown
   #set ($label = $services.localization.render('spaces.switcher.label'))
   &lt;li class="dropdown"&gt;
@@ -175,30 +166,6 @@
       $services.icon.renderHTML('folder') ${label} &lt;b class="caret"&gt;&lt;/b&gt;
     &lt;/a&gt;
     &lt;ul class="dropdown-menu"&gt;
-      #if ($spaceList.size() &gt; 0)
-        #foreach ($spaceName in $spaceList)
-          #set ($dotIndex = $spaceName.lastIndexOf('.'))
-          #if ($dotIndex &gt; 0)
-            #set ($spaceKey = $spaceName.substring(0, $dotIndex))
-          #else
-            #set ($spaceKey = $spaceName)
-          #end
-          #set ($spaceHomePage = "${spaceKey}.WebHome")
-          #set ($spaceDoc = $xwiki.getDocument($spaceHomePage))
-          #set ($spaceObj = $spaceDoc.getObject('SpaceCode.SpaceClass'))
-          #set ($displayName = $!spaceObj.getProperty('name').value)
-          #if ($displayName == '')
-            #set ($displayName = $spaceKey)
-          #end
-
-          &lt;li#if ($spaceKey == $currentTopSpace) class="active"#end&gt;
-            &lt;a href="$xwiki.getURL($spaceHomePage)"&gt;
-              #if ($spaceKey == $currentTopSpace)&lt;strong&gt;$escapetool.xml($displayName)&lt;/strong&gt;#else$escapetool.xml($displayName)#end
-            &lt;/a&gt;
-          &lt;/li&gt;
-        #end
-        &lt;li class="divider"&gt;&lt;/li&gt;
-      #end
       &lt;li&gt;&lt;a href="$xwiki.getURL('Spaces.WebHome')"&gt;$services.localization.render('spaces.switcher.viewAll')&lt;/a&gt;&lt;/li&gt;
       &lt;li&gt;&lt;a href="$xwiki.getURL('Spaces.CreateSpace')"&gt;$services.localization.render('spaces.switcher.createSpace')&lt;/a&gt;&lt;/li&gt;
     &lt;/ul&gt;

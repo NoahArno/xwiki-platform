@@ -46,28 +46,29 @@
 $services.localization.render('spaces.directory.createNew') [[$services.localization.render('spaces.create.title')>>Spaces.CreateSpace]]
 {{/info}}
 
-#set ($xwql = "select distinct doc.space from Document doc, doc.object(SpaceCode.SpaceClass) as obj where doc.name = 'WebHome' order by doc.space asc")
-#set ($spaceList = $services.query.xwql($xwql).execute())
-#if ($spaceList.size() &gt; 0)
-  (% class="table" %)
-  |= $services.localization.render('spaces.directory.col.key') |= $services.localization.render('spaces.directory.col.name') |= $services.localization.render('spaces.directory.col.type') |= $services.localization.render('spaces.directory.col.owner')
-  #foreach ($spaceName in $spaceList)
-    #set ($dotIndex = $spaceName.lastIndexOf('.'))
-    #if ($dotIndex &gt; 0)
-      #set ($spaceKey = $spaceName.substring(0, $dotIndex))
-    #else
-      #set ($spaceKey = $spaceName)
-    #end
-    #set ($spaceHomePage = "${spaceKey}.WebHome")
-    #set ($spaceDoc = $xwiki.getDocument($spaceHomePage))
-    #set ($spaceObj = $spaceDoc.getObject('SpaceCode.SpaceClass'))
-    #set ($spaceDisplayName = $!spaceObj.getProperty('name').value)
-    #set ($spaceType = $!spaceObj.getProperty('type').value)
-    #set ($spaceOwner = $!spaceObj.getProperty('owner').value)
-    | [[$escapetool.xml($spaceKey)>>$spaceHomePage]] | $!escapetool.xml($spaceDisplayName) | $services.localization.render("spaces.type.$!spaceType") | $!escapetool.xml($spaceOwner)
-  #end
-#else
-  {{warning}}$services.localization.render('spaces.directory.empty'){{/warning}}
-#end
+{{html clean="false"}}
+#set ($columns = ['spaceKey', 'spaceName', 'spaceType', 'spaceOwner'])
+#set ($columnsProperties = {
+  'spaceKey': {'type': 'text', 'html': true, 'sortable': true, 'filterable': true,
+    'displayName': $services.localization.render('spaces.directory.col.key')},
+  'spaceName': {'type': 'text', 'html': false, 'sortable': true, 'filterable': true,
+    'displayName': $services.localization.render('spaces.directory.col.name')},
+  'spaceType': {'type': 'text', 'html': false, 'sortable': true, 'filterable': true,
+    'displayName': $services.localization.render('spaces.directory.col.type')},
+  'spaceOwner': {'type': 'text', 'html': false, 'sortable': true, 'filterable': true,
+    'displayName': $services.localization.render('spaces.directory.col.owner')}
+})
+#set ($options = {
+  'resultPage': 'Spaces.SpaceDirectoryLivetableResults',
+  'translationPrefix': 'spaces.livetable.',
+  'tagCloud': false,
+  'rowCount': 10,
+  'maxPages': 10,
+  'selectedColumn': 'spaceKey',
+  'defaultOrder': 'asc',
+  'outputOnlyHtml': true
+})
+#livetable('spacedirectory' $columns $columnsProperties $options)
+{{/html}}
 {{/velocity}}</content>
 </xwikidoc>
