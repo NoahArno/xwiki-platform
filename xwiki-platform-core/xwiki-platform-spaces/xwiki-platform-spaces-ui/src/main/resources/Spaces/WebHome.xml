@@ -47,15 +47,15 @@ $services.localization.render('spaces.directory.createNew') [[$services.localiza
 {{/info}}
 
 {{html clean="false"}}
-#set ($columns = ['spaceKey', 'spaceName', 'spaceType', 'spaceOwner'])
+#set ($columns = ['spaceName', 'spaceKey', 'spaceType', 'spaceOwner'])
 #set ($columnsProperties = {
-  'spaceKey': {'type': 'text', 'html': true, 'sortable': true, 'filterable': true,
-    'displayName': $services.localization.render('spaces.directory.col.key')},
-  'spaceName': {'type': 'text', 'html': false, 'sortable': true, 'filterable': true,
+  'spaceName': {'type': 'text', 'html': true, 'sortable': true, 'filterable': true,
     'displayName': $services.localization.render('spaces.directory.col.name')},
+  'spaceKey': {'type': 'text', 'html': false, 'sortable': true, 'filterable': true,
+    'displayName': $services.localization.render('spaces.directory.col.key')},
   'spaceType': {'type': 'text', 'html': false, 'sortable': true, 'filterable': true,
     'displayName': $services.localization.render('spaces.directory.col.type')},
-  'spaceOwner': {'type': 'text', 'html': false, 'sortable': true, 'filterable': true,
+  'spaceOwner': {'type': 'text', 'html': true, 'sortable': true, 'filterable': true,
     'displayName': $services.localization.render('spaces.directory.col.owner')}
 })
 #set ($options = {
@@ -64,7 +64,7 @@ $services.localization.render('spaces.directory.createNew') [[$services.localiza
   'tagCloud': false,
   'rowCount': 10,
   'maxPages': 10,
-  'selectedColumn': 'spaceKey',
+  'selectedColumn': 'spaceName',
   'defaultOrder': 'asc',
   'outputOnlyHtml': true
 })

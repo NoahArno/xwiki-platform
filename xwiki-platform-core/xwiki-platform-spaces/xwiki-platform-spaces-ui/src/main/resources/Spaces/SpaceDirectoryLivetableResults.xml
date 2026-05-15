@@ -36,89 +36,128 @@
   <minorEdit>false</minorEdit>
   <syntaxId>xwiki/2.1</syntaxId>
   <hidden>true</hidden>
-  <content>{{velocity wiki="false"}}
-#if ($xcontext.action == 'get' &amp;&amp; "$!{request.outputSyntax}" == 'plain')
-  #set ($allSpacesQuery = "select distinct doc.space from Document doc, doc.object(SpaceCode.SpaceClass) as obj "
-    + "where doc.name = 'WebHome' order by doc.space asc")
-  #set ($allSpaces = $services.query.xwql($allSpacesQuery).execute())
+  <content>{{include reference="XWiki.LiveTableResultsMacros" /}}
+
+{{velocity wiki="false"}}
+#if ($xcontext.action == 'get' &amp;&amp; "$!request.outputSyntax" == 'plain')
+  #set ($allSpaces = $services.query.xwql("select distinct doc.space from Document doc, doc.object(SpaceCode.SpaceClass) as obj where doc.name = 'WebHome' order by doc.space asc").execute())
   #set ($filteredSpaces = [])
-  #set ($nameFilter = "$!request.spaceName")
-  #set ($keyFilter = "$!request.spaceKey")
-  #set ($typeFilter = "$!request.spaceType")
-  #set ($ownerFilter = "$!request.spaceOwner")
-  #foreach ($spaceName in $allSpaces)
-    #set ($dotIndex = $spaceName.lastIndexOf('.'))
-    #if ($dotIndex &gt; 0)
-      #set ($spaceKey = $spaceName.substring(0, $dotIndex))
-    #else
-      #set ($spaceKey = $spaceName)
+  #set ($nameFilter = $stringtool.lowerCase("$!request.spaceName"))
+  #set ($keyFilter = $stringtool.lowerCase("$!request.spaceKey"))
+  #set ($typeFilter = $stringtool.lowerCase("$!request.spaceType"))
+  #set ($ownerFilter = $stringtool.lowerCase("$!request.spaceOwner"))
+
+  #foreach ($rawSpaceName in $allSpaces)
+    #set ($spaceKey = "$!rawSpaceName")
+    #if ($spaceKey.endsWith('.WebHome'))
+      #set ($spaceKey = $spaceKey.substring(0, $mathtool.sub($spaceKey.length(), 8)))
     #end
     #set ($spaceHomePage = "${spaceKey}.WebHome")
     #set ($spaceDoc = $xwiki.getDocument($spaceHomePage))
     #set ($spaceObj = $spaceDoc.getObject('SpaceCode.SpaceClass'))
     #if ($spaceObj)
       #set ($spaceDisplayName = "$!spaceObj.getProperty('name').value")
+      #if ("$!spaceDisplayName" == '')
+        #set ($spaceDisplayName = $spaceKey)
+      #end
       #set ($spaceType = "$!spaceObj.getProperty('type').value")
       #set ($spaceOwner = "$!spaceObj.getProperty('owner').value")
+      #set ($spaceOwnerLabel = $spaceOwner)
+      #if ("$!spaceOwner" != '')
+        #set ($spaceOwnerLabel = $xwiki.getUserName($spaceOwner, false))
+      #end
+
       #set ($matches = true)
-      #if ($matches &amp;&amp; "$!keyFilter" != '' &amp;&amp; !$stringtool.lowerCase($spaceKey).contains($stringtool.lowerCase($keyFilter)))
+      #if ($matches &amp;&amp; $keyFilter != '' &amp;&amp; !$stringtool.lowerCase($spaceKey).contains($keyFilter))
         #set ($matches = false)
       #end
-      #if ($matches &amp;&amp; "$!nameFilter" != '' &amp;&amp; !$stringtool.lowerCase($spaceDisplayName).contains($stringtool.lowerCase($nameFilter)))
+      #if ($matches &amp;&amp; $nameFilter != '' &amp;&amp; !$stringtool.lowerCase($spaceDisplayName).contains($nameFilter))
         #set ($matches = false)
       #end
-      #if ($matches &amp;&amp; "$!typeFilter" != '' &amp;&amp; !$stringtool.lowerCase($spaceType).contains($stringtool.lowerCase($typeFilter)))
+      #if ($matches &amp;&amp; $typeFilter != '' &amp;&amp; !$stringtool.lowerCase($spaceType).contains($typeFilter))
         #set ($matches = false)
       #end
-      #if ($matches &amp;&amp; "$!ownerFilter" != '' &amp;&amp; !$stringtool.lowerCase($spaceOwner).contains($stringtool.lowerCase($ownerFilter)))
+      #if ($matches &amp;&amp; $ownerFilter != '' &amp;&amp;
+          !$stringtool.lowerCase($spaceOwner).contains($ownerFilter) &amp;&amp;
+          !$stringtool.lowerCase("$!spaceOwnerLabel").contains($ownerFilter))
         #set ($matches = false)
       #end
+
       #if ($matches)
         #set ($discard = $filteredSpaces.add({
           'spaceKey': $spaceKey,
           'spaceName': $spaceDisplayName,
           'spaceType': $spaceType,
           'spaceOwner': $spaceOwner,
+          'spaceOwnerLabel': $spaceOwnerLabel,
           'spaceHomePage': $spaceHomePage
         }))
       #end
     #end
   #end
-  #set ($offset = $numbertool.toNumber($request.get('offset')).intValue())
-  #set ($offset = $offset - 1)
-  #if (!$offset || $offset &lt; 0)
-    #set ($offset = 0)
+
+  #set ($offset = 1)
+  #if ("$!request.offset" != '')
+    #set ($offset = $numbertool.toNumber($request.offset).intValue())
   #end
-  #set ($limit = $numbertool.toNumber($request.get('limit')).intValue())
-  #if (!$limit || $limit &lt;= 0)
+  #if ($offset &lt; 1)
+    #set ($offset = 1)
+  #end
+
+  #set ($limit = 10)
+  #if ("$!request.limit" != '')
+    #set ($limit = $numbertool.toNumber($request.limit).intValue())
+  #end
+  #if ($limit &lt;= 0)
     #set ($limit = 10)
   #end
-  #set ($pagedSpaces = $filteredSpaces)
-  #set ($totalRows = $pagedSpaces.size())
-  #set ($toIndex = $mathtool.min($offset + $limit, $totalRows))
-  #if ($offset &lt; $toIndex)
-    #set ($pagedSpaces = $pagedSpaces.subList($offset, $toIndex))
-  #else
-    #set ($pagedSpaces = [])
+
+  #set ($startIndex = $mathtool.sub($offset, 1))
+  #set ($totalRows = $filteredSpaces.size())
+  #set ($pagedSpaces = [])
+  #if ($startIndex &lt; $totalRows)
+    #set ($toIndex = $mathtool.min($mathtool.add($startIndex, $limit), $totalRows))
+    #set ($pagedSpaces = $filteredSpaces.subList($startIndex, $toIndex))
   #end
+
   #set ($rows = [])
   #foreach ($space in $pagedSpaces)
+    #set ($spaceHomeUrl = $xwiki.getURL($space.spaceHomePage))
+    #set ($spaceNameCell = '&lt;a href="' + $spaceHomeUrl + '"&gt;' + $escapetool.xml($space.spaceName) + '&lt;/a&gt;')
+    ## Owner link: normalize user reference to XWiki.UserName format.
+    #set ($spaceOwnerCell = $escapetool.xml("$!space.spaceOwnerLabel"))
+    #if ("$!space.spaceOwner" != '')
+      #set ($ownerRef = $space.spaceOwner)
+      ## If owner doesn't contain '.' (like "Admin"), convert to "XWiki.Admin".
+      ## If owner is already "XWiki.Admin" or "xwiki:XWiki.Admin", use as-is.
+      #if (!$ownerRef.contains('.'))
+        #set ($ownerRef = "XWiki.${ownerRef}")
+      #end
+      #set ($spaceOwnerUrl = $xwiki.getURL($ownerRef))
+      #set ($spaceOwnerCell = '&lt;a href="' + $spaceOwnerUrl + '"&gt;' + $escapetool.xml($space.spaceOwnerLabel) + '&lt;/a&gt;')
+    #end
     #set ($discard = $rows.add({
-      'spaceKey': "[[$escapetool.xml($space.spaceKey)>>$space.spaceHomePage]]",
-      'spaceKey_value': $space.spaceKey,
-      'spaceName': $space.spaceName,
+      'spaceName': $spaceNameCell,
       'spaceName_value': $space.spaceName,
+      'spaceKey': $space.spaceKey,
+      'spaceKey_value': $space.spaceKey,
       'spaceType': $services.localization.render("spaces.type.$!space.spaceType"),
       'spaceType_value': $space.spaceType,
-      'spaceOwner': $space.spaceOwner,
-      'spaceOwner_value': $space.spaceOwner
+      'spaceOwner': $spaceOwnerCell,
+      'spaceOwner_value': $space.spaceOwnerLabel
     }))
   #end
+
+  #set ($reqNo = 1)
+  #if ("$!request.reqNo" != '')
+    #set ($reqNo = $numbertool.toNumber($request.reqNo).intValue())
+  #end
+
   #jsonResponse({
     'totalrows': $totalRows,
     'returnedrows': $rows.size(),
-    'offset': $mathtool.add($offset, 1),
-    'reqNo': $numbertool.toNumber($request.reqNo).intValue(),
+    'offset': $offset,
+    'reqNo': $reqNo,
     'rows': $rows
   })
 #end
