@@ -320,7 +320,7 @@
     currentContentColumn.innerHTML = newContentColumn.innerHTML;
 
     // 8. Update browser URL via History API.
-    if (window.location.href !== url) {
+    if (!isSamePage(url, window.location.href)) {
       window.history.pushState({ url: url }, document.title, url);
     }
 
@@ -481,7 +481,14 @@
 
     // Get the target URL.
     var url = anchor.href;
-    if (!url || isSamePage(url, window.location.href)) {
+    if (!url) {
+      return;
+    }
+
+    // Same page: swallow the click entirely (no full reload, no AJAX).
+    if (isSamePage(url, window.location.href)) {
+      event.preventDefault();
+      event.stopPropagation();
       return;
     }
 
