@@ -20,6 +20,7 @@
 package org.xwiki.rendering.async.internal;
 
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -72,6 +73,14 @@ public class AsyncRendererCache implements Initializable, CacheEntryListener<Asy
     private final Map<ComponentRole<?>, Set<String>> roleMapping = new ConcurrentHashMap<>();
 
     private final Map<RightEntry, Set<String>> rightMapping = new ConcurrentHashMap<>();
+
+    /**
+     * Mapping of custom use(String type, Object value) entries to cache keys.
+     * This allows invalidation by custom type/value pairs, separate from entity/component references.
+     *
+     * @since 18.1.0
+     */
+    private final Map<String, Map<Object, Set<String>>> useMapping = new ConcurrentHashMap<>();
 
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -212,6 +221,16 @@ public class AsyncRendererCache implements Initializable, CacheEntryListener<Asy
         for (RightEntry right : status.getRights()) {
             this.rightMapping.computeIfAbsent(right, k -> ConcurrentHashMap.newKeySet()).add(key);
         }
+
+        // Index custom use(String, Object) dependencies for targeted invalidation.
+        for (Map.Entry<String, Collection<Object>> useEntry : status.getUses().entrySet()) {
+            String useType = useEntry.getKey();
+            Map<Object, Set<String>> typeMap =
+                this.useMapping.computeIfAbsent(useType, k -> new ConcurrentHashMap<>());
+            for (Object useValue : useEntry.getValue()) {
+                typeMap.computeIfAbsent(useValue, k -> ConcurrentHashMap.newKeySet()).add(key);
+            }
+        }
     }
 
     @Override
@@ -225,6 +244,25 @@ public class AsyncRendererCache implements Initializable, CacheEntryListener<Asy
         remove(key, status.getRoleTypes(), this.roleTypeMapping);
         remove(key, status.getRoles(), this.roleMapping);
         remove(key, status.getRights(), this.rightMapping);
+
+        // Remove custom use dependencies.
+        for (Map.Entry<String, Collection<Object>> useEntry : status.getUses().entrySet()) {
+            Map<Object, Set<String>> typeMap = this.useMapping.get(useEntry.getKey());
+            if (typeMap != null) {
+                for (Object useValue : useEntry.getValue()) {
+                    Set<String> keys = typeMap.get(useValue);
+                    if (keys != null) {
+                        keys.remove(key);
+                        if (keys.isEmpty()) {
+                            typeMap.remove(useValue);
+                        }
+                    }
+                }
+                if (typeMap.isEmpty()) {
+                    this.useMapping.remove(useEntry.getKey());
+                }
+            }
+        }
     }
 
     private <T> void remove(String key, Set<T> values, Map<T, Set<String>> mapping)
@@ -293,6 +331,25 @@ public class AsyncRendererCache implements Initializable, CacheEntryListener<Asy
     public void cleanCacheForRight()
     {
         this.rightMapping.forEach(this::checkRight);
+    }
+
+    /**
+     * Clean cache entries registered via {@code use(String type, Object value)} with the given type and value.
+     * This allows targeted invalidation by custom dependency types, independent of entity/component references.
+     *
+     * @param type the type string passed to {@code use()}
+     * @param value the value object passed to {@code use()}
+     * @since 18.1.0
+     */
+    public void cleanCacheByUse(String type, Object value)
+    {
+        Map<Object, Set<String>> typeMap = this.useMapping.get(type);
+        if (typeMap != null) {
+            clean(typeMap.remove(value));
+            if (typeMap.isEmpty()) {
+                this.useMapping.remove(type);
+            }
+        }
     }
 
     private void checkRight(RightEntry right, Set<String> keys)
