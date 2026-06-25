@@ -36,24 +36,6 @@
   }
 
   // ---------------------------------------------------------------------------
-  // jQuery reference helper
-  // In XWiki Flamingo, the global $ may be Prototype.js, not jQuery.
-  // We access jQuery via window.jQuery (the noConflict global) or RequireJS.
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Try to get a jQuery reference. Since our script loads after jQuery,
-   * window.jQuery should be available. Falls back to null if not.
-   */
-  function getJQuery() {
-    // Use window.jQuery which is always jQuery even after noConflict.
-    if (window.jQuery && window.jQuery.fn && window.jQuery.fn.jquery) {
-      return window.jQuery;
-    }
-    return null;
-  }
-
-  // ---------------------------------------------------------------------------
   // State tracking
   // ---------------------------------------------------------------------------
 
@@ -215,29 +197,17 @@
   /**
    * Check if a tree node is a pagination node by looking at the anchor's
    * parent li element for pagination-specific data.
-   * This avoids requiring jsTree's API to be available at click time.
+   * This uses the DOM-level ID pattern (pagination nodes always have id="pagination:...")
+   * which is set server-side and requires no jQuery/jsTree dependency.
    */
   function isPaginationNode(anchor) {
-    // Check the li element for pagination type markers.
     var li = anchor.closest('li');
     if (!li) return false;
-    // jsTree pagination nodes have a specific anchor class or role.
-    if (anchor.classList.contains('jstree-pagination')) return true;
-    // Also try the jsTree API if available.
-    var $jq = getJQuery();
-    if ($jq && $jq.jstree) {
-      try {
-        var tree = $jq.jstree.reference(treeContainer);
-        if (tree) {
-          var node = tree.get_node(li);
-          if (node && node.data && node.data.type === 'pagination') {
-            return true;
-          }
-        }
-      } catch (e) {
-        // Ignore.
-      }
-    }
+    // Reliable server-side ID pattern: pagination nodes have id="pagination:$parentId"
+    if (li.id && li.id.indexOf('pagination:') === 0) return true;
+    // Backup: pagination nodes have no real URL (href="#" or empty)
+    var href = anchor.getAttribute('href');
+    if (!href || href === '#' || href === 'javascript:void(0)') return true;
     return false;
   }
 
