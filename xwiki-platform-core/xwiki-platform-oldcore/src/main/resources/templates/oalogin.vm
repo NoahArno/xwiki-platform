@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>OA $services.localization.render('login')</title>
+</head>
+<body>
+<div class="main layoutsubsection">
+    <div class="box errormessage">
+        $!escapetool.html($message)
+    </div>
+</div>
+</body>
+</html>
