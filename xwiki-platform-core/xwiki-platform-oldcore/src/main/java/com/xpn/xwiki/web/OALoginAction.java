@@ -20,7 +20,6 @@
 package com.xpn.xwiki.web;
 
 import java.io.IOException;
-import java.security.Principal;
 import java.util.List;
 
 import javax.inject.Named;
