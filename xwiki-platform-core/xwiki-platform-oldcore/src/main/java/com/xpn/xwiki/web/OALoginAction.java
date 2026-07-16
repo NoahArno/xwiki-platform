@@ -84,7 +84,7 @@ public class OALoginAction extends XWikiAction
         if (StringUtils.isAnyBlank(pid, userLoginId, timestamp, sign)) {
             LOGGER.warn("OA SSO: missing required parameters. pid=[{}], userLoginId=[{}], timestamp=[{}]",
                 pid, userLoginId, timestamp);
-            context.put("message", "oa_missing_params");
+            context.put("message", "缺少必填参数（pid、userLoginId、timestamp、sign）");
             return true;
         }
 
@@ -92,7 +92,7 @@ public class OALoginAction extends XWikiAction
         String oaKey = context.getWiki().Param("xwiki.authentication.oa.key");
         if (StringUtils.isBlank(oaKey)) {
             LOGGER.error("OA SSO: xwiki.authentication.oa.key is not configured in xwiki.cfg");
-            context.put("message", "oa_key_not_configured");
+            context.put("message", "系统配置错误：OA 密钥未设置");
             return true;
         }
 
@@ -101,7 +101,7 @@ public class OALoginAction extends XWikiAction
         if (!computedSign.equalsIgnoreCase(sign)) {
             LOGGER.warn("OA SSO: signature verification failed for user [{}]. "
                 + "Expected=[{}], Received=[{}]", userLoginId, computedSign, sign);
-            context.put("message", "oa_sign_verification_failed");
+            context.put("message", "签名校验失败");
             return true;
         }
 

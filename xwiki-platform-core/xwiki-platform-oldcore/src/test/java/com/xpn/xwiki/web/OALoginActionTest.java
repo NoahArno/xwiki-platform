@@ -141,7 +141,7 @@ class OALoginActionTest
         boolean result = this.action.action(this.oldcore.getXWikiContext());
 
         assertEquals(true, result);
-        assertEquals("oa_sign_verification_failed",
+        assertEquals("签名校验失败",
             this.oldcore.getXWikiContext().get("message"));
     }
 
@@ -159,7 +159,7 @@ class OALoginActionTest
         boolean result = this.action.action(this.oldcore.getXWikiContext());
 
         assertEquals(true, result);
-        assertEquals("oa_missing_params",
+        assertEquals("缺少必填参数（pid、userLoginId、timestamp、sign）",
             this.oldcore.getXWikiContext().get("message"));
     }
 
@@ -203,7 +203,7 @@ class OALoginActionTest
         boolean result = this.action.action(this.oldcore.getXWikiContext());
 
         assertEquals(true, result);
-        assertEquals("oa_key_not_configured",
+        assertEquals("系统配置错误：OA 密钥未设置",
             this.oldcore.getXWikiContext().get("message"));
     }
 
