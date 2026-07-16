@@ -242,7 +242,6 @@ com.xpn.xwiki.web.LoginAction
 com.xpn.xwiki.web.LoginErrorAction
 com.xpn.xwiki.web.LoginSubmitAction
 com.xpn.xwiki.web.LogoutAction
-com.xpn.xwiki.web.OALoginAction
 com.xpn.xwiki.web.ObjectAddAction
 com.xpn.xwiki.web.ObjectRemoveAction
 com.xpn.xwiki.web.ObjectsSynchronizeAction

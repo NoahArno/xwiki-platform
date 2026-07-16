@@ -20,12 +20,14 @@
 package com.xpn.xwiki.web;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -33,133 +35,151 @@ import org.securityfilter.filter.SecurityRequestWrapper;
 import org.securityfilter.realm.SimplePrincipal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xwiki.component.annotation.Component;
 import org.xwiki.model.reference.DocumentReference;
 
+import com.xpn.xwiki.XWiki;
 import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.XWikiException;
 import com.xpn.xwiki.internal.user.UserAuthenticatedEventNotifier;
 
 /**
- * Action for handling OA (Office Automation) single sign-on (SSO) callbacks.
+ * Servlet for handling OA (Office Automation) single sign-on (SSO) callbacks.
  * <p>
  * OA system calls this URL with signed parameters (pid, userLoginId, timestamp, sign).
- * This action verifies the MD5 signature using a pre-shared key, looks up the user
+ * This servlet verifies the MD5 signature using a pre-shared key, looks up the user
  * in XWiki by their login ID (工号), and if the user exists, logs them in automatically.
  * <p>
- * URL format: {@code /xwiki/bin/oalogin/?pid=...&userLoginId=...&timestamp=...&sign=...}
+ * URL format: {@code /xwiki/oa-login?pid=...&userLoginId=...&timestamp=...&sign=...}
+ * <p>
+ * This is a standalone servlet (not an XWiki Action) to bypass the XWiki authentication
+ * framework which would otherwise redirect unauthenticated requests to the login page.
  *
  * @version $Id$
  */
-@Component
-@Named("oalogin")
-@Singleton
-public class OALoginAction extends XWikiAction
+public class OALoginAction extends HttpServlet
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(OALoginAction.class);
 
-    private static final String TEMPLATE = "oalogin";
-
-    /**
-     * Default constructor. No need to wait for XWiki initialization for this action.
-     */
-    public OALoginAction()
-    {
-        this.waitForXWikiInitialization = false;
-    }
-
     @Override
-    public boolean action(XWikiContext context) throws XWikiException
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException
     {
-        HttpServletRequest request = context.getRequest().getHttpServletRequest();
-        HttpServletResponse response = context.getResponse();
-
-        // ① Extract OA parameters from the request
-        String pid = request.getParameter("pid");
-        String userLoginId = request.getParameter("userLoginId");
-        String timestamp = request.getParameter("timestamp");
-        String sign = request.getParameter("sign");
-
-        // ② Validate that all required parameters are present
-        if (StringUtils.isAnyBlank(pid, userLoginId, timestamp, sign)) {
-            LOGGER.warn("OA SSO: missing required parameters. pid=[{}], userLoginId=[{}], timestamp=[{}]",
-                pid, userLoginId, timestamp);
-            context.put("message", "缺少必填参数（pid、userLoginId、timestamp、sign）");
-            return true;
-        }
-
-        // ③ Read the OA pre-shared key from xwiki.cfg
-        String oaKey = context.getWiki().Param("xwiki.authentication.oa.key");
-        if (StringUtils.isBlank(oaKey)) {
-            LOGGER.error("OA SSO: xwiki.authentication.oa.key is not configured in xwiki.cfg");
-            context.put("message", "系统配置错误：OA 密钥未设置");
-            return true;
-        }
-
-        // ④ Compute MD5 signature and compare with the received sign
-        String computedSign = DigestUtils.md5Hex(pid + userLoginId + timestamp + oaKey);
-        if (!computedSign.equalsIgnoreCase(sign)) {
-            LOGGER.warn("OA SSO: signature verification failed for user [{}]. "
-                + "Expected=[{}], Received=[{}]", userLoginId, computedSign, sign);
-            context.put("message", "签名校验失败");
-            return true;
-        }
-
-        // ⑤ Look up the user in XWiki by their login ID (工号)
-        String user = findUserByLoginId(userLoginId, context);
-        if (user == null) {
-            LOGGER.warn("OA SSO: user [{}] not found in XWiki", userLoginId);
-            context.put("message", "当前用户 " + userLoginId + " 不存在");
-            return true;
-        }
-
-        LOGGER.info("OA SSO: user [{}] authenticated successfully via OA", user);
-
-        // ⑥ Set the login state — same mechanism as MyFormAuthenticator.processLogin()
+        XWikiContext context = null;
         try {
+            // Initialize XWiki context
+            context = initializeXWikiContext(request, response);
+
+            // ① Extract OA parameters
+            String pid = request.getParameter("pid");
+            String userLoginId = request.getParameter("userLoginId");
+            String timestamp = request.getParameter("timestamp");
+            String sign = request.getParameter("sign");
+
+            // ② Validate required parameters
+            if (StringUtils.isAnyBlank(pid, userLoginId, timestamp, sign)) {
+                LOGGER.warn("OA SSO: missing required parameters. pid=[{}], userLoginId=[{}], timestamp=[{}]",
+                    pid, userLoginId, timestamp);
+                writeError(response, "缺少必填参数（pid、userLoginId、timestamp、sign）");
+                return;
+            }
+
+            // ③ Read OA KEY from xwiki.cfg
+            String oaKey = context.getWiki().Param("xwiki.authentication.oa.key");
+            if (StringUtils.isBlank(oaKey)) {
+                LOGGER.error("OA SSO: xwiki.authentication.oa.key is not configured in xwiki.cfg");
+                writeError(response, "系统配置错误：OA 密钥未设置");
+                return;
+            }
+
+            // ④ MD5 signature verification
+            String computedSign = DigestUtils.md5Hex(pid + userLoginId + timestamp + oaKey);
+            if (!computedSign.equalsIgnoreCase(sign)) {
+                LOGGER.warn("OA SSO: signature verification failed for user [{}]. "
+                    + "Expected=[{}], Received=[{}]", userLoginId, computedSign, sign);
+                writeError(response, "签名校验失败");
+                return;
+            }
+
+            // ⑤ Find user in XWiki
+            String user = findUserByLoginId(userLoginId, context);
+            if (user == null) {
+                LOGGER.warn("OA SSO: user [{}] not found in XWiki", userLoginId);
+                writeError(response, "当前用户 " + userLoginId + " 不存在");
+                return;
+            }
+
+            LOGGER.info("OA SSO: user [{}] authenticated successfully via OA", user);
+
+            // ⑥ Set login state
             String principalName = context.getWikiId() + ":" + user;
             SimplePrincipal principal = new SimplePrincipal(principalName);
 
-            // Try to set the principal on the SecurityFilter's own wrapper first
-            SecurityRequestWrapper wrappedRequest = getSecurityRequestWrapper(request);
+            javax.servlet.http.HttpServletRequest javaxRequest =
+                org.xwiki.jakartabridge.servlet.JakartaServletBridge.toJavax(request);
+            SecurityRequestWrapper wrappedRequest = new SecurityRequestWrapper(javaxRequest, null, null, "FORM");
             wrappedRequest.setUserPrincipal(principal);
 
-            // Notify the authentication success event
+            // Store principal in HTTP session so SecurityFilter picks it up on next request
+            HttpSession session = request.getSession(true);
+            session.setAttribute("org.securityfilter.filter.SecurityFilter.PRINCIPAL", principal);
+
+            // Notify authentication event
             UserAuthenticatedEventNotifier notifier =
                 Utils.getComponent(UserAuthenticatedEventNotifier.class);
             notifier.notify(principalName);
 
-            // ⑦ Redirect to the wiki home page
+            // ⑦ Redirect to wiki home page
             String redirectUrl = context.getURLFactory().createURL(
                 context.getWiki().getDefaultSpace(context),
                 context.getWiki().getDefaultPage(context), "view", context
             ).toString();
             response.sendRedirect(response.encodeRedirectURL(redirectUrl));
-            return false;
-        } catch (IOException e) {
-            throw new XWikiException(XWikiException.MODULE_XWIKI, XWikiException.ERROR_XWIKI_UNKNOWN,
-                "Failed to redirect after OA login for user [" + user + "]", e);
+
+        } catch (XWikiException e) {
+            LOGGER.error("OA SSO: failed to process login", e);
+            writeError(response, "系统内部错误");
+        } finally {
+            if (context != null) {
+                context.getWiki().getStore().cleanUp(context);
+            }
         }
     }
 
     /**
+     * Initialize a minimal XWiki context for this servlet.
+     * Uses the same pattern as {@code XWikiContextInitializationFilter}.
+     */
+    private XWikiContext initializeXWikiContext(HttpServletRequest request, HttpServletResponse response)
+        throws XWikiException
+    {
+        javax.servlet.ServletContext javaxServletContext =
+            org.xwiki.jakartabridge.servlet.JakartaServletBridge.toJavax(request.getServletContext());
+
+        XWikiServletContext xwikiEngine = new XWikiServletContext(javaxServletContext);
+        XWikiServletRequest xwikiRequest = new XWikiServletRequest(
+            org.xwiki.jakartabridge.servlet.JakartaServletBridge.toJavax(request));
+        XWikiServletResponse xwikiResponse = new XWikiServletResponse(
+            org.xwiki.jakartabridge.servlet.JakartaServletBridge.toJavax(response));
+
+        XWikiContext context = Utils.prepareContext("", xwikiRequest, xwikiResponse, xwikiEngine);
+        XWiki.getXWiki(context);
+        context.setURLFactory(
+            context.getWiki().getURLFactoryService().createURLFactory(context.getMode(), context));
+        context.getWiki().prepareResources(context);
+
+        return context;
+    }
+
+    /**
      * Find a user in XWiki by their login ID.
-     * Uses the same lookup strategy as {@code XWikiAuthServiceImpl.findUser()}.
-     *
-     * @param username the user's login ID (工号)
-     * @param context the XWiki context
-     * @return the full user name (e.g. "XWiki.admin"), or {@code null} if not found
-     * @throws XWikiException on lookup error
      */
     private String findUserByLoginId(String username, XWikiContext context) throws XWikiException
     {
-        // First, check if the user document exists directly
         DocumentReference userRef = new DocumentReference(context.getWikiId(), "XWiki", username);
         if (context.getWiki().exists(userRef, context)) {
             return "XWiki." + username;
         }
 
-        // Fallback: HQL query for case-insensitive database compatibility (e.g. MySQL)
         String sql = "select distinct doc.fullName from XWikiDocument as doc";
         Object[][] whereParams = new Object[][] {
             { "doc.space", "XWiki" },
@@ -169,28 +189,19 @@ public class OALoginAction extends XWikiAction
         return list.isEmpty() ? null : list.get(0);
     }
 
-    /**
-     * Attempt to retrieve the SecurityFilter's {@link SecurityRequestWrapper} from the request.
-     * If the request is already a SecurityRequestWrapper, use it directly.
-     * Otherwise, create a new one (which will still allow session persistence through the
-     * SecurityFilter chain on the next redirect).
-     */
-    private SecurityRequestWrapper getSecurityRequestWrapper(HttpServletRequest request)
+    private void writeError(HttpServletResponse response, String message) throws IOException
     {
-        if (request instanceof SecurityRequestWrapper) {
-            return (SecurityRequestWrapper) request;
-        }
-        return new SecurityRequestWrapper(request, null, null, "FORM");
-    }
-
-    @Override
-    public String render(XWikiContext context) throws XWikiException
-    {
-        // Set 403 status on error, matching LoginSubmitAction behavior
-        String msg = (String) context.get("message");
-        if (StringUtils.isNotBlank(msg)) {
-            context.getResponse().setStatus(HttpServletResponse.SC_FORBIDDEN);
-        }
-        return TEMPLATE;
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.setContentType("text/html; charset=UTF-8");
+        PrintWriter writer = response.getWriter();
+        writer.println("<!DOCTYPE html>");
+        writer.println("<html lang=\"zh-CN\">");
+        writer.println("<head><meta charset=\"UTF-8\"><title>OA 登录</title></head>");
+        writer.println("<body>");
+        writer.println("<h1>OA 登录失败</h1>");
+        writer.println("<p>" + org.apache.commons.text.StringEscapeUtils.escapeHtml4(message) + "</p>");
+        writer.println("</body>");
+        writer.println("</html>");
+        writer.flush();
     }
 }

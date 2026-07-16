@@ -49,3 +49,30 @@ Thank you to all contributors:
 <a href="https://github.com/xwiki/xwiki-platform/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=xwiki/xwiki-platform&max=5000" />
 </a>
+
+## OA 单点登录
+
+1、配置 xwiki.cfg
+
+```text
+# OA 单点登录密钥
+xwiki.authentication.oa.key=<OA系统分配给你们的密钥>
+```
+
+2、在 OA 系统中配置回调地址
+
+```text
+http://<your-server>/xwiki/bin/oalogin/?pid=<应用ID>&userLoginId=<工号>&timestamp=<时间戳>&sign=<MD5签名>
+```
+
+3、验证
+
+用浏览器直接访问测试 URL（手动构造合法签名）：
+
+# 用命令行生成测试签名，替换成你实际的 KEY 和参数
+echo -n "1000admin$(date +%s%3N)你的OA密钥" | md5
+
+然后访问：
+http://localhost:8080/xwiki/bin/oalogin/?pid=1000&userLoginId=admin&timestamp=<上面用的时间戳>&sign=<上面算出来的md5>
+
+如果能自动跳转到 XWiki 首页，说明部署成功。
