@@ -162,6 +162,23 @@ public class OALoginAction extends HttpServlet
             org.xwiki.jakartabridge.servlet.JakartaServletBridge.toJavax(response));
 
         XWikiContext context = Utils.prepareContext("", xwikiRequest, xwikiResponse, xwikiEngine);
+
+        // Initialize the Container component which sets up the Execution context.
+        // Required because XWikiContextInitializationFilter does not apply to /oa-login.
+        try {
+            org.xwiki.container.servlet.ServletContainerInitializer containerInitializer =
+                Utils.getComponent(org.xwiki.container.servlet.ServletContainerInitializer.class);
+            containerInitializer.initializeRequest(
+                org.xwiki.jakartabridge.servlet.JakartaServletBridge.toJavax(request), context);
+            containerInitializer.initializeResponse(
+                org.xwiki.jakartabridge.servlet.JakartaServletBridge.toJavax(response));
+            containerInitializer.initializeSession(
+                org.xwiki.jakartabridge.servlet.JakartaServletBridge.toJavax(request));
+        } catch (org.xwiki.container.servlet.ServletContainerException e) {
+            throw new XWikiException(XWikiException.MODULE_XWIKI, XWikiException.ERROR_XWIKI_UNKNOWN,
+                "Failed to initialize Container component", e);
+        }
+
         XWiki.getXWiki(context);
         context.setURLFactory(
             context.getWiki().getURLFactoryService().createURLFactory(context.getMode(), context));
