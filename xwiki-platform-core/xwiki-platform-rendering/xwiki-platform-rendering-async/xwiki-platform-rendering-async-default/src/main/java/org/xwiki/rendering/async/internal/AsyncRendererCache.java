@@ -113,14 +113,15 @@ public class AsyncRendererCache implements Initializable, CacheEntryListener<Asy
     public void initialize() throws InitializationException
     {
         try {
-            // Standard cache (long lived but small by default)
+            // Standard cache (long lived, increased from 100→1000 capacity and 24h→1h TTL to prevent
+            // cache thrashing under concurrent users. See: collaborative editing performance fix.)
             this.longCache =
-                this.cacheManager.createNewCache(new LRUCacheConfiguration("rendering.asyncrenderer.long", 100, 86400));
+                this.cacheManager.createNewCache(new LRUCacheConfiguration("rendering.asyncrenderer.long", 1000, 3600));
 
             // Cache to store asynchronous result kept only for the small period between which the job is finished
-            // but it was not been asked yet by the client (short live but big size)
+            // but it was not been asked yet by the client (short live but big size, 10000→20000 capacity)
             this.asyncCache = this.cacheManager
-                .createNewCache(new LRUCacheConfiguration("rendering.asyncrenderer.async", 10000, 600));
+                .createNewCache(new LRUCacheConfiguration("rendering.asyncrenderer.async", 20000, 600));
         } catch (CacheException e) {
             throw new InitializationException("Failed to initialize cache", e);
         }
