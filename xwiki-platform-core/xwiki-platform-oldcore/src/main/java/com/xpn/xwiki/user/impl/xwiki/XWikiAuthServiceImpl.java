@@ -167,6 +167,15 @@ public class XWikiAuthServiceImpl extends AbstractXWikiAuthService
                     xwiki.Param("xwiki.authentication.loginsubmitpage", "/loginsubmit/XWiki/XWikiLogin"));
 
                 authenticator.init(fconfig, sconfig);
+
+                // Configure OA homepage redirect for session expiry
+                if (authenticator instanceof MyFormAuthenticator) {
+                    String oaHomepage = xwiki.Param("xwiki.authentication.oa.homepage");
+                    if (StringUtils.isNotBlank(oaHomepage)) {
+                        ((MyFormAuthenticator) authenticator).setOaHomepage(oaHomepage);
+                        LOGGER.info("OA homepage redirect configured: {}", oaHomepage);
+                    }
+                }
             }
 
             this.authenticators.put(wikiName, authenticator);

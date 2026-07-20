@@ -375,6 +375,10 @@ xwiki.authentication.logoutpage=(/|/[^/]+/|/wiki/[^/]+/)logout/*
 #-# which got them.  
 # xwiki.authentication.useip=true
 
+#-# OA SSO: When the user's session or remember-me cookie expires, redirect to this URL
+#-# instead of the XWiki login page. Unset (commented out) to keep the standard behavior.
+# xwiki.authentication.oa.homepage=http://oa.company.com/
+
 #---------------------------------------
 # Editing
 #

@@ -47,12 +47,23 @@ public class MyFormAuthenticator extends FormAuthenticator implements XWikiAuthe
 
     private UserAuthenticatedEventNotifier userAuthenticatedEventNotifier;
 
+    private String oaHomepage;
+
     private UserAuthenticatedEventNotifier getUserAuthenticatedEventNotifier()
     {
         if ( this.userAuthenticatedEventNotifier == null ) {
             this.userAuthenticatedEventNotifier = Utils.getComponent(UserAuthenticatedEventNotifier.class);
         }
         return this.userAuthenticatedEventNotifier;
+    }
+
+    /**
+     * @param oaHomepage the OA homepage URL to redirect to when the session expires;
+     *                   if null or blank, the standard XWiki login page is used
+     */
+    public void setOaHomepage(String oaHomepage)
+    {
+        this.oaHomepage = oaHomepage;
     }
 
     /**
@@ -65,6 +76,12 @@ public class MyFormAuthenticator extends FormAuthenticator implements XWikiAuthe
     public void showLogin(HttpServletRequest request, HttpServletResponse response, XWikiContext context)
         throws IOException
     {
+        // If OA homepage is configured, redirect there instead of showing XWiki login page
+        if (StringUtils.isNotBlank(this.oaHomepage)) {
+            response.sendRedirect(this.oaHomepage);
+            return;
+        }
+
         if ("1".equals(request.getParameter("basicauth"))) {
             String realmName = context.getWiki().Param("xwiki.authentication.realmname");
             if (realmName == null) {
@@ -79,6 +96,12 @@ public class MyFormAuthenticator extends FormAuthenticator implements XWikiAuthe
     @Override
     public void showLogin(HttpServletRequest request, HttpServletResponse response) throws IOException
     {
+        // If OA homepage is configured, redirect there instead of showing XWiki login page
+        if (StringUtils.isNotBlank(this.oaHomepage)) {
+            response.sendRedirect(this.oaHomepage);
+            return;
+        }
+
         String savedRequestId = request.getParameter(SavedRequestManager.getSavedRequestIdentifier());
         if (StringUtils.isEmpty(savedRequestId)) {
             // Save this request
