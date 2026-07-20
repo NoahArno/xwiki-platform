@@ -80,6 +80,7 @@ public class MyFormAuthenticator extends FormAuthenticator implements XWikiAuthe
         if (StringUtils.isNotBlank(this.oaHomepage)) {
             LOGGER.warn("showLogin(context): redirecting to OA homepage [{}]", this.oaHomepage);
             response.sendRedirect(this.oaHomepage);
+            response.flushBuffer();
             return;
         }
 

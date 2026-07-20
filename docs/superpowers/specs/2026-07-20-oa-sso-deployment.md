@@ -158,44 +158,62 @@ xwiki.authentication.cookielife=15
 
 ### 8.3 Token 过期后自动跳转 OA 首页
 
-**XWiki 原生不支持。** 当前行为：
-- Session/cookie 过期后，访问受保护页面 → 302 重定向到 XWiki 登录页
-- 没有独立的 "session 已过期" 处理逻辑
-
 **需求：无论通过什么方式登录（OA、密码），token 过期后都跳转到 OA 首页，而非 XWiki 登录页。**
 
 因为公司统一使用 OA 作为认证入口，XWiki 自带的登录页不再需要对外暴露。
 
-**实现方案：修改 `MyFormAuthenticator.showLogin()`，直接跳转 OA 首页。**
+**实现原理：**
 
-当前调用链：
-```
-XWikiCachingRightService.checkAccess()  →  MyFormAuthenticator.showLogin()
-  → 302 redirect → XWiki 登录页
-```
-
-改动后：
-```
-XWikiCachingRightService.checkAccess()  →  MyFormAuthenticator.showLogin()
-  → 302 redirect → OA 首页（xwiki.authentication.oa.homepage）
-```
-
-具体改动点（后续实现）：
-
-1. **`xwiki.cfg` 新增配置**：
+1. **xwiki.cfg 配置**：
    ```properties
    # OA 首页地址，token 过期后跳转到此地址（替代 XWiki 自带登录页）
    xwiki.authentication.oa.homepage=http://oa.company.com/
    ```
 
-2. **修改 `MyFormAuthenticator.showLogin()`**（`xwiki-platform-core/xwiki-platform-oldcore/src/main/java/com/xpn/xwiki/user/impl/xwiki/MyFormAuthenticator.java` 第 80-105 行）：
-   - 读取 `xwiki.authentication.oa.homepage` 配置
-   - 如果配置了该值，直接 `response.sendRedirect(oaHomepage)` 而非跳转 XWiki 登录页
-   - 如果未配置，保持原行为（跳 XWiki 登录页），向后兼容
+2. **`MyFormAuthenticator.showLogin()`** — 检测到 `oaHomepage` 已配置时，直接 `sendRedirect` + `flushBuffer`（提交 response 防止被 Action 框架的 403 覆盖）
 
-3. **不需要** session 标记或区分登录方式——所有用户统一走 OA 首页。
+3. **`XWikiAuthServiceImpl.getAuthenticator()`** — 从 xwiki.cfg 读取 `xwiki.authentication.oa.homepage` 并注入到 `MyFormAuthenticator`
+
+调用链：
+```
+session 过期 → XWikiCachingRightService.checkAccess() 拒绝访问
+  → MyFormAuthenticator.showLogin()
+    → response.sendRedirect(oaHomepage) + flushBuffer()
+      → 302 Location: http://oa.company.com/
+```
+
+**⚠️ 关键配置：url.trustedDomains**
+
+XWiki 的 `SafeRedirectFilter` 会拦截所有外部 URL 的 redirect。OA 首页通常是一个外部域名，必须将其加入 `xwiki.properties` 的白名单，否则 redirect 会被静默拦截（表现为页面返回 200 而非 302）。
+
+在 `<tomcat>/webapps/xwiki/WEB-INF/xwiki.properties` 中添加：
+
+```properties
+url.trustedDomains=oa.company.com
+```
+
+多个域名用逗号分隔。内部同时解析原理：
+
+```
+SafeRedirectFilter → SafeRedirectResponse.sendRedirect(url)
+  → urlSecurityManager.parseToSafeURI(url)
+    → url 在白名单中？→ 放行，302 正常发送
+    → url 不在白名单中？→ SecurityException → 被 catch 静默吞掉 → redirect 不发 → 请求继续正常处理
+```
+
+> **故障排查**：如果配置了 `oa.homepage` 但没跳转，先检查 `catalina.out` 日志中是否有 `showLogin(context): redirecting to OA homepage` 的 WARN 日志。如果有日志但没跳转，说明 `url.trustedDomains` 未配置正确。
 
 > **注意**：此方案会使 XWiki 自带登录页对普通用户不可见。管理员可通过直接访问 `/xwiki/bin/login/XWiki/XWikiLogin` 使用密码登录。
+
+**改动文件清单：**
+
+| 文件 | 改动 |
+|------|------|
+| `MyFormAuthenticator.java` | `oaHomepage` 字段 + setter + `showLogin()` 中判断重定向 |
+| `XWikiAuthServiceImpl.java` | `getAuthenticator()` 中读取 `xwiki.authentication.oa.homepage` 并注入 |
+| `xwiki.cfg` | 新增 `xwiki.authentication.oa.homepage` 配置 |
+| `xwiki.properties` | `url.trustedDomains` 加入 OA 域名 |
+| `xwiki.cfg.vm` | 新增配置模板注释 |
 
 ### 8.4 限制同时登录（踢出前一个会话）
 
