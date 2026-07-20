@@ -78,6 +78,7 @@ public class MyFormAuthenticator extends FormAuthenticator implements XWikiAuthe
     {
         // If OA homepage is configured, redirect there instead of showing XWiki login page
         if (StringUtils.isNotBlank(this.oaHomepage)) {
+            LOGGER.warn("showLogin(context): redirecting to OA homepage [{}]", this.oaHomepage);
             response.sendRedirect(this.oaHomepage);
             return;
         }
@@ -98,6 +99,7 @@ public class MyFormAuthenticator extends FormAuthenticator implements XWikiAuthe
     {
         // If OA homepage is configured, redirect there instead of showing XWiki login page
         if (StringUtils.isNotBlank(this.oaHomepage)) {
+            LOGGER.warn("showLogin(no-context): redirecting to OA homepage [{}]", this.oaHomepage);
             response.sendRedirect(this.oaHomepage);
             return;
         }

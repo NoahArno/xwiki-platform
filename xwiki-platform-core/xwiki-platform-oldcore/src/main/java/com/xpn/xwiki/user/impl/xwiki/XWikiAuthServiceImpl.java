@@ -173,7 +173,7 @@ public class XWikiAuthServiceImpl extends AbstractXWikiAuthService
                     String oaHomepage = xwiki.Param("xwiki.authentication.oa.homepage");
                     if (StringUtils.isNotBlank(oaHomepage)) {
                         ((MyFormAuthenticator) authenticator).setOaHomepage(oaHomepage);
-                        LOGGER.info("OA homepage redirect configured: {}", oaHomepage);
+                        LOGGER.warn("OA homepage redirect configured: {}", oaHomepage);
                     }
                 }
             }
