@@ -79,6 +79,8 @@
 |------|---------|------|
 | **新建** | `xwiki-platform-core/xwiki-platform-oldcore/src/main/java/com/xpn/xwiki/web/ZhixiOAuth2LoginAction.java` | OAuth2 登录 Servlet（~340 行） |
 | **新建** | `xwiki-platform-core/xwiki-platform-oldcore/src/test/java/com/xpn/xwiki/web/ZhixiOAuth2LoginActionTest.java` | 单元测试（8 个用例） |
+| **修改** | `xwiki-platform-core/xwiki-platform-web/xwiki-platform-web-war/src/main/webapp/WEB-INF/web.xml` | 注册 OALoginAction (`/oa-login`) + ZhixiOAuth2LoginAction (`/zhixi-login`) |
+| **修改** | `xwiki-platform-tools/xwiki-platform-tool-configuration-resources/src/main/resources/xwiki.cfg.vm` | 新增 OA + 知悉 OAuth2 共 5 个配置项模板 |
 
 ## 4. OAuth2 端点说明（知悉 DOAP API）
 
@@ -196,24 +198,11 @@ xwiki.authentication.zhixi.client-secret=<your_client_secret>
 xwiki.authentication.zhixi.redirect-uri=http://<xwiki-host>/xwiki/zhixi-login
 ```
 
-### 6.2 web.xml（部署时添加）
+### 6.2 web.xml
 
-在 `<tomcat>/webapps/xwiki/WEB-INF/web.xml` 的 `</web-app>` 之前添加：
+`/oa-login` 和 `/zhixi-login` 的 Servlet 注册已内置在 `web.xml` 中，部署时无需手动添加。
 
-```xml
-<!-- 知悉 OAuth2 SSO login servlet -->
-<servlet>
-  <servlet-name>ZhixiOAuth2LoginServlet</servlet-name>
-  <servlet-class>com.xpn.xwiki.web.ZhixiOAuth2LoginAction</servlet-class>
-  <load-on-startup>0</load-on-startup>
-</servlet>
-<servlet-mapping>
-  <servlet-name>ZhixiOAuth2LoginServlet</servlet-name>
-  <url-pattern>/zhixi-login</url-pattern>
-</servlet-mapping>
-```
-
-## 7. 错误场景
+### 6.3 部署时只需做
 
 | HTTP 状态 | 错误信息 | 触发条件 |
 |-----------|---------|---------|
@@ -258,18 +247,54 @@ xwiki.authentication.oa.homepage=http://doap.mis.bcs/
       <tomcat>/webapps/xwiki/WEB-INF/lib/
    ```
 
-3. 在 `web.xml` 中注册 `/zhixi-login` Servlet（见第 6.2 节）
+3. **web.xml 配置**：`/oa-login` 和 `/zhixi-login` 的 Servlet 注册已内置在 `web.xml` 模板中，无需手动添加。如需确认，检查 `<tomcat>/webapps/xwiki/WEB-INF/web.xml` 中存在以下内容：
+   ```xml
+   <!-- OA SSO login servlet -->
+   <servlet>
+     <servlet-name>OALoginServlet</servlet-name>
+     <servlet-class>com.xpn.xwiki.web.OALoginAction</servlet-class>
+     <load-on-startup>0</load-on-startup>
+   </servlet>
+   <servlet-mapping>
+     <servlet-name>OALoginServlet</servlet-name>
+     <url-pattern>/oa-login</url-pattern>
+   </servlet-mapping>
 
-4. 在 `xwiki.cfg` 中添加 OAuth2 配置（见第 6.1 节）
-
-5. 在知悉认证中心注册回调地址：
+   <!-- 知悉 (DOAP) OAuth2 SSO login servlet -->
+   <servlet>
+     <servlet-name>ZhixiOAuth2LoginServlet</servlet-name>
+     <servlet-class>com.xpn.xwiki.web.ZhixiOAuth2LoginAction</servlet-class>
+     <load-on-startup>0</load-on-startup>
+   </servlet>
+   <servlet-mapping>
+     <servlet-name>ZhixiOAuth2LoginServlet</servlet-name>
+     <url-pattern>/zhixi-login</url-pattern>
+   </servlet-mapping>
    ```
-   http://<xwiki-host>/xwiki/zhixi-login
+
+4. **xwiki.cfg 配置**：配置项模板已内置在 `xwiki.cfg` 中，只需取消注释并填入实际值。在 `<tomcat>/webapps/xwiki/WEB-INF/xwiki.cfg` 中找到 `# SSO (Single Sign-On)` 段：
+   ```properties
+   # OA SSO
+   xwiki.authentication.oa.key=<OA颁发的密钥>
+   xwiki.authentication.oa.homepage=http://oa.company.com/
+
+   # 知悉 (DOAP) OAuth2 SSO
+   xwiki.authentication.zhixi.doap-host=http://sit-doap.mis.bcs
+   xwiki.authentication.zhixi.client-id=<实际client_id>
+   xwiki.authentication.zhixi.client-secret=<实际client_secret>
+   xwiki.authentication.zhixi.redirect-uri=http://<实际xwiki域名>/xwiki/zhixi-login
    ```
 
-6. 重启 Tomcat
+5. **xwiki.properties 配置**：如果 `xwiki.authentication.oa.homepage` 或 `zhixi.redirect-uri` 指向外部域名，需在 `<tomcat>/webapps/xwiki/WEB-INF/xwiki.properties` 中将域名加入白名单，否则 redirect 会被 SafeRedirectFilter 拦截：
+   ```properties
+   url.trustedDomains=oa.company.com,doap.mis.bcs
+   ```
 
-7. 验证：浏览器访问 `http://<xwiki-host>/xwiki/zhixi-login`，应被重定向到知悉登录页
+6. 在知悉认证中心注册回调地址 `http://<xwiki-host>/xwiki/zhixi-login`
+
+7. 重启 Tomcat
+
+8. 验证：浏览器访问 `http://<xwiki-host>/xwiki/zhixi-login`，应被重定向到知悉登录页
 
 ## 11. 技术细节
 

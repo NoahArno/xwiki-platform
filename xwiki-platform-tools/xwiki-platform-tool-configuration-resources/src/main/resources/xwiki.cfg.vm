@@ -375,9 +375,29 @@ xwiki.authentication.logoutpage=(/|/[^/]+/|/wiki/[^/]+/)logout/*
 #-# which got them.  
 # xwiki.authentication.useip=true
 
+#---------------------------------------
+# SSO (Single Sign-On)
+#---------------------------------------
+
+#-# OA SSO: Pre-shared key for MD5 signature verification (assigned by the OA system).
+# xwiki.authentication.oa.key=
+
 #-# OA SSO: When the user's session or remember-me cookie expires, redirect to this URL
 #-# instead of the XWiki login page. Unset (commented out) to keep the standard behavior.
 # xwiki.authentication.oa.homepage=http://oa.company.com/
+
+#-# 知悉 (DOAP) OAuth2 SSO: DOAP authentication center host (no trailing slash).
+#-#   Test: http://sit-doap.mis.bcs
+#-#   UAT:  http://uat-doap.mis.bcs
+#-#   Prod: http://doap.mis.bcs
+# xwiki.authentication.zhixi.doap-host=http://sit-doap.mis.bcs
+
+#-# 知悉 (DOAP) OAuth2 SSO: OAuth2 client credentials (assigned by DOAP).
+# xwiki.authentication.zhixi.client-id=
+# xwiki.authentication.zhixi.client-secret=
+
+#-# 知悉 (DOAP) OAuth2 SSO: XWiki callback URL (must be registered in DOAP).
+# xwiki.authentication.zhixi.redirect-uri=http://<xwiki-host>/xwiki/zhixi-login
 
 #---------------------------------------
 # Editing
