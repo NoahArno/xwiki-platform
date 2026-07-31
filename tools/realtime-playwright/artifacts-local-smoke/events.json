@@ -1,0 +1,411 @@
+[
+  {
+    "time": "2026-07-31T02:29:20.922Z",
+    "type": "run-start",
+    "users": [
+      "U1",
+      "U2"
+    ],
+    "editURL": "http://localhost:8080/xwiki/bin/edit/Main/WebHome?editor=wysiwyg",
+    "artifactsDir": "/Users/noaharno/programer/sourcecode/xwiki_parent/xwiki-platform/tools/realtime-playwright/artifacts-local-smoke"
+  },
+  {
+    "time": "2026-07-31T02:29:21.196Z",
+    "type": "session-created",
+    "userId": "U1",
+    "index": 0
+  },
+  {
+    "time": "2026-07-31T02:29:21.457Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 ()"
+  },
+  {
+    "time": "2026-07-31T02:29:21.583Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "warning",
+    "text": "JQMIGRATE: jQuery.isFunction() is deprecated"
+  },
+  {
+    "time": "2026-07-31T02:29:21.812Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "warning",
+    "text": "JQMIGRATE: jQuery.isFunction() is deprecated"
+  },
+  {
+    "time": "2026-07-31T02:29:21.823Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "warning",
+    "text": "JQMIGRATE: DEPRECATED: jQuery.fn.focus() event shorthand"
+  },
+  {
+    "time": "2026-07-31T02:29:22.388Z",
+    "type": "login-submitted",
+    "userId": "U1",
+    "url": "http://localhost:8080/xwiki/bin/view/Main/"
+  },
+  {
+    "time": "2026-07-31T02:29:22.629Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "warning",
+    "text": "JQMIGRATE: jQuery.isFunction() is deprecated"
+  },
+  {
+    "time": "2026-07-31T02:29:22.650Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "warning",
+    "text": "[CKEDITOR] Error code: clipboard-image-handling-disabled. {editor: content, plugin: uploadimage}"
+  },
+  {
+    "time": "2026-07-31T02:29:22.650Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "warning",
+    "text": "[CKEDITOR] For more information about this error go to https://ckeditor.com/docs/ckeditor4/latest/guide/dev_errors.html#clipboard-image-handling-disabled"
+  },
+  {
+    "time": "2026-07-31T02:29:22.714Z",
+    "type": "page-error",
+    "userId": "U1",
+    "message": "l.getElementsByTagName is not a function",
+    "stack": "TypeError: l.getElementsByTagName is not a function\n    at Object.success (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/xwiki-platform-ckeditor-plugins/18.1.0/webjar.bundle.min.js:3:247)\n    at c (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:25304)\n    at Object.fireWith [as resolveWith] (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:26053)\n    at l (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:77782)\n    at XMLHttpRequest.<anonymous> (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:80265)"
+  },
+  {
+    "time": "2026-07-31T02:29:22.726Z",
+    "type": "websocket-open",
+    "userId": "U1",
+    "url": "ws://localhost:8080/xwiki/websocket/xwiki/netflux"
+  },
+  {
+    "time": "2026-07-31T02:29:22.766Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T02:29:23.298Z",
+    "type": "edit-page-opened",
+    "userId": "U1",
+    "url": "http://localhost:8080/xwiki/bin/edit/Main/WebHome?editor=wysiwyg"
+  },
+  {
+    "time": "2026-07-31T02:29:23.333Z",
+    "type": "session-created",
+    "userId": "U2",
+    "index": 1
+  },
+  {
+    "time": "2026-07-31T02:29:23.384Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 ()"
+  },
+  {
+    "time": "2026-07-31T02:29:23.507Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "warning",
+    "text": "JQMIGRATE: jQuery.isFunction() is deprecated"
+  },
+  {
+    "time": "2026-07-31T02:29:23.742Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "warning",
+    "text": "JQMIGRATE: jQuery.isFunction() is deprecated"
+  },
+  {
+    "time": "2026-07-31T02:29:23.750Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "warning",
+    "text": "JQMIGRATE: DEPRECATED: jQuery.fn.focus() event shorthand"
+  },
+  {
+    "time": "2026-07-31T02:29:24.321Z",
+    "type": "login-submitted",
+    "userId": "U2",
+    "url": "http://localhost:8080/xwiki/bin/view/Main/"
+  },
+  {
+    "time": "2026-07-31T02:29:24.545Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "warning",
+    "text": "JQMIGRATE: jQuery.isFunction() is deprecated"
+  },
+  {
+    "time": "2026-07-31T02:29:24.568Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "warning",
+    "text": "[CKEDITOR] Error code: clipboard-image-handling-disabled. {editor: content, plugin: uploadimage}"
+  },
+  {
+    "time": "2026-07-31T02:29:24.568Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "warning",
+    "text": "[CKEDITOR] For more information about this error go to https://ckeditor.com/docs/ckeditor4/latest/guide/dev_errors.html#clipboard-image-handling-disabled"
+  },
+  {
+    "time": "2026-07-31T02:29:24.629Z",
+    "type": "page-error",
+    "userId": "U2",
+    "message": "l.getElementsByTagName is not a function",
+    "stack": "TypeError: l.getElementsByTagName is not a function\n    at Object.success (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/xwiki-platform-ckeditor-plugins/18.1.0/webjar.bundle.min.js:3:247)\n    at c (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:25304)\n    at Object.fireWith [as resolveWith] (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:26053)\n    at l (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:77782)\n    at XMLHttpRequest.<anonymous> (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:80265)"
+  },
+  {
+    "time": "2026-07-31T02:29:24.638Z",
+    "type": "websocket-open",
+    "userId": "U2",
+    "url": "ws://localhost:8080/xwiki/websocket/xwiki/netflux"
+  },
+  {
+    "time": "2026-07-31T02:29:24.683Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T02:29:24.684Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T02:29:24.863Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T02:29:24.863Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T02:29:25.251Z",
+    "type": "edit-page-opened",
+    "userId": "U2",
+    "url": "http://localhost:8080/xwiki/bin/edit/Main/WebHome?editor=wysiwyg"
+  },
+  {
+    "time": "2026-07-31T02:29:25.296Z",
+    "type": "editor-ready",
+    "userId": "U2",
+    "kind": "ckeditor-instance"
+  },
+  {
+    "time": "2026-07-31T02:29:25.296Z",
+    "type": "editor-ready",
+    "userId": "U1",
+    "kind": "ckeditor-instance"
+  },
+  {
+    "time": "2026-07-31T02:29:25.512Z",
+    "type": "typed-marker",
+    "userId": "U2",
+    "marker": "RTSMOKE-U2-0001",
+    "durationMs": 216
+  },
+  {
+    "time": "2026-07-31T02:29:25.513Z",
+    "type": "typed-marker",
+    "userId": "U1",
+    "marker": "RTSMOKE-U1-0001",
+    "durationMs": 217
+  },
+  {
+    "time": "2026-07-31T02:29:25.617Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T02:29:25.617Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1}}"
+  },
+  {
+    "time": "2026-07-31T02:29:25.644Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T02:29:25.666Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1}}"
+  },
+  {
+    "time": "2026-07-31T02:29:25.667Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1}}"
+  },
+  {
+    "time": "2026-07-31T02:29:25.720Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
+  },
+  {
+    "time": "2026-07-31T02:29:25.725Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[6,0,7],\"end\":[6,0,7]}]"
+  },
+  {
+    "time": "2026-07-31T02:29:25.823Z",
+    "type": "typed-marker",
+    "userId": "U2",
+    "marker": "RTSMOKE-U2-0002",
+    "durationMs": 210
+  },
+  {
+    "time": "2026-07-31T02:29:25.851Z",
+    "type": "typed-marker",
+    "userId": "U1",
+    "marker": "RTSMOKE-U1-0002",
+    "durationMs": 238
+  },
+  {
+    "time": "2026-07-31T02:29:25.874Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T02:29:25.874Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
+  },
+  {
+    "time": "2026-07-31T02:29:25.926Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
+  },
+  {
+    "time": "2026-07-31T02:29:25.954Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[6,0,17],\"end\":[6,0,17]}]"
+  },
+  {
+    "time": "2026-07-31T02:29:25.954Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3}}"
+  },
+  {
+    "time": "2026-07-31T02:29:26.009Z",
+    "type": "verification-wait-start",
+    "durationMs": 2000
+  },
+  {
+    "time": "2026-07-31T02:29:26.088Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[6,0,17],\"end\":[6,0,17]}]"
+  },
+  {
+    "time": "2026-07-31T02:29:26.129Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3}}"
+  },
+  {
+    "time": "2026-07-31T02:29:26.129Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3}}"
+  },
+  {
+    "time": "2026-07-31T02:29:26.469Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
+  },
+  {
+    "time": "2026-07-31T02:29:26.469Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3}}"
+  },
+  {
+    "time": "2026-07-31T02:29:26.542Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[6,0,41],\"end\":[6,0,41]}]"
+  },
+  {
+    "time": "2026-07-31T02:29:28.011Z",
+    "type": "verification-wait-finished",
+    "durationMs": 2000
+  },
+  {
+    "time": "2026-07-31T02:29:28.020Z",
+    "type": "marker-verification",
+    "userId": "U1",
+    "missing": 0
+  },
+  {
+    "time": "2026-07-31T02:29:28.027Z",
+    "type": "marker-verification",
+    "userId": "U2",
+    "missing": 0
+  },
+  {
+    "time": "2026-07-31T02:29:28.028Z",
+    "type": "run-finished",
+    "missingMarkers": 0,
+    "severeInputs": 0
+  },
+  {
+    "time": "2026-07-31T02:29:28.122Z",
+    "type": "session-closed",
+    "userId": "U1"
+  },
+  {
+    "time": "2026-07-31T02:29:28.145Z",
+    "type": "session-closed",
+    "userId": "U2"
+  }
+]

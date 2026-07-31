@@ -1,0 +1,12 @@
+{
+  "name": "xwiki-realtime-playwright-diagnostics",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "run": "node realtime-wysiwyg-load.js --config config.json"
+  },
+  "dependencies": {
+    "playwright": "^1.56.1"
+  }
+}

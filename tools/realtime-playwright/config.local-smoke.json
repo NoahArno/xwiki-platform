@@ -1,0 +1,23 @@
+{
+  "baseURL": "http://localhost:8080/xwiki",
+  "editURL": "http://localhost:8080/xwiki/bin/edit/Main/WebHome?editor=wysiwyg",
+  "headless": true,
+  "minUsers": 2,
+  "artifactsDir": "artifacts-local-smoke",
+  "users": [
+    { "id": "U1", "username": "admin", "password": "admin" },
+    { "id": "U2", "username": "admin", "password": "admin" }
+  ],
+  "typing": {
+    "iterations": 2,
+    "delayMs": 10,
+    "pauseBetweenMarkersMs": 100,
+    "markerPrefix": "RTSMOKE"
+  },
+  "tableActions": {
+    "enabled": false
+  },
+  "trace": {
+    "enabled": false
+  }
+}
