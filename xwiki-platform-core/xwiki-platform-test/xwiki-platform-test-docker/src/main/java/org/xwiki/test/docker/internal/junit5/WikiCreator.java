@@ -21,7 +21,7 @@ package org.xwiki.test.docker.internal.junit5;
 
 import java.io.IOException;
 
-import javax.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;

@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriBuilder;
 
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.io.IOUtils;

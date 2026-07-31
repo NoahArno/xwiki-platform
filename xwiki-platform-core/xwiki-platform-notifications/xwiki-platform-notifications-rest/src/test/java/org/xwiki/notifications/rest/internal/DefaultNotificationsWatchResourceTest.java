@@ -24,7 +24,7 @@ import java.util.List;
 
 import javax.inject.Named;
 import javax.inject.Provider;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 import org.junit.jupiter.api.Test;
 import org.xwiki.model.reference.DocumentReference;

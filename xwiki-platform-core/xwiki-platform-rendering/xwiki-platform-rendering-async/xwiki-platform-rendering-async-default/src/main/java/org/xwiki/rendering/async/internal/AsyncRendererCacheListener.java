@@ -19,7 +19,7 @@
  */
 package org.xwiki.rendering.async.internal;
 
-import javax.annotation.Priority;
+import jakarta.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;

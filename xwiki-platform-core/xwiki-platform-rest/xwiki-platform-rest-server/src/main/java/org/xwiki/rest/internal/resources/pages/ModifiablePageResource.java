@@ -20,8 +20,8 @@
 package org.xwiki.rest.internal.resources.pages;
 
 import javax.inject.Inject;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.xwiki.rest.XWikiResource;
 import org.xwiki.rest.internal.ModelFactory;

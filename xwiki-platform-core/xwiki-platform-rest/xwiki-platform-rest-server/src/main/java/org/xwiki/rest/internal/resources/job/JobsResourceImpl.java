@@ -21,8 +21,8 @@ package org.xwiki.rest.internal.resources.job;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response.Status;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.xwiki.component.annotation.Component;

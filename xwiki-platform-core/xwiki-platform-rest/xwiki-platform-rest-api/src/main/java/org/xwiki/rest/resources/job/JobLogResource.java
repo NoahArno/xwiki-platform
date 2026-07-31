@@ -19,10 +19,10 @@
  */
 package org.xwiki.rest.resources.job;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.QueryParam;
 
 import org.xwiki.rest.XWikiRestException;
 import org.xwiki.rest.model.jaxb.JobLog;

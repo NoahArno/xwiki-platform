@@ -21,7 +21,7 @@ package org.xwiki.rest;
 
 import java.util.Arrays;
 
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

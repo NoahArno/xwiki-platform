@@ -23,7 +23,7 @@ import java.io.StringWriter;
 import java.util.List;
 import java.util.UUID;
 
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;

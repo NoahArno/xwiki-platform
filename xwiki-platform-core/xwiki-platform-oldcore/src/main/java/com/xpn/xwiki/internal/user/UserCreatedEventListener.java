@@ -19,7 +19,7 @@
  */
 package com.xpn.xwiki.internal.user;
 
-import javax.annotation.Priority;
+import jakarta.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;

@@ -19,7 +19,7 @@
  */
 package org.xwiki.rest.jersey.internal;
 
-import javax.annotation.Priority;
+import jakarta.annotation.Priority;
 
 import org.glassfish.jersey.inject.hk2.Hk2InjectionManagerFactory;
 import org.glassfish.jersey.internal.inject.InjectionManager;

@@ -27,7 +27,7 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang3.StringUtils;
 import org.xwiki.model.reference.DocumentReference;

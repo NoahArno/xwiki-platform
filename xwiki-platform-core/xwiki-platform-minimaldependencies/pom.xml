@@ -411,8 +411,8 @@
     </dependency>
     <!-- javax-->
     <dependency>
-      <groupId>javax.ws.rs</groupId>
-      <artifactId>javax.ws.rs-api</artifactId>
+      <groupId>jakarta.ws.rs</groupId>
+      <artifactId>jakarta.ws.rs-api</artifactId>
     </dependency>
 
     <!-- JTA -->
@@ -470,10 +470,17 @@
     </dependency>
 
     <!-- Annotations -->
-    <!-- javax -->
+    <!-- jakarta -->
     <dependency>
       <groupId>jakarta.annotation</groupId>
       <artifactId>jakarta.annotation-api</artifactId>
+    </dependency>
+    <!-- javax.annotation-api kept for backward compatibility: xwiki-commons JARs
+         were compiled against javax.annotation.Priority and need it at runtime. -->
+    <dependency>
+      <groupId>javax.annotation</groupId>
+      <artifactId>javax.annotation-api</artifactId>
+      <scope>runtime</scope>
     </dependency>
 
     <!-- JSON Processing -->

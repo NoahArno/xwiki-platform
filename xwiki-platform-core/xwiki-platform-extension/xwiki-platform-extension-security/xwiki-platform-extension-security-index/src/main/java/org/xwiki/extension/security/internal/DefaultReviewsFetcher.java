@@ -25,8 +25,8 @@ import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriBuilderException;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriBuilderException;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.StatusLine;

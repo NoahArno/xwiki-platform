@@ -28,11 +28,11 @@ import java.util.Locale;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.slf4j.Logger;
 import org.xwiki.component.annotation.InstantiationStrategy;

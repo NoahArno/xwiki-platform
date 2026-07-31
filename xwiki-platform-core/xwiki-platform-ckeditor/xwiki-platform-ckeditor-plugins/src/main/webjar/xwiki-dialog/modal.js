@@ -29,15 +29,18 @@ define('modal', ['jquery', 'l10n!modal', 'bootstrap'], function($, translations)
   let iconURL = `${XWiki.contextPath}/rest/wikis/${encodeURIComponent(XWiki.currentWiki)}/iconThemes/icons?name=cross`;
   // Default value taken until the fetch is fulfilled
   var closeIconTemplate = `<span aria-hidden="true">&times;</span>`;
-  $.get(iconURL, function(response) {
+  $.getJSON(iconURL, function(response) {
     // We override the close button content template if the request is successful
-    let iconMetadata = response.getElementsByTagName('icon')[0];
-    if (iconMetadata.getElementsByTagName('iconSetType')[0].textContent === 'IMAGE') {
-      closeIconTemplate = '<img src="' + iconMetadata.getElementsByTagName('url')[0].textContent +
+    let iconMetadata = response.icons && response.icons[0];
+    if (!iconMetadata) {
+      return;
+    }
+    if (iconMetadata.iconSetType === 'IMAGE') {
+      closeIconTemplate = '<img src="' + iconMetadata.url +
           '" alt="" />';
-    } else if (iconMetadata.getElementsByTagName('iconSetType')[0].textContent === 'FONT') {
+    } else if (iconMetadata.iconSetType === 'FONT') {
       closeIconTemplate = '<span class="' +
-          iconMetadata.getElementsByTagName('cssClass')[0].textContent +
+          iconMetadata.cssClass +
           '" aria-hidden="true"></span>';
     }
     // Once we retrieve the icon value, we
@@ -49,6 +52,8 @@ define('modal', ['jquery', 'l10n!modal', 'bootstrap'], function($, translations)
     });
     // 2. replace the modal template used to create new modals
     closeButtonTemplate = closeIconTemplate;
+  }).fail(function() {
+    // Silently ignore: the default close button template will be used.
   });
   let closeButtonTemplate = '<span aria-hidden="true">&times;</span>';
   let modalTemplate = '<div class="modal" tabindex="-1" role="dialog" data-backdrop="static">' +

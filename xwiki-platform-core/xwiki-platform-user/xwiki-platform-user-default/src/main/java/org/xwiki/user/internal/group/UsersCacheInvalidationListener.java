@@ -19,7 +19,7 @@
  */
 package org.xwiki.user.internal.group;
 
-import javax.annotation.Priority;
+import jakarta.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;

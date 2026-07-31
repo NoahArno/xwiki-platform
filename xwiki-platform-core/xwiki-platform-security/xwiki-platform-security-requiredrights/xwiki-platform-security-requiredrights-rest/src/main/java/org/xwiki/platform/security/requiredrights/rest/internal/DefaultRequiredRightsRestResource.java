@@ -21,8 +21,8 @@ package org.xwiki.platform.security.requiredrights.rest.internal;
 
 import java.util.List;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Named;

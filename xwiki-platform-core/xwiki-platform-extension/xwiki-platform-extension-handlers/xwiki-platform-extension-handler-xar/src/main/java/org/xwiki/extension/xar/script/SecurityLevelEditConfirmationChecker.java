@@ -21,7 +21,7 @@ package org.xwiki.extension.xar.script;
 
 import java.util.Optional;
 
-import javax.annotation.Priority;
+import jakarta.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;

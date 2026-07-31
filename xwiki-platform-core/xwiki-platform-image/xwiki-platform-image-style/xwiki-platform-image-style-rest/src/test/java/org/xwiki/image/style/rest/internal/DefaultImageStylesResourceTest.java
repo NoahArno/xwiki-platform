@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Provider;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,7 +42,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.web.XWikiResponse;
 
-import static javax.ws.rs.core.Response.Status.OK;
+import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 

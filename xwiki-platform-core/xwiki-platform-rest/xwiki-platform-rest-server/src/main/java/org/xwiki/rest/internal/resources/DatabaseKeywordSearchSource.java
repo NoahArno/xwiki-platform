@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import javax.ws.rs.core.UriBuilderException;
+import jakarta.ws.rs.core.UriBuilderException;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Named;

@@ -27,7 +27,7 @@ import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 import org.slf4j.Logger;
 import org.xwiki.attachment.AttachmentAccessWrapper;

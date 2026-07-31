@@ -21,7 +21,7 @@ package org.xwiki.rest.internal.resources.search;
 
 import java.util.List;
 
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.xwiki.component.annotation.Role;
 import org.xwiki.rest.model.jaxb.SearchResult;

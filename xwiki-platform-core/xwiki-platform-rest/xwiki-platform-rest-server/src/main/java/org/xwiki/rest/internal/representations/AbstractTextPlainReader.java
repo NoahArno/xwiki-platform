@@ -22,7 +22,7 @@ package org.xwiki.rest.internal.representations;
 import java.io.IOException;
 import java.io.InputStream;
 
-import javax.ws.rs.ext.MessageBodyReader;
+import jakarta.ws.rs.ext.MessageBodyReader;
 
 import org.apache.commons.io.IOUtils;
 import org.xwiki.rest.XWikiRestComponent;

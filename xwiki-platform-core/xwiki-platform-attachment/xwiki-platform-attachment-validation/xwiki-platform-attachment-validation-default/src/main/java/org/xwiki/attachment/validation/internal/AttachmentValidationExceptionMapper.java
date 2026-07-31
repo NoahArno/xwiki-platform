@@ -21,10 +21,10 @@ package org.xwiki.attachment.validation.internal;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
 
 import org.json.JSONObject;
 import org.xwiki.attachment.validation.AttachmentValidationException;

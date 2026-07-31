@@ -24,8 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Named;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response.Status;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response.Status;
 
 import org.suigeneris.jrcs.rcs.Version;
 import org.xwiki.component.annotation.Component;

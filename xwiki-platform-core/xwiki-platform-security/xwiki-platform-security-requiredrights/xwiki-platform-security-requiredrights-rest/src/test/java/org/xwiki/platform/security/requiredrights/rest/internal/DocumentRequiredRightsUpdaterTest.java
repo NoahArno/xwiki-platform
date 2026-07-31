@@ -22,7 +22,7 @@ package org.xwiki.platform.security.requiredrights.rest.internal;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -23,7 +23,7 @@ import java.io.StringReader;
 import java.net.URI;
 import java.util.HashMap;
 
-import javax.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriBuilder;
 import javax.xml.bind.JAXBContext;
 
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -38,7 +38,7 @@ import org.xwiki.test.docker.junit5.UITest;
 import org.xwiki.test.ui.TestUtils;
 
 import static java.util.Collections.singletonList;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 

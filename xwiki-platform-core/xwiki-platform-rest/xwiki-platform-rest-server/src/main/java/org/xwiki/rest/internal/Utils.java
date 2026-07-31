@@ -29,7 +29,7 @@ import java.util.Map;
 
 import javax.inject.Provider;
 import javax.print.URIException;
-import javax.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriBuilder;
 
 import org.apache.commons.lang3.StringUtils;
 import org.xwiki.component.manager.ComponentLookupException;

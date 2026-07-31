@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-import javax.annotation.Priority;
+import jakarta.annotation.Priority;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;

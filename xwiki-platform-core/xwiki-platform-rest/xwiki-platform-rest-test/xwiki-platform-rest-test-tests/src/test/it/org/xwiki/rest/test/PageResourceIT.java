@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.NameValuePair;

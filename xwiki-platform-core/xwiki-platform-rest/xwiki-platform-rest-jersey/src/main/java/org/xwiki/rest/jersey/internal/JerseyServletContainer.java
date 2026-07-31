@@ -38,7 +38,6 @@ import org.glassfish.jersey.servlet.ServletContainer;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.component.descriptor.ComponentDescriptor;
 import org.xwiki.component.manager.ComponentManager;
-import org.xwiki.jakartabridge.servlet.JakartaServletBridge;
 import org.xwiki.rest.XWikiRestComponent;
 
 /**
@@ -71,9 +70,9 @@ public class JerseyServletContainer extends HttpServlet
         // Create and initialize the Jersey servlet
         ServletContainer newContainer = new ServletContainer(createResourceConfig());
         try {
-            newContainer.init(JakartaServletBridge.toJavax(getServletConfig()));
-        } catch (javax.servlet.ServletException e) {
-            throw new ServletException(e);
+            newContainer.init(getServletConfig());
+        } catch (ServletException e) {
+            throw e;
         }
 
         // Remember the previous container
@@ -136,9 +135,9 @@ public class JerseyServletContainer extends HttpServlet
 
         try {
             // Execute the request
-            this.container.service(JakartaServletBridge.toJavax(req), JakartaServletBridge.toJavax(res));
-        } catch (javax.servlet.ServletException e) {
-            throw new ServletException(e);
+            this.container.service(req, res);
+        } catch (ServletException e) {
+            throw e;
         } finally {
             // Decrement the counter
             counter.decrementAndGet();
@@ -169,6 +168,6 @@ public class JerseyServletContainer extends HttpServlet
     @Override
     public ServletContext getServletContext()
     {
-        return JakartaServletBridge.toJakarta(this.container.getServletContext());
+        return this.container.getServletContext();
     }
 }

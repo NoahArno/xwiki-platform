@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
@@ -495,7 +495,7 @@ public abstract class AbstractHttpIT
     {
         String uri = buildURI(PageResource.class, wikiName, spaceName, pageName).toString();
 
-        PutMethod putMethod = executePut(uri, content, javax.ws.rs.core.MediaType.TEXT_PLAIN,
+        PutMethod putMethod = executePut(uri, content, jakarta.ws.rs.core.MediaType.TEXT_PLAIN,
             TestUtils.SUPER_ADMIN_CREDENTIALS.getUserName(), TestUtils.SUPER_ADMIN_CREDENTIALS.getPassword());
 
         int code = putMethod.getStatusCode();

@@ -19,11 +19,11 @@
  */
 package org.xwiki.platform.security.requiredrights.rest;
 
-import javax.ws.rs.Encoded;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
+import jakarta.ws.rs.Encoded;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 
 import org.xwiki.rest.XWikiRestException;
 import org.xwiki.security.requiredrights.rest.model.jaxb.DocumentRequiredRights;

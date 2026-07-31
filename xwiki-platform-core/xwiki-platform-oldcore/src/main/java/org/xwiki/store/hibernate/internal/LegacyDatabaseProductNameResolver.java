@@ -21,7 +21,7 @@ package org.xwiki.store.hibernate.internal;
 
 import java.util.Optional;
 
-import javax.annotation.Priority;
+import jakarta.annotation.Priority;
 
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;

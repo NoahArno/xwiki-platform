@@ -22,7 +22,7 @@ package org.xwiki.attachment.validation.internal.step;
 import java.io.InputStream;
 import java.util.List;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;

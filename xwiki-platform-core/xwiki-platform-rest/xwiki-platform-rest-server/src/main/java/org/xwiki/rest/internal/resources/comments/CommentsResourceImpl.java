@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Vector;
 
 import javax.inject.Named;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 import org.xwiki.component.annotation.Component;
 import org.xwiki.rest.XWikiResource;

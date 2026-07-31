@@ -27,8 +27,8 @@ import java.util.Map;
 import java.util.Vector;
 
 import javax.inject.Provider;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.jupiter.api.BeforeEach;

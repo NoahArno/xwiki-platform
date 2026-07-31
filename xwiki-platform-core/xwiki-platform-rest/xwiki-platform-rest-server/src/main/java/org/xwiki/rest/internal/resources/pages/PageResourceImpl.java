@@ -22,8 +22,8 @@ package org.xwiki.rest.internal.resources.pages;
 import java.net.URI;
 import java.util.List;
 
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.core.Response;
 
 import org.xwiki.component.annotation.Component;
 import org.xwiki.localization.ContextualLocalizationManager;
