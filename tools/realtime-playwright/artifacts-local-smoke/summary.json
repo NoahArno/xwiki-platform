@@ -7,7 +7,7 @@
   "totalMarkers": 4,
   "slowInputs": 0,
   "severeInputs": 0,
-  "maxInputDurationMs": 238,
+  "maxInputDurationMs": 215,
   "missingMarkers": [],
   "tableResult": {
     "skipped": true
@@ -15,7 +15,7 @@
   "eventCounts": {
     "run-start": 1,
     "session-created": 2,
-    "console": 37,
+    "console": 103,
     "login-submitted": 2,
     "page-error": 2,
     "websocket-open": 2,

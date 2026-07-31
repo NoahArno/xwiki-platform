@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { createRandomActionPool } from './random-editing.js';
+
 export const DEFAULT_CONFIG = Object.freeze({
   headless: false,
   minUsers: 8,
@@ -35,7 +37,8 @@ export const DEFAULT_CONFIG = Object.freeze({
       'button[name="action_saveandcontinue"]',
       'button[name="action_save"]'
     ],
-    tableCell: ['td', 'th']
+    tableCell: ['td', 'th'],
+    randomTextBlock: ['p', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre', 'td', 'th']
   },
   typing: {
     iterations: 100,
@@ -58,6 +61,21 @@ export const DEFAULT_CONFIG = Object.freeze({
   verification: {
     settleMs: 2000
   },
+  randomEditing: {
+    enabled: false,
+    durationMs: 0,
+    minPauseMs: 3000,
+    maxPauseMs: 8000,
+    users: 'all',
+    markerPrefix: 'RANDOM',
+    actions: {
+      insertText: 60,
+      deleteText: 10,
+      newline: 10,
+      tableContextMenu: 10,
+      tableCellText: 10
+    }
+  },
   trace: {
     enabled: true,
     screenshots: true,
@@ -65,7 +83,8 @@ export const DEFAULT_CONFIG = Object.freeze({
     sources: false
   },
   browser: {
-    slowMoMs: 0
+    slowMoMs: 0,
+    channel: undefined
   }
 });
 
@@ -100,12 +119,17 @@ export function loadConfigFromObject(input, baseDir = process.cwd()) {
   });
 
   config.baseURL = trimTrailingSlash(config.baseURL);
+  config.editURL = resolveEditURL(config, config.editURL);
   config.artifactsDir = path.resolve(baseDir, config.artifactsDir);
   config.selectors.editor = normalizeSelectorList(config.selectors.editor, 'selectors.editor');
   config.selectors.realtimeConnected = normalizeSelectorList(config.selectors.realtimeConnected,
     'selectors.realtimeConnected');
   config.selectors.saveButton = normalizeSelectorList(config.selectors.saveButton, 'selectors.saveButton');
   config.selectors.tableCell = normalizeSelectorList(config.selectors.tableCell, 'selectors.tableCell');
+  config.selectors.randomTextBlock = normalizeSelectorList(config.selectors.randomTextBlock,
+    'selectors.randomTextBlock');
+  validateRandomEditingConfig(config.randomEditing);
+  validateBrowserConfig(config.browser);
 
   return config;
 }
@@ -118,6 +142,29 @@ export function resolveApplicationURL(config, value) {
     return `${config.baseURL}${value}`;
   }
   return new URL(value, `${config.baseURL}/`).toString();
+}
+
+function resolveEditURL(config, value) {
+  if (/^https?:\/\//i.test(value)) {
+    return value;
+  }
+  if (value.startsWith('/')) {
+    return `${config.baseURL}${value}`;
+  }
+  return `http://${value}`;
+}
+
+function validateBrowserConfig(browser) {
+  if (browser.channel === undefined || browser.channel === null || browser.channel === '') {
+    browser.channel = undefined;
+    return;
+  }
+  if (typeof browser.channel !== 'string') {
+    throw new Error('Configuration field browser.channel must be a string like "chrome", "msedge" or empty.');
+  }
+  if (!/^[a-z0-9-]+$/i.test(browser.channel)) {
+    throw new Error(`Configuration field browser.channel "${browser.channel}" contains invalid characters.`);
+  }
 }
 
 function requireString(value, name) {
@@ -134,6 +181,26 @@ function normalizeSelectorList(value, name) {
     throw new Error(`Configuration field ${name} must be a selector string or a non-empty selector array.`);
   }
   return value;
+}
+
+function validateRandomEditingConfig(randomEditing) {
+  requireNonNegativeNumber(randomEditing.durationMs, 'randomEditing.durationMs');
+  requireNonNegativeNumber(randomEditing.minPauseMs, 'randomEditing.minPauseMs');
+  requireNonNegativeNumber(randomEditing.maxPauseMs, 'randomEditing.maxPauseMs');
+  if (randomEditing.minPauseMs > randomEditing.maxPauseMs) {
+    throw new Error('randomEditing.minPauseMs must be less than or equal to randomEditing.maxPauseMs.');
+  }
+  requireString(randomEditing.markerPrefix, 'randomEditing.markerPrefix');
+  if (randomEditing.users !== 'all' && !Array.isArray(randomEditing.users)) {
+    throw new Error('Configuration field randomEditing.users must be "all" or an array of user ids.');
+  }
+  createRandomActionPool(randomEditing.actions);
+}
+
+function requireNonNegativeNumber(value, name) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+    throw new Error(`Configuration field ${name} must be a non-negative number.`);
+  }
 }
 
 function mergeDeep(base, override) {

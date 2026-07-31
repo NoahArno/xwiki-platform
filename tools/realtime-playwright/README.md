@@ -19,6 +19,12 @@ cp config.example.json config.json
 - 把 8 个用户的 `username` 和 `password` 替换成测试账号。
 - 第一次运行建议保持 `headless` 为 `false`，这样可以直接观察浏览器行为。
 
+`browser.channel` 可选：
+
+- 留空或省略：使用 Playwright 自带 Chromium（默认）。
+- `"chrome"`：使用系统安装的 Google Chrome（例如内网机器上的 Chrome 146）。
+- `"msedge"`：使用系统安装的 Microsoft Edge。
+
 ## 运行
 
 ```bash
@@ -30,6 +36,35 @@ node realtime-wysiwyg-load.js --config config.json
 - `0`：没有检测到严重输入延迟，也没有发现输入标记丢失。
 - `2`：至少有一个输入标记丢失，或某次输入耗时超过 2000ms。
 - `1`：脚本配置、登录、页面定位等运行错误。
+
+## 随机持续编辑模式
+
+如果想让脚本像真实用户一样在给定编辑页面里低频随机修改，可以开启 `randomEditing`：
+
+```json
+"randomEditing": {
+  "enabled": true,
+  "durationMs": 0,
+  "minPauseMs": 3000,
+  "maxPauseMs": 8000,
+  "users": "all",
+  "markerPrefix": "RANDOM",
+  "actions": {
+    "insertText": 60,
+    "deleteText": 10,
+    "newline": 10,
+    "tableContextMenu": 10,
+    "tableCellText": 10
+  }
+}
+```
+
+- `durationMs: 0`：一直运行，直到按 `Ctrl+C`。
+- `durationMs > 0`：运行到指定毫秒数后自动停止。
+- `minPauseMs` / `maxPauseMs`：每个用户两次随机动作之间的等待区间。
+- `actions`：随机动作权重。页面没有表格时，表格动作会被记录为 skipped，脚本继续运行。
+
+随机持续编辑模式默认不保存页面。需要保存时开启 `save.enabled`。
 
 ## 输出
 
@@ -78,3 +113,14 @@ npx playwright show-trace artifacts/U1/trace.zip
 ## 安全提醒
 
 请只在测试页面或生产页面的测试副本上运行。脚本会输入大量标记文本；如果开启 `save.enabled`，还会尝试保存页面。
+
+## 内网 Windows 离线使用
+
+如果运行机器在内网、无法访问外网（例如公司 Windows 电脑），可以使用预打包的离线目录：
+
+1. 在能联网的机器上执行 `npm install`（或使用仓库内已生成好的 `offline-bundle/`）。
+2. 把 `offline-bundle/xwiki-realtime-playwright-offline-windows/` 整个文件夹拷贝到内网 Windows 机器。
+3. 双击 `run-verify.bat` 自检，编辑 `app/config.json` 后双击 `run.bat` 运行。
+
+离线包已内置 Node.js（win-x64）、playwright 依赖、Chromium 151 和 ffmpeg，完全不需要外网；
+也支持通过 `browser.channel: "chrome"` 复用内网已安装的 Google Chrome。详见离线包内 `README-OFFLINE.md`。

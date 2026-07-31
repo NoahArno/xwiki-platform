@@ -32,6 +32,25 @@
     "afterTyping": true,
     "timeoutMs": 120000
   },
+  "browser": {
+    "slowMoMs": 0,
+    "channel": ""
+  },
+  "randomEditing": {
+    "enabled": false,
+    "durationMs": 0,
+    "minPauseMs": 3000,
+    "maxPauseMs": 8000,
+    "users": "all",
+    "markerPrefix": "RANDOM",
+    "actions": {
+      "insertText": 60,
+      "deleteText": 10,
+      "newline": 10,
+      "tableContextMenu": 10,
+      "tableCellText": 10
+    }
+  },
   "selectors": {
     "editor": [
       ".cke_wysiwyg_frame",
@@ -54,7 +73,8 @@
       "button[name=\"action_saveandcontinue\"]",
       "button[name=\"action_save\"]"
     ],
-    "tableCell": ["td", "th"]
+    "tableCell": ["td", "th"],
+    "randomTextBlock": ["p", "li", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "pre", "td", "th"]
   },
   "trace": {
     "enabled": true,

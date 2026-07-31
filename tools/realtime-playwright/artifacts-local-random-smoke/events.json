@@ -1,0 +1,458 @@
+[
+  {
+    "time": "2026-07-31T03:41:13.557Z",
+    "type": "run-start",
+    "users": [
+      "U1",
+      "U2"
+    ],
+    "editURL": "http://localhost:8080/xwiki/bin/edit/Main/WebHome?editor=wysiwyg",
+    "artifactsDir": "/Users/noaharno/programer/sourcecode/xwiki_parent/xwiki-platform/tools/realtime-playwright/artifacts-local-random-smoke"
+  },
+  {
+    "time": "2026-07-31T03:41:13.708Z",
+    "type": "session-created",
+    "userId": "U1",
+    "index": 0
+  },
+  {
+    "time": "2026-07-31T03:41:13.801Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 ()"
+  },
+  {
+    "time": "2026-07-31T03:41:13.887Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "warning",
+    "text": "JQMIGRATE: jQuery.isFunction() is deprecated"
+  },
+  {
+    "time": "2026-07-31T03:41:14.100Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "warning",
+    "text": "JQMIGRATE: jQuery.isFunction() is deprecated"
+  },
+  {
+    "time": "2026-07-31T03:41:14.110Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "warning",
+    "text": "JQMIGRATE: DEPRECATED: jQuery.fn.focus() event shorthand"
+  },
+  {
+    "time": "2026-07-31T03:41:14.695Z",
+    "type": "login-submitted",
+    "userId": "U1",
+    "url": "http://localhost:8080/xwiki/bin/view/Main/"
+  },
+  {
+    "time": "2026-07-31T03:41:14.886Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "warning",
+    "text": "JQMIGRATE: jQuery.isFunction() is deprecated"
+  },
+  {
+    "time": "2026-07-31T03:41:14.902Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "warning",
+    "text": "[CKEDITOR] Error code: clipboard-image-handling-disabled. {editor: content, plugin: uploadimage}"
+  },
+  {
+    "time": "2026-07-31T03:41:14.902Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "warning",
+    "text": "[CKEDITOR] For more information about this error go to https://ckeditor.com/docs/ckeditor4/latest/guide/dev_errors.html#clipboard-image-handling-disabled"
+  },
+  {
+    "time": "2026-07-31T03:41:14.958Z",
+    "type": "page-error",
+    "userId": "U1",
+    "message": "l.getElementsByTagName is not a function",
+    "stack": "TypeError: l.getElementsByTagName is not a function\n    at Object.success (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/xwiki-platform-ckeditor-plugins/18.1.0/webjar.bundle.min.js:3:247)\n    at c (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:25304)\n    at Object.fireWith [as resolveWith] (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:26053)\n    at l (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:77782)\n    at XMLHttpRequest.<anonymous> (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:80265)"
+  },
+  {
+    "time": "2026-07-31T03:41:14.966Z",
+    "type": "websocket-open",
+    "userId": "U1",
+    "url": "ws://localhost:8080/xwiki/websocket/xwiki/netflux"
+  },
+  {
+    "time": "2026-07-31T03:41:15.060Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "Saved path-based selection:  []"
+  },
+  {
+    "time": "2026-07-31T03:41:15.578Z",
+    "type": "edit-page-opened",
+    "userId": "U1",
+    "url": "http://localhost:8080/xwiki/bin/edit/Main/WebHome?editor=wysiwyg"
+  },
+  {
+    "time": "2026-07-31T03:41:15.605Z",
+    "type": "session-created",
+    "userId": "U2",
+    "index": 1
+  },
+  {
+    "time": "2026-07-31T03:41:15.651Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "error",
+    "text": "Failed to load resource: the server responded with a status of 401 ()"
+  },
+  {
+    "time": "2026-07-31T03:41:15.738Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "warning",
+    "text": "JQMIGRATE: jQuery.isFunction() is deprecated"
+  },
+  {
+    "time": "2026-07-31T03:41:15.938Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "warning",
+    "text": "JQMIGRATE: jQuery.isFunction() is deprecated"
+  },
+  {
+    "time": "2026-07-31T03:41:15.946Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "warning",
+    "text": "JQMIGRATE: DEPRECATED: jQuery.fn.focus() event shorthand"
+  },
+  {
+    "time": "2026-07-31T03:41:16.516Z",
+    "type": "login-submitted",
+    "userId": "U2",
+    "url": "http://localhost:8080/xwiki/bin/view/Main/"
+  },
+  {
+    "time": "2026-07-31T03:41:16.701Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "warning",
+    "text": "JQMIGRATE: jQuery.isFunction() is deprecated"
+  },
+  {
+    "time": "2026-07-31T03:41:16.718Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "warning",
+    "text": "[CKEDITOR] Error code: clipboard-image-handling-disabled. {editor: content, plugin: uploadimage}"
+  },
+  {
+    "time": "2026-07-31T03:41:16.718Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "warning",
+    "text": "[CKEDITOR] For more information about this error go to https://ckeditor.com/docs/ckeditor4/latest/guide/dev_errors.html#clipboard-image-handling-disabled"
+  },
+  {
+    "time": "2026-07-31T03:41:16.774Z",
+    "type": "page-error",
+    "userId": "U2",
+    "message": "l.getElementsByTagName is not a function",
+    "stack": "TypeError: l.getElementsByTagName is not a function\n    at Object.success (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/xwiki-platform-ckeditor-plugins/18.1.0/webjar.bundle.min.js:3:247)\n    at c (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:25304)\n    at Object.fireWith [as resolveWith] (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:26053)\n    at l (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:77782)\n    at XMLHttpRequest.<anonymous> (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:80265)"
+  },
+  {
+    "time": "2026-07-31T03:41:16.781Z",
+    "type": "websocket-open",
+    "userId": "U2",
+    "url": "ws://localhost:8080/xwiki/websocket/xwiki/netflux"
+  },
+  {
+    "time": "2026-07-31T03:41:16.868Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "Saved path-based selection:  []"
+  },
+  {
+    "time": "2026-07-31T03:41:17.389Z",
+    "type": "edit-page-opened",
+    "userId": "U2",
+    "url": "http://localhost:8080/xwiki/bin/edit/Main/WebHome?editor=wysiwyg"
+  },
+  {
+    "time": "2026-07-31T03:41:17.440Z",
+    "type": "editor-ready",
+    "userId": "U2",
+    "kind": "ckeditor-instance"
+  },
+  {
+    "time": "2026-07-31T03:41:17.440Z",
+    "type": "editor-ready",
+    "userId": "U1",
+    "kind": "ckeditor-instance"
+  },
+  {
+    "time": "2026-07-31T03:41:17.440Z",
+    "type": "random-editing-start",
+    "durationMs": 6000,
+    "users": [
+      "U1",
+      "U2"
+    ],
+    "minPauseMs": 500,
+    "maxPauseMs": 1000
+  },
+  {
+    "time": "2026-07-31T03:41:18.383Z",
+    "type": "random-action",
+    "userId": "U1",
+    "action": "insertText",
+    "durationMs": 376,
+    "marker": "RANDOM-U1-1785469278007-4743",
+    "position": {
+      "tagName": "p",
+      "textLength": 475,
+      "offset": 398
+    }
+  },
+  {
+    "time": "2026-07-31T03:41:18.615Z",
+    "type": "random-action",
+    "userId": "U2",
+    "action": "insertText",
+    "durationMs": 364,
+    "marker": "RANDOM-U2-1785469278251-6736",
+    "position": {
+      "tagName": "p",
+      "textLength": 123,
+      "offset": 105
+    }
+  },
+  {
+    "time": "2026-07-31T03:41:18.829Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[5,0,135],\"end\":[5,0,135]}]"
+  },
+  {
+    "time": "2026-07-31T03:41:18.918Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[3,0,428],\"end\":[3,0,428]}]"
+  },
+  {
+    "time": "2026-07-31T03:41:19.352Z",
+    "type": "random-action-skipped",
+    "userId": "U1",
+    "action": "tableCellText",
+    "durationMs": 20,
+    "skipped": true,
+    "reason": "No table cell found."
+  },
+  {
+    "time": "2026-07-31T03:41:19.717Z",
+    "type": "random-action",
+    "userId": "U2",
+    "action": "insertText",
+    "durationMs": 387,
+    "marker": "RANDOM-U2-1785469279330-4757",
+    "position": {
+      "tagName": "p",
+      "textLength": 161,
+      "offset": 104
+    }
+  },
+  {
+    "time": "2026-07-31T03:41:19.928Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[3,0,428],\"end\":[3,0,428]}]"
+  },
+  {
+    "time": "2026-07-31T03:41:20.509Z",
+    "type": "random-action",
+    "userId": "U1",
+    "action": "insertText",
+    "durationMs": 375,
+    "marker": "RANDOM-U1-1785469280134-9848",
+    "position": {
+      "tagName": "p",
+      "textLength": 289,
+      "offset": 64
+    }
+  },
+  {
+    "time": "2026-07-31T03:41:20.709Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[10,0,36],\"end\":[10,0,36]}]"
+  },
+  {
+    "time": "2026-07-31T03:41:20.866Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[18,0,94],\"end\":[18,0,94]}]"
+  },
+  {
+    "time": "2026-07-31T03:41:21.055Z",
+    "type": "random-action",
+    "userId": "U2",
+    "action": "insertText",
+    "durationMs": 400,
+    "marker": "RANDOM-U2-1785469280655-8473",
+    "position": {
+      "tagName": "p",
+      "textLength": 68,
+      "offset": 33
+    }
+  },
+  {
+    "time": "2026-07-31T03:41:21.232Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[18,0,94],\"end\":[18,0,94]}]"
+  },
+  {
+    "time": "2026-07-31T03:41:21.361Z",
+    "type": "random-action",
+    "userId": "U1",
+    "action": "deleteText",
+    "durationMs": 5,
+    "count": 1,
+    "position": {
+      "tagName": "p",
+      "textLength": 69,
+      "offset": 30
+    }
+  },
+  {
+    "time": "2026-07-31T03:41:21.651Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[10,0,63],\"end\":[10,0,63]}]"
+  },
+  {
+    "time": "2026-07-31T03:41:22.154Z",
+    "type": "random-action",
+    "userId": "U2",
+    "action": "insertText",
+    "durationMs": 380,
+    "marker": "RANDOM-U2-1785469281774-3302",
+    "position": {
+      "tagName": "p",
+      "textLength": 54,
+      "offset": 52
+    }
+  },
+  {
+    "time": "2026-07-31T03:41:22.574Z",
+    "type": "random-action",
+    "userId": "U1",
+    "action": "insertText",
+    "durationMs": 379,
+    "marker": "RANDOM-U1-1785469282195-4309",
+    "position": {
+      "tagName": "p",
+      "textLength": 110,
+      "offset": 58
+    }
+  },
+  {
+    "time": "2026-07-31T03:41:22.800Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[18,0,253],\"end\":[18,0,253]}]"
+  },
+  {
+    "time": "2026-07-31T03:41:22.826Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[43,0,88],\"end\":[43,0,88]}]"
+  },
+  {
+    "time": "2026-07-31T03:41:23.061Z",
+    "type": "random-action",
+    "userId": "U2",
+    "action": "insertText",
+    "durationMs": 389,
+    "marker": "RANDOM-U2-1785469282672-5908",
+    "position": {
+      "tagName": "p",
+      "textLength": 319,
+      "offset": 243
+    }
+  },
+  {
+    "time": "2026-07-31T03:41:23.500Z",
+    "type": "random-editing-user-finished",
+    "userId": "U2",
+    "actions": {
+      "insertText": 5
+    },
+    "skipped": {},
+    "errors": 0
+  },
+  {
+    "time": "2026-07-31T03:41:23.620Z",
+    "type": "random-action",
+    "userId": "U1",
+    "action": "insertText",
+    "durationMs": 389,
+    "marker": "RANDOM-U1-1785469283231-1518",
+    "position": {
+      "tagName": "p",
+      "textLength": 1,
+      "offset": 0
+    }
+  },
+  {
+    "time": "2026-07-31T03:41:23.663Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[45,0,60],\"end\":[45,0,60]}]"
+  },
+  {
+    "time": "2026-07-31T03:41:23.699Z",
+    "type": "random-editing-user-finished",
+    "userId": "U1",
+    "actions": {
+      "insertText": 4,
+      "deleteText": 1
+    },
+    "skipped": {
+      "tableCellText": 1
+    },
+    "errors": 0
+  },
+  {
+    "time": "2026-07-31T03:41:23.700Z",
+    "type": "run-finished",
+    "randomActions": 10,
+    "randomErrors": 0,
+    "stopReason": "duration"
+  },
+  {
+    "time": "2026-07-31T03:41:23.806Z",
+    "type": "session-closed",
+    "userId": "U2"
+  },
+  {
+    "time": "2026-07-31T03:41:23.810Z",
+    "type": "session-closed",
+    "userId": "U1"
+  }
+]

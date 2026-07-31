@@ -1,0 +1,44 @@
+{
+  "mode": "randomEditing",
+  "editURL": "http://localhost:8080/xwiki/bin/edit/Main/WebHome?editor=wysiwyg",
+  "users": [
+    {
+      "userId": "U1",
+      "actions": {
+        "insertText": 4,
+        "deleteText": 1
+      },
+      "skipped": {
+        "tableCellText": 1
+      },
+      "errors": 0
+    },
+    {
+      "userId": "U2",
+      "actions": {
+        "insertText": 5
+      },
+      "skipped": {},
+      "errors": 0
+    }
+  ],
+  "durationMs": 6000,
+  "stopReason": "duration",
+  "randomActions": 10,
+  "randomSkipped": 1,
+  "randomErrors": 0,
+  "eventCounts": {
+    "run-start": 1,
+    "session-created": 2,
+    "console": 26,
+    "login-submitted": 2,
+    "page-error": 2,
+    "websocket-open": 2,
+    "edit-page-opened": 2,
+    "editor-ready": 2,
+    "random-editing-start": 1,
+    "random-action": 10,
+    "random-action-skipped": 1,
+    "random-editing-user-finished": 2
+  }
+}

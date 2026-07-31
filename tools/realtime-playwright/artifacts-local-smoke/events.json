@@ -1,6 +1,6 @@
 [
   {
-    "time": "2026-07-31T02:29:20.922Z",
+    "time": "2026-07-31T03:19:44.264Z",
     "type": "run-start",
     "users": [
       "U1",
@@ -10,401 +10,863 @@
     "artifactsDir": "/Users/noaharno/programer/sourcecode/xwiki_parent/xwiki-platform/tools/realtime-playwright/artifacts-local-smoke"
   },
   {
-    "time": "2026-07-31T02:29:21.196Z",
+    "time": "2026-07-31T03:19:44.412Z",
     "type": "session-created",
     "userId": "U1",
     "index": 0
   },
   {
-    "time": "2026-07-31T02:29:21.457Z",
+    "time": "2026-07-31T03:19:44.628Z",
     "type": "console",
     "userId": "U1",
     "level": "error",
     "text": "Failed to load resource: the server responded with a status of 401 ()"
   },
   {
-    "time": "2026-07-31T02:29:21.583Z",
+    "time": "2026-07-31T03:19:44.746Z",
     "type": "console",
     "userId": "U1",
     "level": "warning",
     "text": "JQMIGRATE: jQuery.isFunction() is deprecated"
   },
   {
-    "time": "2026-07-31T02:29:21.812Z",
+    "time": "2026-07-31T03:19:45.006Z",
     "type": "console",
     "userId": "U1",
     "level": "warning",
     "text": "JQMIGRATE: jQuery.isFunction() is deprecated"
   },
   {
-    "time": "2026-07-31T02:29:21.823Z",
+    "time": "2026-07-31T03:19:45.015Z",
     "type": "console",
     "userId": "U1",
     "level": "warning",
     "text": "JQMIGRATE: DEPRECATED: jQuery.fn.focus() event shorthand"
   },
   {
-    "time": "2026-07-31T02:29:22.388Z",
+    "time": "2026-07-31T03:19:45.595Z",
     "type": "login-submitted",
     "userId": "U1",
     "url": "http://localhost:8080/xwiki/bin/view/Main/"
   },
   {
-    "time": "2026-07-31T02:29:22.629Z",
+    "time": "2026-07-31T03:19:45.767Z",
     "type": "console",
     "userId": "U1",
     "level": "warning",
     "text": "JQMIGRATE: jQuery.isFunction() is deprecated"
   },
   {
-    "time": "2026-07-31T02:29:22.650Z",
+    "time": "2026-07-31T03:19:45.784Z",
     "type": "console",
     "userId": "U1",
     "level": "warning",
     "text": "[CKEDITOR] Error code: clipboard-image-handling-disabled. {editor: content, plugin: uploadimage}"
   },
   {
-    "time": "2026-07-31T02:29:22.650Z",
+    "time": "2026-07-31T03:19:45.784Z",
     "type": "console",
     "userId": "U1",
     "level": "warning",
     "text": "[CKEDITOR] For more information about this error go to https://ckeditor.com/docs/ckeditor4/latest/guide/dev_errors.html#clipboard-image-handling-disabled"
   },
   {
-    "time": "2026-07-31T02:29:22.714Z",
+    "time": "2026-07-31T03:19:45.837Z",
     "type": "page-error",
     "userId": "U1",
     "message": "l.getElementsByTagName is not a function",
     "stack": "TypeError: l.getElementsByTagName is not a function\n    at Object.success (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/xwiki-platform-ckeditor-plugins/18.1.0/webjar.bundle.min.js:3:247)\n    at c (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:25304)\n    at Object.fireWith [as resolveWith] (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:26053)\n    at l (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:77782)\n    at XMLHttpRequest.<anonymous> (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:80265)"
   },
   {
-    "time": "2026-07-31T02:29:22.726Z",
+    "time": "2026-07-31T03:19:45.845Z",
     "type": "websocket-open",
     "userId": "U1",
     "url": "ws://localhost:8080/xwiki/websocket/xwiki/netflux"
   },
   {
-    "time": "2026-07-31T02:29:22.766Z",
+    "time": "2026-07-31T03:19:45.893Z",
     "type": "console",
     "userId": "U1",
     "level": "debug",
-    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
   },
   {
-    "time": "2026-07-31T02:29:23.298Z",
+    "time": "2026-07-31T03:19:45.894Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.894Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.894Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.895Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.895Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.895Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.895Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.896Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.896Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.896Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.896Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.896Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.896Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":5},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.897Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":5},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":5},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.897Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":5},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.897Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.897Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.897Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.898Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.898Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.898Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.898Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.898Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.898Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.898Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.898Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.898Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":5},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.899Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:45.900Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "Saved path-based selection:  []"
+  },
+  {
+    "time": "2026-07-31T03:19:46.429Z",
     "type": "edit-page-opened",
     "userId": "U1",
     "url": "http://localhost:8080/xwiki/bin/edit/Main/WebHome?editor=wysiwyg"
   },
   {
-    "time": "2026-07-31T02:29:23.333Z",
+    "time": "2026-07-31T03:19:46.456Z",
     "type": "session-created",
     "userId": "U2",
     "index": 1
   },
   {
-    "time": "2026-07-31T02:29:23.384Z",
+    "time": "2026-07-31T03:19:46.514Z",
     "type": "console",
     "userId": "U2",
     "level": "error",
     "text": "Failed to load resource: the server responded with a status of 401 ()"
   },
   {
-    "time": "2026-07-31T02:29:23.507Z",
+    "time": "2026-07-31T03:19:46.597Z",
     "type": "console",
     "userId": "U2",
     "level": "warning",
     "text": "JQMIGRATE: jQuery.isFunction() is deprecated"
   },
   {
-    "time": "2026-07-31T02:29:23.742Z",
+    "time": "2026-07-31T03:19:46.828Z",
     "type": "console",
     "userId": "U2",
     "level": "warning",
     "text": "JQMIGRATE: jQuery.isFunction() is deprecated"
   },
   {
-    "time": "2026-07-31T02:29:23.750Z",
+    "time": "2026-07-31T03:19:46.841Z",
     "type": "console",
     "userId": "U2",
     "level": "warning",
     "text": "JQMIGRATE: DEPRECATED: jQuery.fn.focus() event shorthand"
   },
   {
-    "time": "2026-07-31T02:29:24.321Z",
+    "time": "2026-07-31T03:19:47.401Z",
     "type": "login-submitted",
     "userId": "U2",
     "url": "http://localhost:8080/xwiki/bin/view/Main/"
   },
   {
-    "time": "2026-07-31T02:29:24.545Z",
+    "time": "2026-07-31T03:19:47.545Z",
     "type": "console",
     "userId": "U2",
     "level": "warning",
     "text": "JQMIGRATE: jQuery.isFunction() is deprecated"
   },
   {
-    "time": "2026-07-31T02:29:24.568Z",
+    "time": "2026-07-31T03:19:47.562Z",
     "type": "console",
     "userId": "U2",
     "level": "warning",
     "text": "[CKEDITOR] Error code: clipboard-image-handling-disabled. {editor: content, plugin: uploadimage}"
   },
   {
-    "time": "2026-07-31T02:29:24.568Z",
+    "time": "2026-07-31T03:19:47.562Z",
     "type": "console",
     "userId": "U2",
     "level": "warning",
     "text": "[CKEDITOR] For more information about this error go to https://ckeditor.com/docs/ckeditor4/latest/guide/dev_errors.html#clipboard-image-handling-disabled"
   },
   {
-    "time": "2026-07-31T02:29:24.629Z",
+    "time": "2026-07-31T03:19:47.617Z",
     "type": "page-error",
     "userId": "U2",
     "message": "l.getElementsByTagName is not a function",
     "stack": "TypeError: l.getElementsByTagName is not a function\n    at Object.success (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/xwiki-platform-ckeditor-plugins/18.1.0/webjar.bundle.min.js:3:247)\n    at c (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:25304)\n    at Object.fireWith [as resolveWith] (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:26053)\n    at l (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:77782)\n    at XMLHttpRequest.<anonymous> (http://localhost:8080/xwiki/webjars/wiki%3Axwiki/jquery/3.7.1/jquery.min.js?r=1:2:80265)"
   },
   {
-    "time": "2026-07-31T02:29:24.638Z",
+    "time": "2026-07-31T03:19:47.626Z",
     "type": "websocket-open",
     "userId": "U2",
     "url": "ws://localhost:8080/xwiki/websocket/xwiki/netflux"
   },
   {
-    "time": "2026-07-31T02:29:24.683Z",
+    "time": "2026-07-31T03:19:47.676Z",
     "type": "console",
     "userId": "U2",
     "level": "debug",
-    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
   },
   {
-    "time": "2026-07-31T02:29:24.684Z",
+    "time": "2026-07-31T03:19:47.677Z",
     "type": "console",
     "userId": "U2",
     "level": "debug",
-    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
   },
   {
-    "time": "2026-07-31T02:29:24.863Z",
+    "time": "2026-07-31T03:19:47.677Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.677Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.677Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.680Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.680Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.680Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.681Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.681Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.681Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.682Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.682Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.682Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":5},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.682Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":5},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":5},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.682Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":5},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.682Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":false,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.682Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.682Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.682Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.683Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.683Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.683Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.683Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.683Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.683Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.684Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":4},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.684Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":5},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.684Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.685Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:47.685Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "Saved path-based selection:  []"
+  },
+  {
+    "time": "2026-07-31T03:19:48.084Z",
     "type": "console",
     "userId": "U1",
     "level": "debug",
-    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
   },
   {
-    "time": "2026-07-31T02:29:24.863Z",
+    "time": "2026-07-31T03:19:48.084Z",
     "type": "console",
     "userId": "U1",
     "level": "debug",
-    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
   },
   {
-    "time": "2026-07-31T02:29:25.251Z",
+    "time": "2026-07-31T03:19:48.201Z",
     "type": "edit-page-opened",
     "userId": "U2",
     "url": "http://localhost:8080/xwiki/bin/edit/Main/WebHome?editor=wysiwyg"
   },
   {
-    "time": "2026-07-31T02:29:25.296Z",
-    "type": "editor-ready",
-    "userId": "U2",
-    "kind": "ckeditor-instance"
-  },
-  {
-    "time": "2026-07-31T02:29:25.296Z",
+    "time": "2026-07-31T03:19:48.242Z",
     "type": "editor-ready",
     "userId": "U1",
     "kind": "ckeditor-instance"
   },
   {
-    "time": "2026-07-31T02:29:25.512Z",
-    "type": "typed-marker",
+    "time": "2026-07-31T03:19:48.242Z",
+    "type": "editor-ready",
     "userId": "U2",
-    "marker": "RTSMOKE-U2-0001",
-    "durationMs": 216
+    "kind": "ckeditor-instance"
   },
   {
-    "time": "2026-07-31T02:29:25.513Z",
+    "time": "2026-07-31T03:19:48.456Z",
     "type": "typed-marker",
     "userId": "U1",
     "marker": "RTSMOKE-U1-0001",
-    "durationMs": 217
+    "durationMs": 214
   },
   {
-    "time": "2026-07-31T02:29:25.617Z",
+    "time": "2026-07-31T03:19:48.457Z",
+    "type": "typed-marker",
+    "userId": "U2",
+    "marker": "RTSMOKE-U2-0001",
+    "durationMs": 215
+  },
+  {
+    "time": "2026-07-31T03:19:48.559Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+  },
+  {
+    "time": "2026-07-31T03:19:48.561Z",
     "type": "console",
     "userId": "U2",
     "level": "debug",
-    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-17\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1}}"
   },
   {
-    "time": "2026-07-31T02:29:25.617Z",
+    "time": "2026-07-31T03:19:48.648Z",
     "type": "console",
     "userId": "U1",
     "level": "debug",
-    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1}}"
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
   },
   {
-    "time": "2026-07-31T02:29:25.644Z",
-    "type": "console",
-    "userId": "U2",
-    "level": "debug",
-    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
-  },
-  {
-    "time": "2026-07-31T02:29:25.666Z",
-    "type": "console",
-    "userId": "U1",
-    "level": "debug",
-    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1}}"
-  },
-  {
-    "time": "2026-07-31T02:29:25.667Z",
-    "type": "console",
-    "userId": "U1",
-    "level": "debug",
-    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1}}"
-  },
-  {
-    "time": "2026-07-31T02:29:25.720Z",
-    "type": "console",
-    "userId": "U1",
-    "level": "debug",
-    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
-  },
-  {
-    "time": "2026-07-31T02:29:25.725Z",
+    "time": "2026-07-31T03:19:48.651Z",
     "type": "console",
     "userId": "U1",
     "level": "debug",
     "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[6,0,7],\"end\":[6,0,7]}]"
   },
   {
-    "time": "2026-07-31T02:29:25.823Z",
+    "time": "2026-07-31T03:19:48.724Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-17\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1}}"
+  },
+  {
+    "time": "2026-07-31T03:19:48.724Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-17\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1}}"
+  },
+  {
+    "time": "2026-07-31T03:19:48.755Z",
     "type": "typed-marker",
     "userId": "U2",
     "marker": "RTSMOKE-U2-0002",
-    "durationMs": 210
+    "durationMs": 196
   },
   {
-    "time": "2026-07-31T02:29:25.851Z",
+    "time": "2026-07-31T03:19:48.773Z",
     "type": "typed-marker",
     "userId": "U1",
     "marker": "RTSMOKE-U1-0002",
-    "durationMs": 238
+    "durationMs": 215
   },
   {
-    "time": "2026-07-31T02:29:25.874Z",
-    "type": "console",
-    "userId": "U2",
-    "level": "debug",
-    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
-  },
-  {
-    "time": "2026-07-31T02:29:25.874Z",
-    "type": "console",
-    "userId": "U2",
-    "level": "debug",
-    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
-  },
-  {
-    "time": "2026-07-31T02:29:25.926Z",
-    "type": "console",
-    "userId": "U2",
-    "level": "debug",
-    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
-  },
-  {
-    "time": "2026-07-31T02:29:25.954Z",
-    "type": "console",
-    "userId": "U2",
-    "level": "debug",
-    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[6,0,17],\"end\":[6,0,17]}]"
-  },
-  {
-    "time": "2026-07-31T02:29:25.954Z",
+    "time": "2026-07-31T03:19:48.792Z",
     "type": "console",
     "userId": "U1",
     "level": "debug",
-    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3}}"
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":false,\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":0}}"
   },
   {
-    "time": "2026-07-31T02:29:26.009Z",
+    "time": "2026-07-31T03:19:48.792Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-17\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1}}"
+  },
+  {
+    "time": "2026-07-31T03:19:48.860Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-17\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
+  },
+  {
+    "time": "2026-07-31T03:19:48.878Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-17\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1}}"
+  },
+  {
+    "time": "2026-07-31T03:19:48.920Z",
     "type": "verification-wait-start",
     "durationMs": 2000
   },
   {
-    "time": "2026-07-31T02:29:26.088Z",
+    "time": "2026-07-31T03:19:48.950Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[6,0,17],\"end\":[6,0,17]}]"
+  },
+  {
+    "time": "2026-07-31T03:19:49.141Z",
     "type": "console",
     "userId": "U1",
     "level": "debug",
     "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[6,0,17],\"end\":[6,0,17]}]"
   },
   {
-    "time": "2026-07-31T02:29:26.129Z",
+    "time": "2026-07-31T03:19:49.236Z",
     "type": "console",
     "userId": "U1",
     "level": "debug",
-    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3}}"
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-17\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":1}}"
   },
   {
-    "time": "2026-07-31T02:29:26.129Z",
+    "time": "2026-07-31T03:19:49.236Z",
     "type": "console",
     "userId": "U1",
     "level": "debug",
-    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3}}"
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-17\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
   },
   {
-    "time": "2026-07-31T02:29:26.469Z",
+    "time": "2026-07-31T03:19:49.291Z",
     "type": "console",
     "userId": "U2",
     "level": "debug",
-    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-17\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
   },
   {
-    "time": "2026-07-31T02:29:26.469Z",
+    "time": "2026-07-31T03:19:49.291Z",
     "type": "console",
     "userId": "U2",
     "level": "debug",
-    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d9071924356365895\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-10\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9784019369533066\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-f\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3}}"
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-17\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
   },
   {
-    "time": "2026-07-31T02:29:26.542Z",
+    "time": "2026-07-31T03:19:50.272Z",
     "type": "console",
     "userId": "U2",
     "level": "debug",
-    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[6,0,41],\"end\":[6,0,41]}]"
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-17\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
   },
   {
-    "time": "2026-07-31T02:29:28.011Z",
+    "time": "2026-07-31T03:19:50.273Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-17\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
+  },
+  {
+    "time": "2026-07-31T03:19:50.273Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":1,\"updateCount\":7},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-17\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
+  },
+  {
+    "time": "2026-07-31T03:19:50.273Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":1,\"updateCount\":7},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-17\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
+  },
+  {
+    "time": "2026-07-31T03:19:50.674Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[6,0,17],\"end\":[6,0,17]}]"
+  },
+  {
+    "time": "2026-07-31T03:19:50.674Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "Saved path-based selection:  [{\"collapsed\":true,\"start\":[6,0,51],\"end\":[6,0,51]}]"
+  },
+  {
+    "time": "2026-07-31T03:19:50.852Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":1,\"updateCount\":7},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-17\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
+  },
+  {
+    "time": "2026-07-31T03:19:50.852Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Push local states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":1,\"updateCount\":7},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-17\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
+  },
+  {
+    "time": "2026-07-31T03:19:50.852Z",
+    "type": "console",
+    "userId": "U2",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":1,\"updateCount\":8},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-17\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
+  },
+  {
+    "time": "2026-07-31T03:19:50.852Z",
+    "type": "console",
+    "userId": "U1",
+    "level": "debug",
+    "text": "[Saver]  Received remote states:  {\"xwiki:XWiki.admin-admin%2d05935746342671078\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-13\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d140237468774552\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-15\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d1581586762294035\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-11\",\"savedUpdateCount\":{},\"saving\":1,\"updateCount\":8},\"xwiki:XWiki.admin-admin%2d2930052094576939\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-14\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d6155797758340764\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-12\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":6},\"xwiki:XWiki.admin-admin%2d8455216912232647\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-16\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":3},\"xwiki:XWiki.admin-admin%2d9341647824733982\":{\"dirty\":true,\"id\":\"8f55761c-2d1e-431b-b660-27978d791225-17\",\"savedUpdateCount\":{},\"saving\":0,\"updateCount\":2}}"
+  },
+  {
+    "time": "2026-07-31T03:19:50.921Z",
     "type": "verification-wait-finished",
     "durationMs": 2000
   },
   {
-    "time": "2026-07-31T02:29:28.020Z",
+    "time": "2026-07-31T03:19:50.929Z",
     "type": "marker-verification",
     "userId": "U1",
     "missing": 0
   },
   {
-    "time": "2026-07-31T02:29:28.027Z",
+    "time": "2026-07-31T03:19:50.938Z",
     "type": "marker-verification",
     "userId": "U2",
     "missing": 0
   },
   {
-    "time": "2026-07-31T02:29:28.028Z",
+    "time": "2026-07-31T03:19:50.938Z",
     "type": "run-finished",
     "missingMarkers": 0,
     "severeInputs": 0
   },
   {
-    "time": "2026-07-31T02:29:28.122Z",
+    "time": "2026-07-31T03:19:51.027Z",
     "type": "session-closed",
     "userId": "U1"
   },
   {
-    "time": "2026-07-31T02:29:28.145Z",
+    "time": "2026-07-31T03:19:51.034Z",
     "type": "session-closed",
     "userId": "U2"
   }
