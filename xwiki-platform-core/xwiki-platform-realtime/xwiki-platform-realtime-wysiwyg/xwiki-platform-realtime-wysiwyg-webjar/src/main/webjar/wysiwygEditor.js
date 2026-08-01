@@ -76,6 +76,11 @@ define('xwiki-realtime-wysiwyg', [
         status: ConnectionStatus.DISCONNECTED
       };
 
+      // Track IME composition state to prevent remote DOM patches from interrupting the user while they are composing
+      // (e.g., typing Chinese/Japanese/Korean characters).
+      this._isComposing = false;
+      this._pendingRemoteUpdate = null;
+
       // Don't create the checkbox if we can't connect to the WebSocket service.
       if (realtimeContext.realtimeEnabled !== 0) {
         this._createAllowRealtimeCheckbox();
@@ -287,6 +292,71 @@ define('xwiki-realtime-wysiwyg', [
       this._connection.listeners.push({
         removeListener: () => {
           document.removeEventListener('visibilitychange', visibilityChangeListener);
+        }
+      });
+
+      this._registerCompositionListeners();
+    }
+
+    _registerCompositionListeners() {
+      // Protect IME composition from being interrupted by remote DOM patches. When the user is composing (e.g., typing
+      // Chinese/Japanese/Korean), we defer remote updates until composition ends to avoid the browser forcibly
+      // cancelling the composition when DiffDOM modifies the text node holding the in-progress composition state.
+      //
+      // We listen on both the main document (for inline/in-place editing mode) and the content wrapper's owner document
+      // (for iframe-based standalone editing mode), since composition events do not cross iframe boundaries.
+      const onCompositionStart = () => {
+        this._isComposing = true;
+      };
+      const onCompositionEnd = () => {
+        this._isComposing = false;
+
+        // Flush any pending local changes immediately to push the committed composition text to ChainPad
+        // BEFORE applying the deferred remote update. Without this, the _onLocal debounce (100ms) would
+        // fire after _onRemote (scheduled with 0ms timeout), causing the remote patch to overwrite the
+        // newly committed text before it reaches ChainPad.
+        clearTimeout(this._localContentChangeTimeout);
+        this._onLocal();
+
+        if (this._pendingRemoteUpdate) {
+          const info = this._pendingRemoteUpdate;
+          this._pendingRemoteUpdate = null;
+          // Defer with setTimeout to let CKEditor finish its own compositionend handling (committing the
+          // composition text and updating internal state) before we apply the remote DOM patch. Without
+          // this delay, the remote patch can interfere with CKEditor's composition processing, corrupting
+          // the saved selection offsets.
+          setTimeout(() => {
+            this._onRemote(info);
+          }, 0);
+        }
+      };
+      const cleanup = () => {
+        this._pendingRemoteUpdate = null;
+        this._isComposing = false;
+      };
+
+      const documents = new Set();
+      // Always listen on the main document (covers inline/in-place editing mode).
+      documents.add(document);
+
+      // Also listen on the content wrapper's owner document (covers iframe-based standalone editing mode).
+      const contentWrapper = this._editor.getContentWrapper();
+      if (contentWrapper) {
+        documents.add(contentWrapper.ownerDocument);
+      } else {
+      }
+
+      for (const doc of documents) {
+        doc.addEventListener('compositionstart', onCompositionStart);
+        doc.addEventListener('compositionend', onCompositionEnd);
+      }
+      this._connection.listeners.push({
+        removeListener: () => {
+          for (const doc of documents) {
+            doc.removeEventListener('compositionstart', onCompositionStart);
+            doc.removeEventListener('compositionend', onCompositionEnd);
+          }
+          cleanup();
         }
       });
     }
@@ -637,6 +707,13 @@ define('xwiki-realtime-wysiwyg', [
       if (this._connection.status !== ConnectionStatus.CONNECTED) {
         return;
       }
+      // Don't push local content updates while the user is composing (IME is active). During inline composition
+      // (e.g., in Chrome), the browser modifies the DOM text directly with the in-progress composition text, which
+      // triggers CKEditor's change event and this handler. Pushing partial composition text to other users would not
+      // only be incorrect but could also trigger ChainPad internal reconciliation that modifies the DOM.
+      if (this._isComposing) {
+        return;
+      }
       if (typeof localContent !== 'string') {
         // Get the local content from the editor.
         localContent = this._getLocalContent();
@@ -677,6 +754,14 @@ define('xwiki-realtime-wysiwyg', [
 
     async _onRemote(info) {
       if (this._connection.status !== ConnectionStatus.CONNECTED) {
+        return;
+      }
+
+      // Don't apply remote DOM patches while the user is composing (IME is active). Doing so would modify text nodes
+      // that hold the in-progress composition state, causing the browser to forcibly cancel the composition and commit
+      // incomplete text (e.g., turning "denglinfeng" into "deng林峰" instead of "邓林峰").
+      if (this._isComposing) {
+        this._pendingRemoteUpdate = info;
         return;
       }
 

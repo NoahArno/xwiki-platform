@@ -5,7 +5,7 @@
   "minUsers": 5,
   "artifactsDir": "artifacts",
   "users": [
-    { "id": "U1", "username": "admin", "password": "admin" },
+    { "id": "U1", "username": "000005", "password": "000005" },
     { "id": "U2", "username": "000001", "password": "000001" },
     { "id": "U3", "username": "000002", "password": "000002" },
     { "id": "U4", "username": "000003", "password": "000003" },
