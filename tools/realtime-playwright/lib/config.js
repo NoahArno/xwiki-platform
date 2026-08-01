@@ -145,13 +145,27 @@ export function resolveApplicationURL(config, value) {
 }
 
 function resolveEditURL(config, value) {
+  let url;
   if (/^https?:\/\//i.test(value)) {
-    return value;
+    url = value;
+  } else if (value.startsWith('/')) {
+    url = `${config.baseURL}${value}`;
+  } else {
+    url = `http://${value}`;
   }
-  if (value.startsWith('/')) {
-    return `${config.baseURL}${value}`;
+  return normalizeEditURL(url);
+}
+
+// editURL must point at the WYSIWYG edit page (.../bin/edit/...). A very common
+// mistake is to paste the view page URL with a "#edit" fragment
+// (.../bin/view/Space/Page#edit), which never opens the editor. Rewrite that
+// pattern to the equivalent edit URL so the run can actually load the editor.
+function normalizeEditURL(url) {
+  const match = /^(.+?\/bin\/)view\/([^#]*)(?:#.*)?$/.exec(url);
+  if (match) {
+    return `${match[1]}edit/${match[2]}`;
   }
-  return `http://${value}`;
+  return url;
 }
 
 function validateBrowserConfig(browser) {

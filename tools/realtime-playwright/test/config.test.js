@@ -167,3 +167,47 @@ test('keeps an absolute editURL unchanged', () => {
 
   assert.equal(config.editURL, 'https://edit.example.com/xwiki/bin/edit/Test/Page?editor=wysiwyg');
 });
+
+test('rewrites a view URL with a #edit fragment into the edit URL', () => {
+  const config = loadConfigFromObject({
+    baseURL: 'http://localhost:8080/xwiki',
+    editURL: 'http://localhost:8080/xwiki/bin/view/Main/#edit',
+    minUsers: 1,
+    users: [{ id: 'U1', username: 'user1', password: 'secret' }]
+  });
+
+  assert.equal(config.editURL, 'http://localhost:8080/xwiki/bin/edit/Main/');
+});
+
+test('rewrites a scheme-less view URL with #edit into the edit URL', () => {
+  const config = loadConfigFromObject({
+    baseURL: 'http://192.168.1.10:8080/xwiki',
+    editURL: '192.168.1.10:8080/xwiki/bin/view/Main/WebHome#edit',
+    minUsers: 1,
+    users: [{ id: 'U1', username: 'user1', password: 'secret' }]
+  });
+
+  assert.equal(config.editURL, 'http://192.168.1.10:8080/xwiki/bin/edit/Main/WebHome');
+});
+
+test('rewrites a path-only view URL with #edit into the edit URL', () => {
+  const config = loadConfigFromObject({
+    baseURL: 'http://localhost:8080/xwiki',
+    editURL: '/xwiki/bin/view/Space/Page#edit',
+    minUsers: 1,
+    users: [{ id: 'U1', username: 'user1', password: 'secret' }]
+  });
+
+  assert.equal(config.editURL, 'http://localhost:8080/xwiki/xwiki/bin/edit/Space/Page');
+});
+
+test('leaves a proper edit URL untouched', () => {
+  const config = loadConfigFromObject({
+    baseURL: 'http://localhost:8080/xwiki',
+    editURL: 'http://localhost:8080/xwiki/bin/edit/Main/WebHome?editor=wysiwyg',
+    minUsers: 1,
+    users: [{ id: 'U1', username: 'user1', password: 'secret' }]
+  });
+
+  assert.equal(config.editURL, 'http://localhost:8080/xwiki/bin/edit/Main/WebHome?editor=wysiwyg');
+});

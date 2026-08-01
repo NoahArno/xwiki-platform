@@ -400,6 +400,15 @@ async function createSession(browser, config, recorder, user, index) {
   await page.waitForLoadState('networkidle').catch(() => {});
   recorder.event('edit-page-opened', { userId: user.id, url: page.url() });
 
+  if (/\/bin\/view\//.test(page.url())) {
+    recorder.event('edit-url-view', {
+      userId: user.id,
+      url: page.url(),
+      message: 'editURL resolved to a view page; the editor will never load. ' +
+        'Use an edit page URL like /xwiki/bin/edit/Space/Page?editor=wysiwyg.'
+    });
+  }
+
   return { user, context, page, userDir, editor: null };
 }
 
@@ -490,7 +499,11 @@ async function findEditor(page, config) {
     }
   }
 
-  throw new Error('Unable to locate a CKEditor/contenteditable editor. Adjust selectors.editor in config.json.');
+  throw new Error(
+    `Unable to locate a CKEditor/contenteditable editor on "${page.url()}". ` +
+    'editURL must point at the edit page (e.g. /xwiki/bin/edit/Space/Page?editor=wysiwyg), ' +
+    'not the view page (/xwiki/bin/view/...). Adjust editURL or selectors.editor in config.json.'
+  );
 }
 
 async function typeMarkers(session, config, recorder) {

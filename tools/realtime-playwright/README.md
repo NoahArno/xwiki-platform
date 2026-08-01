@@ -15,7 +15,12 @@ cp config.example.json config.json
 编辑 `config.json`：
 
 - 把 `baseURL` 改成你的 XWiki 基础地址，例如 `http://xwiki.example.com/xwiki`。
-- 把 `editURL` 改成问题页面的 WYSIWYG 编辑地址。
+- 把 `editURL` 改成问题页面的 **WYSIWYG 编辑页地址**，必须是 `.../bin/edit/<空间>/<页面>?editor=wysiwyg` 这种形式。
+  获取方法：浏览器里打开目标页面 → 点击「编辑」按钮 → 复制地址栏里的完整 URL（此时地址栏应该是
+  `.../bin/edit/...` 而不是 `.../bin/view/...`）填入 `editURL`。
+  > 注意：`.../bin/view/...` 是查看页地址，即使加上 `#edit` 也不会打开编辑器。
+  > 脚本会自动把 `.../bin/view/...#edit` 这种常见的错误写法改写成对应的 `.../bin/edit/...` 地址，
+  > 但最可靠的还是直接填复制到的编辑页 URL。
 - 把 8 个用户的 `username` 和 `password` 替换成测试账号。
 - 第一次运行建议保持 `headless` 为 `false`，这样可以直接观察浏览器行为。
 
@@ -95,7 +100,10 @@ npx playwright show-trace artifacts/U1/trace.zip
 
 ## Selector 调整
 
-默认配置会依次尝试 CKEditor、编辑器 iframe、通用 `contenteditable` 和源码 textarea。如果脚本报错 `Unable to locate a CKEditor/contenteditable editor`，需要检查编辑页面 DOM，并调整 `selectors.editor`。
+默认配置会依次尝试 CKEditor、编辑器 iframe、通用 `contenteditable` 和源码 textarea。如果脚本报错 `Unable to locate a CKEditor/contenteditable editor`：
+1. 先看错误信息里的页面 URL——如果还是 `.../bin/view/...`，说明 `editURL` 填成了查看页地址，改成 `.../bin/edit/...` 即可。
+2. 确认页面确实进入了编辑模式（能看到编辑器）。
+3. 如果编辑器结构特殊，再调整 `selectors.editor`。
 
 表格诊断默认使用 `td` 和 `th` 作为 `selectors.tableCell`。如果编辑器在 iframe 中，脚本也会搜索所有 frame。
 
