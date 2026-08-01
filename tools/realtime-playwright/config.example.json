@@ -1,18 +1,15 @@
 {
   "baseURL": "http://localhost:8080/xwiki",
-  "editURL": "http://localhost:8080/xwiki/bin/edit/Test/WeeklyReport?editor=wysiwyg",
+  "editURL": "http://localhost:8080/xwiki/bin/view/Main/#edit",
   "headless": false,
-  "minUsers": 8,
+  "minUsers": 5,
   "artifactsDir": "artifacts",
   "users": [
-    { "id": "U1", "username": "user1", "password": "password" },
-    { "id": "U2", "username": "user2", "password": "password" },
-    { "id": "U3", "username": "user3", "password": "password" },
-    { "id": "U4", "username": "user4", "password": "password" },
-    { "id": "U5", "username": "user5", "password": "password" },
-    { "id": "U6", "username": "user6", "password": "password" },
-    { "id": "U7", "username": "user7", "password": "password" },
-    { "id": "U8", "username": "user8", "password": "password" }
+    { "id": "U1", "username": "admin", "password": "admin" },
+    { "id": "U2", "username": "000001", "password": "000001" },
+    { "id": "U3", "username": "000002", "password": "000002" },
+    { "id": "U4", "username": "000003", "password": "000003" },
+    { "id": "U5", "username": "000004", "password": "000004" }
   ],
   "typing": {
     "iterations": 100,

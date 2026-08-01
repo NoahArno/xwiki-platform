@@ -5,17 +5,17 @@
     {
       "userId": "U1",
       "actions": {
-        "insertText": 4,
+        "insertText": 3,
+        "newline": 1,
         "deleteText": 1
       },
-      "skipped": {
-        "tableCellText": 1
-      },
+      "skipped": {},
       "errors": 0
     },
     {
       "userId": "U2",
       "actions": {
+        "newline": 1,
         "insertText": 5
       },
       "skipped": {},
@@ -24,21 +24,20 @@
   ],
   "durationMs": 6000,
   "stopReason": "duration",
-  "randomActions": 10,
-  "randomSkipped": 1,
+  "randomActions": 11,
+  "randomSkipped": 0,
   "randomErrors": 0,
   "eventCounts": {
     "run-start": 1,
     "session-created": 2,
-    "console": 26,
+    "console": 27,
     "login-submitted": 2,
     "page-error": 2,
     "websocket-open": 2,
     "edit-page-opened": 2,
     "editor-ready": 2,
     "random-editing-start": 1,
-    "random-action": 10,
-    "random-action-skipped": 1,
+    "random-action": 11,
     "random-editing-user-finished": 2
   }
 }
