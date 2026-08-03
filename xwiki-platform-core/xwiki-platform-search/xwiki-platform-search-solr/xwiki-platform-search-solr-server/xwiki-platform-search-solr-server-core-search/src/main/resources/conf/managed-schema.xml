@@ -84,6 +84,10 @@
            * a "docid" plong field has been added to store the XWiki document long local identifier (XWikiDocument#getId)
            * a dynamic *_string_lowercase and a corresponding copy field have been added to automatically provide a lower case version of all exact string properties
            * the fullname field is now set for all entities, not just DOCUMENT
+
+         18.1.0 (no schema version change):
+           * added dynamic fields "*_zh_CN" and "*_zh_SG" (type "text_zh") and "*_zh_HK" and "*_zh_MO" (type "text_zh_TW")
+             so that content indexed with a Chinese locale variant is no longer silently dropped by the "ignored" dynamic field
     -->
     <!-- XWIKI: the versions of the schema from XWiki point of view.
     
@@ -1298,6 +1302,13 @@
 
     <!-- XWIKI: Simplified Chinese -->
     <dynamicField name="*_zh" type="text_zh"  indexed="true"  stored="true" multiValued="true"/>
+    <!-- XWIKI: Simplified Chinese locales that use a country/region suffix (e.g. zh_CN) were not covered by
+         any text dynamic field and fell back to the "ignored" dynamic field, so their content was never indexed
+         in a searchable field. Add explicit dynamic fields for the common Chinese locales. -->
+    <dynamicField name="*_zh_CN" type="text_zh"  indexed="true"  stored="true" multiValued="true"/>
+    <dynamicField name="*_zh_SG" type="text_zh"  indexed="true"  stored="true" multiValued="true"/>
+    <dynamicField name="*_zh_HK" type="text_zh_TW"  indexed="true"  stored="true" multiValued="true"/>
+    <dynamicField name="*_zh_MO" type="text_zh_TW"  indexed="true"  stored="true" multiValued="true"/>
     <fieldType name="text_zh" class="solr.TextField" positionIncrementGap="100">
       <analyzer>
         <tokenizer name="hmmChinese"/>
