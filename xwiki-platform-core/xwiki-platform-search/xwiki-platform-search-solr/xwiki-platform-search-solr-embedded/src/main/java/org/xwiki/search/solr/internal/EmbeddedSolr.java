@@ -90,7 +90,7 @@ public class EmbeddedSolr extends AbstractSolr implements Disposable, Initializa
 
     private static final String SCHEMA_PATH = "conf/managed-schema.xml";
 
-    private static final long SEARCH_CORE_MAJOR_VERSION = AbstractSolrCoreInitializer.SCHEMA_VERSION_16_6;
+    private static final long SEARCH_CORE_MAJOR_VERSION = AbstractSolrCoreInitializer.SCHEMA_VERSION_18_1_0;
 
     private static final String CORE_PROPERTIES_FILENAME = "core.properties";
 
