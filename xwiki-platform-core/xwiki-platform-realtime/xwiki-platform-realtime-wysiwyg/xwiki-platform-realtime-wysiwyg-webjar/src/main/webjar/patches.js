@@ -434,7 +434,6 @@ define('xwiki-realtime-wysiwyg-patches', [
      */
     _savePathBasedSelection(selection) {
       selection = selection.map(this._savePathBasedRange.bind(this));
-      console.debug('Saved path-based selection: ', JSON.stringify(selection));
       return selection;
     }
 
@@ -499,7 +498,6 @@ define('xwiki-realtime-wysiwyg-patches', [
     }
 
     _restorePathBasedSelection(selection) {
-      console.debug('Restoring path-based selection: ', JSON.stringify(selection));
       return selection.map(this._restorePathBasedRange.bind(this));
     }
 
