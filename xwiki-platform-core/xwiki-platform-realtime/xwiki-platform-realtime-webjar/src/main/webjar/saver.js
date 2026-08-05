@@ -346,7 +346,7 @@ define('xwiki-realtime-saver', [
       }
 
       const remoteStates = this._chainpad.getUserDoc();
-      debug('Received remote states: ', remoteStates);
+      // debug('Received remote states: ', remoteStates);
 
       try {
         this._states = JSON.parse(remoteStates);
@@ -362,7 +362,6 @@ define('xwiki-realtime-saver', [
         return;
       }
       const localStates = jsonSortify(this._states);
-      debug('Push local states: ', localStates);
       this._chainpad.contentUpdate(localStates);
       const remoteStates = this._chainpad.getUserDoc();
       if (remoteStates !== localStates) {
