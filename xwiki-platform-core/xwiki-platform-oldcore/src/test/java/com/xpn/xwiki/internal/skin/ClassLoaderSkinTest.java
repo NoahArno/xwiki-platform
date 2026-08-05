@@ -75,12 +75,12 @@ class ClassLoaderSkinTest
     @Test
     void getLocalResource() throws Exception
     {
-        String relativePath = "o;ne/t?w&o/../t=hr#e e";
+        String relativePath = "o;ne/t?w&o/t=hr#e e";
         String fullPath = "skins/test/" + relativePath;
 
-        doReturn(new URL("file:/skins/test/o;ne/t?w&o/../t=hr#e e"))
+        doReturn(new URL("file:/skins/test/o;ne/t?w&o/t=hr#e e"))
             .when(this.classLoader)
-            .getResource("skins/test/o;ne/t?w&o/../t=hr#e e");
+            .getResource("skins/test/o;ne/t?w&o/t=hr#e e");
 
         Resource<?> resource = this.skin.getLocalResource(relativePath);
         assertEquals(fullPath, resource.getPath());
@@ -91,7 +91,36 @@ class ClassLoaderSkinTest
     {
         assertNull(this.skin.getLocalResource("../../notskin/a"));
         assertEquals(1, this.logCapture.size());
-        assertEquals("Direct access to skin file [notskin/a] refused. Possible break-in attempt!",
+        assertEquals("Direct access to skin file [../../notskin/a] refused. Possible break-in attempt!",
+            this.logCapture.getMessage(0));
+    }
+
+    @Test
+    void getLocalResourceWithTraversalStayingInsideSkinFolder()
+    {
+        // ".." is rejected even when the normalized path stays inside the skin folder, to avoid any discrepancy
+        // between the validated path and the path actually resolved by the classloader or the servlet container.
+        assertNull(this.skin.getLocalResource("o;ne/t?w&o/../t=hr#e e"));
+        assertEquals(1, this.logCapture.size());
+        assertEquals("Direct access to skin file [o;ne/t?w&o/../t=hr#e e] refused. Possible break-in attempt!",
+            this.logCapture.getMessage(0));
+    }
+
+    @Test
+    void getLocalResourceWithAbsolutePath()
+    {
+        assertNull(this.skin.getLocalResource("/etc/passwd"));
+        assertEquals(1, this.logCapture.size());
+        assertEquals("Direct access to skin file [/etc/passwd] refused. Possible break-in attempt!",
+            this.logCapture.getMessage(0));
+    }
+
+    @Test
+    void getLocalResourceWithWindowsSeparators()
+    {
+        assertNull(this.skin.getLocalResource("..\\..\\WEB-INF\\web.xml"));
+        assertEquals(1, this.logCapture.size());
+        assertEquals("Direct access to skin file [..\\..\\WEB-INF\\web.xml] refused. Possible break-in attempt!",
             this.logCapture.getMessage(0));
     }
 }

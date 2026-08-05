@@ -76,7 +76,7 @@ class EnvironmentSkinTest
     @Test
     void getLocalResource() throws Exception
     {
-        String relativePath = "o;ne/t?w&o/../t=hr#e e";
+        String relativePath = "o;ne/t?w&o/t=hr#e e";
         String fullPath = "/skins/test/" + relativePath;
         when(this.environment.getResource(fullPath)).thenReturn(new URL("http://resourceURL"));
 
@@ -88,7 +88,36 @@ class EnvironmentSkinTest
     void getLocalResourceWithBreakInAttempt()
     {
         assertNull(this.skin.getLocalResource("one/../../two"));
-        assertEquals("Direct access to skin file [/skins/two] refused. Possible break-in attempt!",
+        assertEquals("Direct access to skin file [one/../../two] refused. Possible break-in attempt!",
+            this.logCapture.getMessage(0));
+    }
+
+    @Test
+    void getLocalResourceWithTraversalStayingInsideSkinFolder()
+    {
+        // ".." is rejected even when the normalized path stays inside the skin folder, to avoid any discrepancy
+        // between the validated path and the path actually resolved by the environment or the servlet container.
+        assertNull(this.skin.getLocalResource("o;ne/t?w&o/../t=hr#e e"));
+        assertEquals(1, this.logCapture.size());
+        assertEquals("Direct access to skin file [o;ne/t?w&o/../t=hr#e e] refused. Possible break-in attempt!",
+            this.logCapture.getMessage(0));
+    }
+
+    @Test
+    void getLocalResourceWithAbsolutePath()
+    {
+        assertNull(this.skin.getLocalResource("/etc/passwd"));
+        assertEquals(1, this.logCapture.size());
+        assertEquals("Direct access to skin file [/etc/passwd] refused. Possible break-in attempt!",
+            this.logCapture.getMessage(0));
+    }
+
+    @Test
+    void getLocalResourceWithWindowsSeparators()
+    {
+        assertNull(this.skin.getLocalResource("..\\..\\WEB-INF\\web.xml"));
+        assertEquals(1, this.logCapture.size());
+        assertEquals("Direct access to skin file [..\\..\\WEB-INF\\web.xml] refused. Possible break-in attempt!",
             this.logCapture.getMessage(0));
     }
 

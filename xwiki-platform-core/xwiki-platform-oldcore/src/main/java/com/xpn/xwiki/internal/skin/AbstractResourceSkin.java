@@ -27,6 +27,7 @@ import org.apache.commons.configuration2.BaseConfiguration;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xwiki.filter.input.InputSource;
@@ -139,6 +140,15 @@ public abstract class AbstractResourceSkin extends AbstractSkin
 
     private String getSkinResourcePath(String resource)
     {
+        // Reject any resource name that could be used for path traversal before building the actual path, so that
+        // user controlled input is never used to construct a filesystem/classloader path. This protects against
+        // ".." path segments, absolute paths and Windows style separators, whatever the result of the path
+        // normalization done afterwards by the classloader, the servlet container or the URL resolution.
+        if (isPathTraversalAttempt(resource)) {
+            LOGGER.warn("Direct access to skin file [{}] refused. Possible break-in attempt!", resource);
+            return null;
+        }
+
         String skinFolder = getSkinFolder();
         String resourcePath = skinFolder + resource;
 
@@ -151,5 +161,27 @@ public abstract class AbstractResourceSkin extends AbstractSkin
         }
 
         return resourcePath;
+    }
+
+    private boolean isPathTraversalAttempt(String resource)
+    {
+        if (StringUtils.isEmpty(resource)) {
+            return true;
+        }
+
+        // Reject absolute paths and Windows style separators.
+        if (resource.charAt(0) == '/' || resource.charAt(0) == '\\' || resource.indexOf('\\') != -1) {
+            return true;
+        }
+
+        // Reject any ".." path segment (separated by "/" or "\\").
+        String[] segments = resource.split("[/\\\\]");
+        for (String segment : segments) {
+            if ("..".equals(segment)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

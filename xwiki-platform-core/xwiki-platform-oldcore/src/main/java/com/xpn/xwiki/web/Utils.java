@@ -334,9 +334,32 @@ public class Utils
         String page = request.getParameter("xpage");
         if (StringUtils.isEmpty(page)) {
             page = defaultpage;
+        } else if (isPathTraversalAttempt(page)) {
+            // Protect against path traversal through the "xpage" parameter: fall back to the default template
+            // instead of using the malicious value to resolve a template/skin resource.
+            LOGGER.warn("Direct access to template [{}] refused. Possible break-in attempt!", page);
+            page = defaultpage;
         }
 
         return page;
+    }
+
+    private static boolean isPathTraversalAttempt(String page)
+    {
+        // Reject absolute paths and Windows style separators.
+        if (page.charAt(0) == '/' || page.charAt(0) == '\\' || page.indexOf('\\') != -1) {
+            return true;
+        }
+
+        // Reject any ".." path segment (separated by "/" or "\\").
+        String[] segments = page.split("[/\\\\]");
+        for (String segment : segments) {
+            if ("..".equals(segment)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
