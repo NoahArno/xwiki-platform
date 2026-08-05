@@ -34,10 +34,10 @@
     "channel": ""
   },
   "randomEditing": {
-    "enabled": false,
+    "enabled": true,
     "durationMs": 0,
-    "minPauseMs": 3000,
-    "maxPauseMs": 8000,
+    "minPauseMs": 1000,
+    "maxPauseMs": 3000,
     "users": "all",
     "markerPrefix": "RANDOM",
     "actions": {
