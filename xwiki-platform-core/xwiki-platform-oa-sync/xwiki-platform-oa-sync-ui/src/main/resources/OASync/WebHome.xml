@@ -15,8 +15,7 @@
   <minorEdit>false</minorEdit>
   <syntaxId>xwiki/2.1</syntaxId>
   <hidden>true</hidden>
-  <content>{{velocity}}
-== OA 用户数据同步 ==
+  <content>== OA 用户数据同步 ==
 
 (% class=&quot;xform&quot; %)
 * **数据日期**：默认同步前一天（`xwiki.oa-sync.source.&lt;type&gt;.date-offset-days`）
@@ -24,72 +23,32 @@
 * **记录**：每种来源保留最近 10 条
 * **状态说明**：SUCCESS=全部成功；PARTIAL_FAILURE=部分失败；FAILURE=整体失败（详见 errorLog）
 
-(% id=&quot;syncActions&quot; class=&quot;btn-group&quot; %)
-(% class=&quot;btn btn-primary&quot; data-sync-type=&quot;employee&quot; %)立即同步：行员(% /%)
-(% /%)
+== 手动触发 ==
 
-#set ($records = $services.query.xwql(&quot;select doc.fullName from Document doc where doc.object(OASync.SyncRecordClass) order by doc.creationDate desc&quot;).execute())
-#if (!$records || $records.isEmpty())
+{{html}}
+&lt;form action=&quot;$request.contextPath/rest/oa-sync/trigger?type=employee&quot; method=&quot;post&quot; class=&quot;xform&quot;&gt;
+  &lt;span class=&quot;buttonwrapper&quot;&gt;
+    &lt;input type=&quot;submit&quot; value=&quot;立即同步：行员&quot; class=&quot;btn btn-primary&quot;/&gt;
+  &lt;/span&gt;
+&lt;/form&gt;
+{{/html}}
+
+== 最近同步记录 ==
+
+#set ($records = $services.query.xwql(&#x27;from doc.object(OASync.SyncRecordClass) as records order by doc.creationDate desc&#x27;).execute())
+#if (!$records || $records.size() == 0)
 {{info}}暂无同步记录。{{/info}}
 #else
-{{html clean=&quot;false&quot;}}
-&lt;table class=&quot;table table-striped table-hover&quot;&gt;
-  &lt;thead&gt;
-    &lt;tr&gt;&lt;th&gt;类型&lt;/th&gt;&lt;th&gt;数据日期&lt;/th&gt;&lt;th&gt;触发&lt;/th&gt;&lt;th&gt;状态&lt;/th&gt;&lt;th&gt;总数&lt;/th&gt;&lt;th&gt;成功&lt;/th&gt;&lt;th&gt;失败&lt;/th&gt;&lt;th&gt;开始时间&lt;/th&gt;&lt;th&gt;错误日志&lt;/th&gt;&lt;/tr&gt;
-  &lt;/thead&gt;
-  &lt;tbody&gt;
-  #foreach ($name in $records)
-    #set ($recordDoc = $xwiki.getDocument($name))
-    #set ($recordObj = $recordDoc.getObject(&#x27;OASync.SyncRecordClass&#x27;))
-    #if ($recordObj)
-    &lt;tr&gt;
-      &lt;td&gt;$recordObj.getValue(&#x27;syncType&#x27;)&lt;/td&gt;
-      &lt;td&gt;$recordObj.getValue(&#x27;syncDate&#x27;)&lt;/td&gt;
-      &lt;td&gt;$recordObj.getValue(&#x27;triggerType&#x27;)&lt;/td&gt;
-      &lt;td&gt;$recordObj.getValue(&#x27;status&#x27;)&lt;/td&gt;
-      &lt;td&gt;$recordObj.getValue(&#x27;totalCount&#x27;)&lt;/td&gt;
-      &lt;td&gt;$recordObj.getValue(&#x27;successCount&#x27;)&lt;/td&gt;
-      &lt;td&gt;$recordObj.getValue(&#x27;failCount&#x27;)&lt;/td&gt;
-      &lt;td&gt;$recordObj.getValue(&#x27;startTime&#x27;)&lt;/td&gt;
-      &lt;td&gt;
-      #if (&quot;$!recordObj.getValue(&#x27;errorLog&#x27;)&quot; != &#x27;&#x27;)
-        &lt;details&gt;&lt;summary&gt;查看失败明细&lt;/summary&gt;&lt;pre&gt;$escapetool.html($recordObj.getValue(&#x27;errorLog&#x27;))&lt;/pre&gt;&lt;/details&gt;
-      #else
-        （无）
-      #end
-      &lt;/td&gt;
-    &lt;/tr&gt;
-    #end
-  #end
-  &lt;/tbody&gt;
-&lt;/table&gt;
-{{/html}}
+|=(% scope=&quot;col&quot; %)类型|=(% scope=&quot;col&quot; %)数据日期|=(% scope=&quot;col&quot; %)触发|=(% scope=&quot;col&quot; %)状态|=(% scope=&quot;col&quot; %)总数|=(% scope=&quot;col&quot; %)成功|=(% scope=&quot;col&quot; %)失败|=(% scope=&quot;col&quot; %)开始时间|=(% scope=&quot;col&quot; %)错误日志
+#foreach ($name in $records)
+  #set ($recordDoc = $xwiki.getDocument($name))
+  #set ($recordObj = $recordDoc.getObject(&#x27;OASync.SyncRecordClass&#x27;))
+  #if ($recordObj)
+|$recordObj.getValue(&#x27;syncType&#x27;)|$recordObj.getValue(&#x27;syncDate&#x27;)|$recordObj.getValue(&#x27;triggerType&#x27;)|$recordObj.getValue(&#x27;status&#x27;)|$recordObj.getValue(&#x27;totalCount&#x27;)|$recordObj.getValue(&#x27;successCount&#x27;)|$recordObj.getValue(&#x27;failCount&#x27;)|$recordObj.getValue(&#x27;startTime&#x27;)
+#if (&quot;$!recordObj.getValue(&#x27;errorLog&#x27;)&quot; != &#x27;&#x27;)
+|(% colspan=&quot;9&quot; %){{code}}$recordObj.getValue(&#x27;errorLog&#x27;){{/code}}
 #end
-
-{{html clean=&quot;false&quot;}}
-&lt;script&gt;
-require([&#x27;jquery&#x27;], function ($) {
-  $(&#x27;#syncActions .btn&#x27;).on(&#x27;click&#x27;, function () {
-    var type = $(this).data(&#x27;sync-type&#x27;);
-    var btn = $(this);
-    btn.prop(&#x27;disabled&#x27;, true);
-    $.ajax({
-      url: &#x27;$request.contextPath/rest/oa-sync/trigger?type=&#x27; + type,
-      method: &#x27;POST&#x27;,
-      dataType: &#x27;json&#x27;,
-      success: function (data) {
-        new XWiki.widgets.Notification(
-          &#x27;[&#x27; + data.type + &#x27;] &#x27; + data.status + &#x27; 成功=&#x27; + data.success + &#x27; 失败=&#x27; + data.failed,
-          &#x27;done&#x27;);
-      },
-      error: function (xhr) {
-        new XWiki.widgets.Notification(&#x27;触发失败：&#x27; + xhr.responseText, &#x27;error&#x27;);
-      },
-      complete: function () { btn.prop(&#x27;disabled&#x27;, false); }
-    });
-  });
-});
-&lt;/script&gt;
-{{/html}}
-{{/velocity}}</content>
+  #end
+#end
+#end</content>
 </xwikidoc>
