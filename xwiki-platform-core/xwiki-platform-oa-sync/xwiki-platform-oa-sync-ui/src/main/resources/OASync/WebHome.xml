@@ -27,11 +27,32 @@
 == 手动触发 ==
 
 {{html}}
-&lt;form action=&quot;$request.contextPath/rest/oa-sync/trigger?type=employee&quot; method=&quot;post&quot; class=&quot;xform&quot;&gt;
-  &lt;span class=&quot;buttonwrapper&quot;&gt;
-    &lt;input type=&quot;submit&quot; value=&quot;立即同步：行员&quot; class=&quot;btn btn-primary&quot;/&gt;
-  &lt;/span&gt;
-&lt;/form&gt;
+&lt;button id=&quot;oaSyncTrigger&quot; class=&quot;btn btn-primary&quot;&gt;立即同步：行员&lt;/button&gt;
+&lt;script&gt;
+(function () {
+  var btn = document.getElementById(&#x27;oaSyncTrigger&#x27;);
+  if (!btn) {
+    return;
+  }
+  btn.addEventListener(&#x27;click&#x27;, function () {
+    btn.disabled = true;
+    fetch(&#x27;$request.contextPath/rest/oa-sync/trigger?type=employee&#x27;, {
+      method: &#x27;POST&#x27;,
+      headers: { &#x27;Content-Type&#x27;: &#x27;application/json&#x27; },
+      body: &#x27;{}&#x27;
+    }).then(function (resp) {
+      return resp.json().catch(function () { return {}; }).then(function (data) {
+        var level = data.status === &#x27;SUCCESS&#x27; ? &#x27;done&#x27; : &#x27;warning&#x27;;
+        new XWiki.widgets.Notification(&#x27;[&#x27; + data.type + &#x27;] &#x27; + data.status + &#x27; 成功=&#x27; + data.success + &#x27; 失败=&#x27; + data.failed, level);
+      });
+    }).catch(function (err) {
+      new XWiki.widgets.Notification(&#x27;触发失败：&#x27; + err, &#x27;error&#x27;);
+    }).finally(function () {
+      btn.disabled = false;
+    });
+  });
+})();
+&lt;/script&gt;
 {{/html}}
 
 == 最近同步记录 ==
