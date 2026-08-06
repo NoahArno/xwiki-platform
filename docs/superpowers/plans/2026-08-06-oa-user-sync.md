@@ -2713,7 +2713,10 @@ Expected: BUILD SUCCESS，单测全部通过。
 
 - [ ] **Step 2: 部署清单（写给用户/运维）**
 
-- 复制 `xwiki-platform-oa-sync-default/target/xwiki-platform-oa-sync-default-18.1.0.jar` 到 Tomcat `webapps/xwiki/WEB-INF/lib/`（如 api 模块独立成 jar 一并复制）
+- 复制以下 **3 个 jar** 到 Tomcat `webapps/xwiki/WEB-INF/lib/`（缺一不可，接口/模型在 api 包，FTP 依赖 commons-net）：
+  - `xwiki-platform-oa-sync-api/target/xwiki-platform-oa-sync-api-18.1.0.jar`
+  - `xwiki-platform-oa-sync-default/target/xwiki-platform-oa-sync-default-18.1.0.jar`
+  - `~/.m2/repository/commons-net/commons-net/3.12.0/commons-net-3.12.0.jar`
 - 通过「管理 → 扩展管理器」导入 `xwiki-platform-oa-sync-ui-18.1.0.xar`（或在 XAR 目录部署）
 - 在 `webapps/xwiki/WEB-INF/xwiki.cfg` 追加配置（host/port/user/password/超时/employee 目录与文件名模板）
 - 重启 Tomcat → 进入 `OASync.WebHome` 页面验证记录区；「管理 → 调度器」确认任务已调度（cron `0 0 5 * * ?`，可改）
