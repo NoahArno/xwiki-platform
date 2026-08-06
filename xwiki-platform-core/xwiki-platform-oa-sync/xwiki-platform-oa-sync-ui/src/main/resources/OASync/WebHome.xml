@@ -20,7 +20,7 @@
 
 (% class=&quot;xform&quot; %)
 * **数据日期**：默认同步前一天（`xwiki.oa-sync.source.&lt;type&gt;.date-offset-days`）
-* **定时**：每天 05:00，可在「管理 → 调度器」修改 cron
+* **定时**：每天 05:00，可在「应用 → Scheduler」修改 cron
 * **记录**：每种来源保留最近 10 条
 * **状态说明**：SUCCESS=全部成功；PARTIAL_FAILURE=部分失败；FAILURE=整体失败（详见 errorLog）
 
@@ -28,7 +28,45 @@
 (% class=&quot;btn btn-primary&quot; data-sync-type=&quot;employee&quot; %)立即同步：行员(% /%)
 (% /%)
 
-{{html wiki=&quot;true&quot;}}
+#set ($records = $xwiki.searchDocuments(&quot;where doc.object(OASync.SyncRecordClass) order by doc.creationDate desc&quot;))
+#if (!$records || $records.isEmpty())
+{{info}}暂无同步记录。{{/info}}
+#else
+{{html clean=&quot;false&quot;}}
+&lt;table class=&quot;table table-striped table-hover&quot;&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;&lt;th&gt;类型&lt;/th&gt;&lt;th&gt;数据日期&lt;/th&gt;&lt;th&gt;触发&lt;/th&gt;&lt;th&gt;状态&lt;/th&gt;&lt;th&gt;总数&lt;/th&gt;&lt;th&gt;成功&lt;/th&gt;&lt;th&gt;失败&lt;/th&gt;&lt;th&gt;开始时间&lt;/th&gt;&lt;th&gt;错误日志&lt;/th&gt;&lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+  #foreach ($name in $records)
+    #set ($recordDoc = $xwiki.getDocument($name))
+    #set ($recordObj = $recordDoc.getObject(&#x27;OASync.SyncRecordClass&#x27;))
+    #if ($recordObj)
+    &lt;tr&gt;
+      &lt;td&gt;$recordObj.getValue(&#x27;syncType&#x27;)&lt;/td&gt;
+      &lt;td&gt;$recordObj.getValue(&#x27;syncDate&#x27;)&lt;/td&gt;
+      &lt;td&gt;$recordObj.getValue(&#x27;triggerType&#x27;)&lt;/td&gt;
+      &lt;td&gt;$recordObj.getValue(&#x27;status&#x27;)&lt;/td&gt;
+      &lt;td&gt;$recordObj.getValue(&#x27;totalCount&#x27;)&lt;/td&gt;
+      &lt;td&gt;$recordObj.getValue(&#x27;successCount&#x27;)&lt;/td&gt;
+      &lt;td&gt;$recordObj.getValue(&#x27;failCount&#x27;)&lt;/td&gt;
+      &lt;td&gt;$recordObj.getValue(&#x27;startTime&#x27;)&lt;/td&gt;
+      &lt;td&gt;
+      #if (&quot;$!recordObj.getValue(&#x27;errorLog&#x27;)&quot; != &#x27;&#x27;)
+        &lt;details&gt;&lt;summary&gt;查看失败明细&lt;/summary&gt;&lt;pre&gt;$escapetool.html($recordObj.getValue(&#x27;errorLog&#x27;))&lt;/pre&gt;&lt;/details&gt;
+      #else
+        （无）
+      #end
+      &lt;/td&gt;
+    &lt;/tr&gt;
+    #end
+  #end
+  &lt;/tbody&gt;
+&lt;/table&gt;
+{{/html}}
+#end
+
+{{html clean=&quot;false&quot;}}
 &lt;script&gt;
 require([&#x27;jquery&#x27;], function ($) {
   $(&#x27;#syncActions .btn&#x27;).on(&#x27;click&#x27;, function () {
@@ -36,7 +74,7 @@ require([&#x27;jquery&#x27;], function ($) {
     var btn = $(this);
     btn.prop(&#x27;disabled&#x27;, true);
     $.ajax({
-      url: &#x27;$xwiki.getURL(&#x27;&#x27;, &#x27;rest&#x27;)&#x27; + &#x27;/oa-sync/trigger?type=&#x27; + type,
+      url: &#x27;$request.contextPath/rest/oa-sync/trigger?type=&#x27; + type,
       method: &#x27;POST&#x27;,
       dataType: &#x27;json&#x27;,
       success: function (data) {
@@ -53,15 +91,5 @@ require([&#x27;jquery&#x27;], function ($) {
 });
 &lt;/script&gt;
 {{/html}}
-
-== 最近同步记录 ==
-
-{{liveTable
-  outputOnlyHTML=&quot;true&quot;
-  doTranslation=&quot;false&quot;
-  properties=&quot;doc.title,doc.creationDate,syncType,syncDate,triggerType,status,totalCount,successCount,failCount,errorLog&quot;
-  className=&quot;OASync.SyncRecordClass&quot;
-  source=&quot;liveTable&quot;
-/}}
 {{/velocity}}</content>
 </xwikidoc>

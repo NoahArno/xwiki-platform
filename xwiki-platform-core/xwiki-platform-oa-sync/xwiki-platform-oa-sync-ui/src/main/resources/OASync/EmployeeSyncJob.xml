@@ -20,7 +20,7 @@
     <name>OASync.EmployeeSyncJob</name>
     <number>0</number>
     <className>XWiki.SchedulerJobClass</className>
-    <guid>a1b2c3d4-oasync-employee-0001</guid>
+    <guid>c06a1fb7-322a-403e-9452-2aceb06aa262</guid>
     <class>
       <name>XWiki.SchedulerJobClass</name>
       <customClass/>
