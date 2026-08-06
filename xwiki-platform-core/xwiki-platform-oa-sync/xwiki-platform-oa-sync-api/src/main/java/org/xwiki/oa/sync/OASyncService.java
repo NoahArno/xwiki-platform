@@ -1,6 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<!--
+/*
  * See the NOTICE file distributed with this work for additional
  * information regarding copyright ownership.
  *
@@ -18,24 +16,30 @@
  * License along with this software; if not, write to the Free
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
--->
+ */
+package org.xwiki.oa.sync;
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>org.xwiki.platform</groupId>
-    <artifactId>xwiki-platform-oa-sync</artifactId>
-    <version>18.1.0</version>
-  </parent>
-  <artifactId>xwiki-platform-oa-sync-api</artifactId>
-  <name>XWiki Platform - OA User Sync - API</name>
-  <packaging>jar</packaging>
-  <description>OA User Sync API</description>
-  <dependencies>
-    <dependency>
-      <groupId>org.xwiki.commons</groupId>
-      <artifactId>xwiki-commons-component-api</artifactId>
-      <version>${commons.version}</version>
-    </dependency>
-  </dependencies>
-</project>
+import java.time.LocalDate;
+import java.util.List;
+
+import org.xwiki.component.annotation.Role;
+import org.xwiki.oa.sync.model.OASyncResult;
+import org.xwiki.oa.sync.model.OASyncTriggerType;
+
+/**
+ * Entry point for running OA user data syncs.
+ *
+ * @version $Id$
+ */
+@Role
+public interface OASyncService
+{
+    /**
+     * Run all enabled sources.
+     *
+     * @param triggerType how the sync was triggered
+     * @param manualDate optional data date override for manual backfill; {@code null} = default (offset from config)
+     * @return one result per enabled source (disabled sources are skipped and not present)
+     */
+    List<OASyncResult> syncAll(OASyncTriggerType triggerType, LocalDate manualDate);
+}

@@ -1,6 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<!--
+/*
  * See the NOTICE file distributed with this work for additional
  * information regarding copyright ownership.
  *
@@ -18,24 +16,36 @@
  * License along with this software; if not, write to the Free
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
--->
+ */
+package org.xwiki.oa.sync.model;
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>org.xwiki.platform</groupId>
-    <artifactId>xwiki-platform-oa-sync</artifactId>
-    <version>18.1.0</version>
-  </parent>
-  <artifactId>xwiki-platform-oa-sync-api</artifactId>
-  <name>XWiki Platform - OA User Sync - API</name>
-  <packaging>jar</packaging>
-  <description>OA User Sync API</description>
-  <dependencies>
-    <dependency>
-      <groupId>org.xwiki.commons</groupId>
-      <artifactId>xwiki-commons-component-api</artifactId>
-      <version>${commons.version}</version>
-    </dependency>
-  </dependencies>
-</project>
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Result of parsing a data file: valid records plus per-line errors.
+ *
+ * @version $Id$
+ */
+public class OASyncParseResult
+{
+    private final List<OAUserRecord> records = new ArrayList<>();
+
+    private final List<String> errors = new ArrayList<>();
+
+    /**
+     * @return the valid records parsed from the file
+     */
+    public List<OAUserRecord> getRecords()
+    {
+        return this.records;
+    }
+
+    /**
+     * @return the per-line parse errors (bad rows that were skipped)
+     */
+    public List<String> getErrors()
+    {
+        return this.errors;
+    }
+}
