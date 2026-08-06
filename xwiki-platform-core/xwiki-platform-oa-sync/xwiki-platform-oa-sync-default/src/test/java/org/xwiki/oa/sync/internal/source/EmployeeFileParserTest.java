@@ -174,4 +174,24 @@ class EmployeeFileParserTest
         assertTrue(result.getRecords().isEmpty());
         assertEquals(1, result.getErrors().size());
     }
+
+    @Test
+    void processesWhenAccountTypeBlank() throws Exception
+    {
+        // 真实 OA 文件里行员的账号类型(序号11)是留空的：空值应视为行员处理
+        String[] f = this.fields24();
+        f[1] = "10086";
+        f[10] = "";
+        f[11] = "101";
+        f[12] = "1";
+        f[22] = "8801";
+        f[23] = "科技部";
+
+        OASyncParseResult result = this.parser.parse(writeFile(this.line(f)), StandardCharsets.UTF_8);
+        assertEquals(0, result.getErrors().size());
+        assertEquals(1, result.getRecords().size());
+        OAUserRecord r = result.getRecords().get(0);
+        assertEquals("10086", r.getUsername());
+        assertTrue(r.isActive());
+    }
 }

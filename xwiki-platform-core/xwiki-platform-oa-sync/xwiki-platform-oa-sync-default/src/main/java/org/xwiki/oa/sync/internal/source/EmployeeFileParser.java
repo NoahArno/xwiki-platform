@@ -87,8 +87,10 @@ public class EmployeeFileParser
             return;
         }
         // 1-based index N == fields[N-1]
-        if (!ACCOUNT_TYPE_EMPLOYEE.equals(fields[10].trim())) {
-            // 只处理账号类型=1
+        // 账号类型(序号11)：只处理行员（值=1）；真实 OA 文件里行员的该列留空，因此空值也视为行员处理，
+        // 只有显式填了非 1 值（如外包/其他账号类型）的行才跳过。
+        String accountType = fields[10].trim();
+        if (!accountType.isEmpty() && !ACCOUNT_TYPE_EMPLOYEE.equals(accountType)) {
             return;
         }
         String username = fields[1].trim();
