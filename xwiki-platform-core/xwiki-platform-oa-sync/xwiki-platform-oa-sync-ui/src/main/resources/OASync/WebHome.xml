@@ -1,0 +1,67 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<xwikidoc version="1.5" reference="OASync.WebHome" locale="">
+  <web>OASync</web>
+  <name>WebHome</name>
+  <language/>
+  <defaultLanguage/>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <parent>Main.WebHome</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title>OA 用户数据同步</title>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>xwiki/2.1</syntaxId>
+  <hidden>false</hidden>
+  <content>{{velocity}}
+== OA 用户数据同步 ==
+
+(% class=&quot;xform&quot; %)
+* **数据日期**：默认同步前一天（`xwiki.oa-sync.source.&lt;type&gt;.date-offset-days`）
+* **定时**：每天 05:00，可在「管理 → 调度器」修改 cron
+* **记录**：每种来源保留最近 10 条
+* **状态说明**：SUCCESS=全部成功；PARTIAL_FAILURE=部分失败；FAILURE=整体失败（详见 errorLog）
+
+(% id=&quot;syncActions&quot; class=&quot;btn-group&quot; %)
+(% class=&quot;btn btn-primary&quot; data-sync-type=&quot;employee&quot; %)立即同步：行员(% /%)
+(% /%)
+
+{{html wiki=&quot;true&quot;}}
+&lt;script&gt;
+require([&#x27;jquery&#x27;], function ($) {
+  $(&#x27;#syncActions .btn&#x27;).on(&#x27;click&#x27;, function () {
+    var type = $(this).data(&#x27;sync-type&#x27;);
+    var btn = $(this);
+    btn.prop(&#x27;disabled&#x27;, true);
+    $.ajax({
+      url: &#x27;$xwiki.getURL(&#x27;&#x27;, &#x27;rest&#x27;)&#x27; + &#x27;/oa-sync/trigger?type=&#x27; + type,
+      method: &#x27;POST&#x27;,
+      dataType: &#x27;json&#x27;,
+      success: function (data) {
+        new XWiki.widgets.Notification(
+          &#x27;[&#x27; + data.type + &#x27;] &#x27; + data.status + &#x27; 成功=&#x27; + data.success + &#x27; 失败=&#x27; + data.failed,
+          &#x27;done&#x27;);
+      },
+      error: function (xhr) {
+        new XWiki.widgets.Notification(&#x27;触发失败：&#x27; + xhr.responseText, &#x27;error&#x27;);
+      },
+      complete: function () { btn.prop(&#x27;disabled&#x27;, false); }
+    });
+  });
+});
+&lt;/script&gt;
+{{/html}}
+
+== 最近同步记录 ==
+
+{{liveTable
+  outputOnlyHTML=&quot;true&quot;
+  doTranslation=&quot;false&quot;
+  properties=&quot;doc.title,doc.creationDate,syncType,syncDate,triggerType,status,totalCount,successCount,failCount,errorLog&quot;
+  className=&quot;OASync.SyncRecordClass&quot;
+  source=&quot;liveTable&quot;
+/}}
+{{/velocity}}</content>
+</xwikidoc>
