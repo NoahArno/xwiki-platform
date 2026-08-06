@@ -1,0 +1,10 @@
+org.xwiki.oa.sync.internal.configuration.DefaultOASyncConfiguration
+org.xwiki.oa.sync.internal.initializer.OASyncRecordClassInitializer
+org.xwiki.oa.sync.internal.initializer.OASyncOrgGroupClassInitializer
+org.xwiki.oa.sync.internal.rest.OASyncRESTResource
+org.xwiki.oa.sync.internal.service.DefaultOASyncService
+org.xwiki.oa.sync.internal.source.EmployeeOASyncSource
+org.xwiki.oa.sync.internal.source.OutsourcingOASyncSource
+org.xwiki.oa.sync.internal.store.SyncRecordStore
+org.xwiki.oa.sync.internal.sync.UserGroupSynchronizer
+org.xwiki.oa.sync.internal.ftp.OAFtpDownloader
