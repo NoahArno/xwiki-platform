@@ -111,12 +111,17 @@ public class DefaultOASyncService implements OASyncService
             ? manualDate
             : LocalDate.now().minusDays(this.configuration.getSourceDateOffsetDays(type));
         OASyncResult result = new OASyncResult(type, syncDate, triggerType, LocalDateTime.now());
+        LOGGER.info("OA同步: 开始 来源=[{}] 数据日期=[{}] 触发=[{}]", type, syncDate, triggerType);
         Path downloaded = null;
         try {
             String remotePath = source.resolveRemotePath(syncDate.format(DATE_FORMAT));
+            LOGGER.info("OA同步: 来源=[{}] 远程文件=[{}]", type, remotePath);
             downloaded = this.ftpDownloader.download(remotePath);
+            LOGGER.info("OA同步: 来源=[{}] 本地临时文件=[{}]", type, downloaded);
 
             OASyncParseResult parseResult = source.parse(downloaded);
+            LOGGER.info("OA同步: 来源=[{}] 解析完成: 有效记录=[{}] 解析错误=[{}]", type,
+                parseResult.getRecords().size(), parseResult.getErrors().size());
             int failed = parseResult.getErrors().size();
             int success = 0;
             result.getErrorLog().addAll(parseResult.getErrors());
@@ -135,6 +140,7 @@ public class DefaultOASyncService implements OASyncService
             result.setSuccessCount(success);
             result.setFailCount(failed);
             result.setStatus(failed == 0 ? OASyncResult.Status.SUCCESS : OASyncResult.Status.PARTIAL_FAILURE);
+            LOGGER.info("OA同步: 来源=[{}] 处理完成: 成功=[{}] 失败=[{}] 总数=[{}]", type, success, failed, success + failed);
         } catch (Exception e) {
             String msg = "来源 [" + type + "] 同步失败: " + e.getMessage();
             result.getErrorLog().add(msg);
@@ -153,6 +159,7 @@ public class DefaultOASyncService implements OASyncService
         try {
             this.recordStore.save(result, context);
             this.recordStore.cleanup(type, context);
+            LOGGER.info("OA同步: 来源=[{}] 同步记录已保存", type);
         } catch (Exception e) {
             LOGGER.error("保存同步记录失败（来源 {}）", type, e);
         }

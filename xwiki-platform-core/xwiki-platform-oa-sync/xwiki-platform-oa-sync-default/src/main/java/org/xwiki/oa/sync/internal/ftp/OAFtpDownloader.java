@@ -74,18 +74,21 @@ public class OAFtpDownloader
             client.setDefaultTimeout(this.configuration.getFtpTimeoutMs());
             client.setDataTimeout(this.configuration.getFtpTimeoutMs());
             client.connect(this.configuration.getFtpHost(), this.configuration.getFtpPort());
+            LOGGER.info("FTP 连接成功: {}:{}", this.configuration.getFtpHost(), this.configuration.getFtpPort());
             if (!client.login(this.configuration.getFtpUsername(), this.configuration.getFtpPassword())) {
                 throw new IOException("FTP 登录失败: " + client.getReplyString());
             }
             client.setFileType(FTP.BINARY_FILE_TYPE);
             client.enterLocalPassiveMode();
 
+            LOGGER.info("FTP 登录成功, 用户: {}", this.configuration.getFtpUsername());
             temp = Files.createTempFile("oa-sync-", ".dat");
             try (OutputStream out = Files.newOutputStream(temp)) {
                 if (!client.retrieveFile(remotePath, out)) {
                     throw new IOException("FTP 下载失败 [" + remotePath + "]: " + client.getReplyString());
                 }
             }
+            LOGGER.info("FTP 下载完成: [{}] ({} 字节)", remotePath, Files.size(temp));
             return temp;
         } catch (IOException e) {
             if (temp != null) {
