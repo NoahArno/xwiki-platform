@@ -28,7 +28,7 @@
 (% class=&quot;btn btn-primary&quot; data-sync-type=&quot;employee&quot; %)立即同步：行员(% /%)
 (% /%)
 
-#set ($records = $xwiki.searchDocuments(&quot;where doc.object(OASync.SyncRecordClass) order by doc.creationDate desc&quot;))
+#set ($records = $services.query.xwql(&quot;select doc.fullName from Document doc where doc.object(OASync.SyncRecordClass) order by doc.creationDate desc&quot;).execute())
 #if (!$records || $records.isEmpty())
 {{info}}暂无同步记录。{{/info}}
 #else

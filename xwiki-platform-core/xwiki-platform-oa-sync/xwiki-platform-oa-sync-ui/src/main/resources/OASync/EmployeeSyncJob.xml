@@ -20,8 +20,8 @@
     <name>OASync.EmployeeSyncJob</name>
     <number>0</number>
     <className>XWiki.SchedulerJobClass</className>
-    <guid>c06a1fb7-322a-403e-9452-2aceb06aa262</guid>
-    <class>
+    <guid>c4db1490-7ec8-416e-a774-daf5a7dc27ca</guid>
+<class>
       <name>XWiki.SchedulerJobClass</name>
       <customClass/>
       <customMapping/>
@@ -30,164 +30,108 @@
       <defaultWeb/>
       <nameField/>
       <validationScript/>
-      <cron>
-        <cache>0</cache>
+      <contextDatabase>
         <disabled>0</disabled>
-        <displayType>input</displayType>
-        <freeText>required</freeText>
-        <hint/>
+        <name>contextDatabase</name>
+        <number>9</number>
+        <prettyName>Job execution context database</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </contextDatabase>
+      <contextLang>
+        <disabled>0</disabled>
+        <name>contextLang</name>
+        <number>8</number>
+        <prettyName>Job execution context lang</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </contextLang>
+      <contextUser>
+        <disabled>0</disabled>
+        <name>contextUser</name>
+        <number>7</number>
+        <prettyName>Job execution context user</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </contextUser>
+      <cron>
+        <disabled>0</disabled>
         <name>cron</name>
         <number>5</number>
-        <picker>0</picker>
         <prettyName>Cron Expression</prettyName>
         <size>30</size>
         <unmodifiable>0</unmodifiable>
-        <validationMessage/>
-        <validationRegExp/>
         <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
       </cron>
       <jobClass>
-        <cache>0</cache>
         <disabled>0</disabled>
-        <displayType>input</displayType>
-        <freeText>required</freeText>
-        <hint/>
         <name>jobClass</name>
         <number>3</number>
-        <picker>0</picker>
         <prettyName>Job Class</prettyName>
         <size>60</size>
         <unmodifiable>0</unmodifiable>
-        <validationMessage/>
-        <validationRegExp/>
         <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
       </jobClass>
       <jobDescription>
-        <cache>0</cache>
         <disabled>0</disabled>
-        <displayType>textarea</displayType>
-        <freeText>required</freeText>
-        <hint/>
         <name>jobDescription</name>
         <number>2</number>
-        <picker>0</picker>
         <prettyName>Job Description</prettyName>
         <rows>10</rows>
         <size>45</size>
         <unmodifiable>0</unmodifiable>
-        <validationMessage/>
-        <validationRegExp/>
         <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
       </jobDescription>
       <jobName>
-        <cache>0</cache>
         <disabled>0</disabled>
-        <displayType>input</displayType>
-        <freeText>required</freeText>
-        <hint/>
         <name>jobName</name>
         <number>1</number>
-        <picker>0</picker>
         <prettyName>Job Name</prettyName>
         <size>60</size>
         <unmodifiable>0</unmodifiable>
-        <validationMessage/>
-        <validationRegExp/>
         <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
       </jobName>
       <script>
-        <cache>0</cache>
         <disabled>0</disabled>
-        <displayType>textarea</displayType>
-        <freeText>required</freeText>
-        <hint/>
+        <editor>PureText</editor>
         <name>script</name>
         <number>6</number>
-        <picker>0</picker>
         <prettyName>Job Script</prettyName>
         <rows>10</rows>
         <size>60</size>
         <unmodifiable>0</unmodifiable>
-        <validationMessage/>
-        <validationRegExp/>
         <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
-        <contenttype>PureText</contenttype>
       </script>
       <status>
-        <cache>0</cache>
         <disabled>0</disabled>
-        <displayType>input</displayType>
-        <freeText>required</freeText>
-        <hint/>
         <name>status</name>
         <number>4</number>
-        <picker>0</picker>
         <prettyName>Status</prettyName>
         <size>30</size>
         <unmodifiable>0</unmodifiable>
-        <validationMessage/>
-        <validationRegExp/>
         <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
       </status>
-      <contextDatabase>
-        <cache>0</cache>
-        <disabled>0</disabled>
-        <displayType>input</displayType>
-        <freeText>required</freeText>
-        <hint/>
-        <name>contextDatabase</name>
-        <number>9</number>
-        <picker>0</picker>
-        <prettyName>Job execution context database</prettyName>
-        <size>30</size>
-        <unmodifiable>0</unmodifiable>
-        <validationMessage/>
-        <validationRegExp/>
-        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
-      </contextDatabase>
-      <contextLang>
-        <cache>0</cache>
-        <disabled>0</disabled>
-        <displayType>input</displayType>
-        <freeText>required</freeText>
-        <hint/>
-        <name>contextLang</name>
-        <number>8</number>
-        <picker>0</picker>
-        <prettyName>Job execution context lang</prettyName>
-        <size>30</size>
-        <unmodifiable>0</unmodifiable>
-        <validationMessage/>
-        <validationRegExp/>
-        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
-      </contextLang>
-      <contextUser>
-        <cache>0</cache>
-        <disabled>0</disabled>
-        <displayType>input</displayType>
-        <freeText>required</freeText>
-        <hint/>
-        <name>contextUser</name>
-        <number>7</number>
-        <picker>0</picker>
-        <prettyName>Job execution context user</prettyName>
-        <size>30</size>
-        <unmodifiable>0</unmodifiable>
-        <validationMessage/>
-        <validationRegExp/>
-        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
-      </contextUser>
     </class>
     <property>
-      <jobName>OA 行员用户同步</jobName>
-      <jobDescription>每天从 FTP 同步行员用户数据（前一天，全量幂等）</jobDescription>
-      <jobClass>org.xwiki.oa.sync.internal.job.OASyncJob</jobClass>
-      <status>Normal</status>
       <cron>0 0 5 * * ?</cron>
+    </property>
+    <property>
+      <jobClass>org.xwiki.oa.sync.internal.job.OASyncJob</jobClass>
+    </property>
+    <property>
+      <jobDescription>每天从 FTP 同步行员用户数据（前一天，全量幂等）</jobDescription>
+    </property>
+    <property>
+      <jobName>OA 行员用户同步</jobName>
+    </property>
+    <property>
       <script/>
-      <contextUser>XWiki.Admin</contextUser>
-      <contextLang/>
-      <contextDatabase/>
+    </property>
+    <property>
+      <status>Normal</status>
     </property>
   </object>
 </xwikidoc>
