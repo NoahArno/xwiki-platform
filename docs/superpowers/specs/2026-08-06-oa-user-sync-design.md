@@ -107,19 +107,36 @@ flowchart TD
 
 **时间可配置**：同步任务 = 一个 `XWiki.SchedulerJobClass` 文档（默认 cron `0 0 5 * * ?`），管理员在 XWiki 管理 → 调度器界面改 cron / 启停 / 手动触发，无需重启。
 
-**FTP 等连接配置**放 `xwiki.cfg`（沿用 Zhixi SSO 的 `context.getWiki().Param(...)` 模式）：
+**FTP 等连接配置**放 `xwiki.cfg`（沿用 Zhixi SSO 的 `context.getWiki().Param(...)` 模式）。FTP 连接信息共用；**目录、文件名模板、编码、日期偏移按来源独立配置**，方便后续接入业务外包用户（不同目录、不同文件）：
 
 ```properties
+# ---------- FTP 连接（所有来源共用同一台 FTP） ----------
 xwiki.oa-sync.ftp.host=
 xwiki.oa-sync.ftp.port=21
 xwiki.oa-sync.ftp.username=
 xwiki.oa-sync.ftp.password=
-xwiki.oa-sync.ftp.base-path=/comm/bdpp/oa
 xwiki.oa-sync.ftp.timeout-ms=30000
-xwiki.oa-sync.date-offset-days=1
-xwiki.oa-sync.sources=employee        # 外包文件定稿后追加 outsourcing
+
+# ---------- 来源：行员 ----------
+xwiki.oa-sync.source.employee.enabled=true
+xwiki.oa-sync.source.employee.base-path=/comm/bdpp/oa/%s        # %s = YYYYMMDD（日期子目录）
+xwiki.oa-sync.source.employee.file-pattern=IOA_EMPLOYEE_JGTY_%s.dat
+xwiki.oa-sync.source.employee.encoding=GBK
+xwiki.oa-sync.source.employee.date-offset-days=1
+
+# ---------- 来源：业务外包（文件格式定稿后启用） ----------
+xwiki.oa-sync.source.outsourcing.enabled=false
+xwiki.oa-sync.source.outsourcing.base-path=/comm/bdpp/XXXX/%s   # 外包实际目录
+xwiki.oa-sync.source.outsourcing.file-pattern=XXXX_%s.dat       # 外包实际文件名模板
+xwiki.oa-sync.source.outsourcing.encoding=GBK
+xwiki.oa-sync.source.outsourcing.date-offset-days=1
+
 xwiki.oa-sync.record.space=OASync
 ```
+
+- `base-path` / `file-pattern` 中的 `%s` 均替换为数据日期 `YYYYMMDD`（已按 `date-offset-days` 偏移，默认前一天）
+- 启用外包只需：`enabled=true` + 填外包目录/文件名模板 + 补齐 `OutsourcingOASyncSource` 解析实现
+- 未启用的来源不参与同步、不产生记录
 
 ## 7. 同步记录页 + 手动触发
 
@@ -152,7 +169,8 @@ SPI 接口 `OASyncSource`：
 ```java
 public interface OASyncSource {
     String getType();                       // "employee" / "outsourcing"
-    String getFilePattern(String date);     // 文件相对路径/文件名模板
+    boolean isEnabled();                    // 读取 xwiki.oa-sync.source.<type>.enabled
+    String resolveRemotePath(String date);  // 按 base-path + file-pattern 模板拼出远程文件路径（%s=YYYYMMDD）
     List<OAUserRecord> parse(Path file);    // 解析为统一记录
 }
 ```
