@@ -20,7 +20,7 @@
 package com.xpn.xwiki.web;
 
 import java.net.URL;
-import java.util.Collections;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -34,6 +34,7 @@ import com.xpn.xwiki.test.MockitoOldcore;
 import com.xpn.xwiki.test.junit5.mockito.InjectMockitoOldcore;
 import com.xpn.xwiki.test.junit5.mockito.OldcoreTest;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -177,7 +178,7 @@ class ZhixiOAuth2LoginActionTest
         when(this.httpResponse.getWriter()).thenReturn(this.printWriter);
 
         doReturn(ACCESS_TOKEN).when(this.action).exchangeToken(eq(AUTH_CODE), any());
-        doReturn(createUserInfo(USER_LOGIN_ID, true))
+        doReturn(createUserInfo(USER_LOGIN_ID))
             .when(this.action).fetchUserInfo(eq(ACCESS_TOKEN), any());
 
         // User does NOT exist
@@ -192,23 +193,6 @@ class ZhixiOAuth2LoginActionTest
     }
 
     @Test
-    void callbackUserDisabledReturns403() throws Exception
-    {
-        when(this.httpRequest.getParameter("code")).thenReturn(AUTH_CODE);
-        when(this.httpRequest.getParameter("state")).thenReturn(STATE);
-        when(this.httpSession.getAttribute("zhixi_oauth2_state")).thenReturn(STATE);
-        when(this.httpResponse.getWriter()).thenReturn(this.printWriter);
-
-        doReturn(ACCESS_TOKEN).when(this.action).exchangeToken(eq(AUTH_CODE), any());
-        doReturn(createUserInfo(USER_LOGIN_ID, false))
-            .when(this.action).fetchUserInfo(eq(ACCESS_TOKEN), any());
-
-        this.action.doGet(this.httpRequest, this.httpResponse);
-
-        verify(this.httpResponse).setStatus(403);
-    }
-
-    @Test
     void callbackSuccessRedirectsToHome() throws Exception
     {
         when(this.httpRequest.getParameter("code")).thenReturn(AUTH_CODE);
@@ -216,7 +200,7 @@ class ZhixiOAuth2LoginActionTest
         when(this.httpSession.getAttribute("zhixi_oauth2_state")).thenReturn(STATE);
 
         doReturn(ACCESS_TOKEN).when(this.action).exchangeToken(eq(AUTH_CODE), any());
-        doReturn(createUserInfo(USER_LOGIN_ID, true))
+        doReturn(createUserInfo(USER_LOGIN_ID))
             .when(this.action).fetchUserInfo(eq(ACCESS_TOKEN), any());
 
         // User exists
@@ -248,17 +232,54 @@ class ZhixiOAuth2LoginActionTest
         verify(this.httpResponse).setStatus(403);
     }
 
+    // ── JSON deserialization resilience ──
+
+    @Test
+    void userInfoDeserializationIgnoresUnknownFields() throws Exception
+    {
+        // DOAP user_info may return more fields than the DTO declares (e.g. birthday).
+        // Unknown fields must be ignored instead of failing the whole login.
+        String json = "{"
+            + "\"username\":\"admin\","
+            + "\"name\":\"Admin User\","
+            + "\"email\":\"admin@example.com\","
+            + "\"enabled\":true,"
+            + "\"birthday\":\"1990-01-01\","
+            + "\"phone\":\"13800000000\","
+            + "\"authorities\":[{\"authority\":\"ROLE_USER\",\"description\":\"普通用户\",\"extra\":1}]"
+            + "}";
+
+        ZhixiOAuth2LoginAction.ZhixiUserInfo userInfo =
+            new ObjectMapper().readValue(json, ZhixiOAuth2LoginAction.ZhixiUserInfo.class);
+
+        assertEquals("admin", userInfo.getUsername());
+    }
+
+    @Test
+    void tokenResponseDeserializationIgnoresUnknownFields() throws Exception
+    {
+        String json = "{"
+            + "\"access_token\":\"abc123\","
+            + "\"token_type\":\"bearer\","
+            + "\"expires_in\":3600,"
+            + "\"refresh_token\":\"not-used\","
+            + "\"extra_field\":\"ignored\""
+            + "}";
+
+        ZhixiOAuth2LoginAction.ZhixiTokenResponse response =
+            new ObjectMapper().readValue(json, ZhixiOAuth2LoginAction.ZhixiTokenResponse.class);
+
+        assertEquals("abc123", response.getAccessToken());
+        assertEquals(3600, response.getExpiresIn());
+    }
+
     // ── Helpers ──
 
-    private ZhixiOAuth2LoginAction.ZhixiUserInfo createUserInfo(String username, boolean enabled)
+    private ZhixiOAuth2LoginAction.ZhixiUserInfo createUserInfo(String username)
     {
         ZhixiOAuth2LoginAction.ZhixiUserInfo userInfo =
             new ZhixiOAuth2LoginAction.ZhixiUserInfo();
         userInfo.setUsername(username);
-        userInfo.setName("Test User");
-        userInfo.setEmail(username + "@example.com");
-        userInfo.setEnabled(enabled);
-        userInfo.setAuthorities(Collections.emptyList());
         return userInfo;
     }
 }

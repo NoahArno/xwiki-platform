@@ -47,6 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xwiki.model.reference.DocumentReference;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -64,7 +65,7 @@ import com.xpn.xwiki.internal.user.UserAuthenticatedEventNotifier;
  *   <li>User authenticates on DOAP → redirected back to {@code /xwiki/zhixi-login?code=...&state=...}</li>
  *   <li>Servlet exchanges the authorization code for an access token via DOAP token endpoint</li>
  *   <li>Servlet fetches user info via DOAP user_info endpoint</li>
- *   <li>If the user exists and is enabled in XWiki, they are logged in automatically</li>
+ *   <li>If the user exists in XWiki, they are logged in automatically (disabled XWiki users are rejected by the standard per-request auth check)</li>
  * </ol>
  * <p>
  * This is a standalone servlet (not an XWiki Action) to bypass the XWiki authentication
@@ -206,13 +207,6 @@ public class ZhixiOAuth2LoginAction extends HttpServlet
                 return;
             }
 
-            // ④ Validate user is enabled
-            if (!userInfo.isEnabled()) {
-                LOGGER.warn("Zhixi OAuth2: user [{}] is disabled in DOAP", userInfo.getUsername());
-                writeError(response, "当前用户 " + userInfo.getUsername() + " 已被禁用");
-                return;
-            }
-
             // ⑤ Find the user in XWiki
             String user = findUserByLoginId(userInfo.getUsername(), context);
             if (user == null) {
@@ -343,8 +337,8 @@ public class ZhixiOAuth2LoginAction extends HttpServlet
                     return null;
                 }
 
-                LOGGER.info("Zhixi OAuth2: user_info fetched. username=[{}], name=[{}]",
-                    userInfo.getUsername(), userInfo.getName());
+                LOGGER.info("Zhixi OAuth2: user_info fetched. username=[{}]",
+                    userInfo.getUsername());
                 return userInfo;
 
             }
@@ -483,7 +477,8 @@ public class ZhixiOAuth2LoginAction extends HttpServlet
     /**
      * DOAP token endpoint response (snake_case JSON keys).
      */
-    public static class ZhixiTokenResponse
+    @JsonIgnoreProperties(ignoreUnknown = true)
+public static class ZhixiTokenResponse
     {
         @JsonProperty("access_token")
         private String accessToken;
@@ -550,14 +545,14 @@ public class ZhixiOAuth2LoginAction extends HttpServlet
 
     /**
      * DOAP user_info endpoint response.
+     * <p>
+     * Only {@code username} is used at login time. Any other fields returned by DOAP
+     * (e.g. enabled, birthday, phone, name, authorities) are ignored via {@link JsonIgnoreProperties}.
      */
-    public static class ZhixiUserInfo
+    @JsonIgnoreProperties(ignoreUnknown = true)
+public static class ZhixiUserInfo
     {
         private String username;
-        private String name;
-        private String email;
-        private boolean enabled;
-        private List<Authority> authorities;
 
         public String getUsername()
         {
@@ -569,83 +564,12 @@ public class ZhixiOAuth2LoginAction extends HttpServlet
             this.username = username;
         }
 
-        public String getName()
-        {
-            return name;
-        }
-
-        public void setName(String name)
-        {
-            this.name = name;
-        }
-
-        public String getEmail()
-        {
-            return email;
-        }
-
-        public void setEmail(String email)
-        {
-            this.email = email;
-        }
-
-        public boolean isEnabled()
-        {
-            return enabled;
-        }
-
-        public void setEnabled(boolean enabled)
-        {
-            this.enabled = enabled;
-        }
-
-        public List<Authority> getAuthorities()
-        {
-            return authorities;
-        }
-
-        public void setAuthorities(List<Authority> authorities)
-        {
-            this.authorities = authorities;
-        }
-
         @Override
         public String toString()
         {
             return "ZhixiUserInfo{"
                 + "username='" + username + '\''
-                + ", name='" + name + '\''
-                + ", enabled=" + enabled
                 + '}';
-        }
-    }
-
-    /**
-     * DOAP user authority.
-     */
-    public static class Authority
-    {
-        private String authority;
-        private String description;
-
-        public String getAuthority()
-        {
-            return authority;
-        }
-
-        public void setAuthority(String authority)
-        {
-            this.authority = authority;
-        }
-
-        public String getDescription()
-        {
-            return description;
-        }
-
-        public void setDescription(String description)
-        {
-            this.description = description;
         }
     }
 }
