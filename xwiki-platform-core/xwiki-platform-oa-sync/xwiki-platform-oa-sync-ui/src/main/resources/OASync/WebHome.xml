@@ -15,7 +15,8 @@
   <minorEdit>false</minorEdit>
   <syntaxId>xwiki/2.1</syntaxId>
   <hidden>true</hidden>
-  <content>== OA 用户数据同步 ==
+  <content>{{velocity}}
+== OA 用户数据同步 ==
 
 (% class=&quot;xform&quot; %)
 * **数据日期**：默认同步前一天（`xwiki.oa-sync.source.&lt;type&gt;.date-offset-days`）
@@ -50,5 +51,6 @@
 #end
   #end
 #end
-#end</content>
+#end
+{{/velocity}}</content>
 </xwikidoc>
