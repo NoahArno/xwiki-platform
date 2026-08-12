@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ * Logback test configuration for the audit log module.
+ * Keeps the default XWiki test logging but disables the org.xwiki.audit.log package so
+ * that tests don't write to the console (CaptureConsoleExtension fails otherwise).
+ * Production logging is configured at runtime and is not affected.
+-->
+
+<configuration>
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <!-- Disable audit log logs in tests -->
+  <logger name="org.xwiki.audit.log" level="off"/>
+
+  <root level="warn">
+    <appender-ref ref="STDOUT"/>
+  </root>
+</configuration>
