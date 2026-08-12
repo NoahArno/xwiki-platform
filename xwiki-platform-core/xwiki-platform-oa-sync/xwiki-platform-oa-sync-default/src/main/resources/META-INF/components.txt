@@ -8,3 +8,12 @@ org.xwiki.oa.sync.internal.source.OutsourcingOASyncSource
 org.xwiki.oa.sync.internal.store.SyncRecordStore
 org.xwiki.oa.sync.internal.sync.UserGroupSynchronizer
 org.xwiki.oa.sync.internal.ftp.OAFtpDownloader
+org.xwiki.oa.sync.internal.mq.DefaultDoapMqConfiguration
+org.xwiki.oa.sync.internal.mq.DefaultDoapMqConsumer
+org.xwiki.oa.sync.internal.mq.DoapMqApplicationReadyListener
+org.xwiki.oa.sync.internal.mq.DoapUserMessageDispatcher
+org.xwiki.oa.sync.internal.mq.DoapUserMessageParser
+org.xwiki.oa.sync.internal.mq.DoapUserSynchronizer
+org.xwiki.oa.sync.internal.mq.handler.DoapUserCreateHandler
+org.xwiki.oa.sync.internal.mq.handler.DoapUserUpdateHandler
+org.xwiki.oa.sync.internal.mq.handler.DoapUserDeleteHandler
