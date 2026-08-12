@@ -260,6 +260,7 @@
     <module>xwiki-platform-node</module>
     <module>xwiki-platform-notifications</module>
     <module>xwiki-platform-oa-sync</module>
+    <module>xwiki-platform-audit-log</module>
     <module>xwiki-platform-observation</module>
     <module>xwiki-platform-office</module>
     <module>xwiki-platform-oldcore</module>
