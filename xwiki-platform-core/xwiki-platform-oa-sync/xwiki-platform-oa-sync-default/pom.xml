@@ -91,6 +91,14 @@
       <groupId>org.apache.rocketmq</groupId>
       <artifactId>rocketmq-client</artifactId>
       <version>4.7.1</version>
+      <exclusions>
+        <!-- XWiki 禁用 commons-logging（用 jcl-over-slf4j 桥接），否则 enforcer 的
+             enforce-jcl-log4j-isolation 规则会构建失败 -->
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- Test dependencies -->

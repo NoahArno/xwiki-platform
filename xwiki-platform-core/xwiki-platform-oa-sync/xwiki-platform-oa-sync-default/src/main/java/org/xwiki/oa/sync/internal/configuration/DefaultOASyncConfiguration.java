@@ -79,13 +79,13 @@ public class DefaultOASyncConfiguration implements OASyncConfiguration
     @Override
     public String getSourceBasePath(String type)
     {
-        return get("xwiki.oa-sync.source." + type + ".base-path", "");
+        return get("xwiki.oa-sync.source." + type + ".base-path", defaultSourceBasePath(type));
     }
 
     @Override
     public String getSourceFilePattern(String type)
     {
-        return get("xwiki.oa-sync.source." + type + ".file-pattern", "");
+        return get("xwiki.oa-sync.source." + type + ".file-pattern", defaultSourceFilePattern(type));
     }
 
     @Override
@@ -98,6 +98,28 @@ public class DefaultOASyncConfiguration implements OASyncConfiguration
     public int getSourceDateOffsetDays(String type)
     {
         return getInt("xwiki.oa-sync.source." + type + ".date-offset-days", 1);
+    }
+
+    private String defaultSourceBasePath(String type)
+    {
+        if ("employee".equals(type)) {
+            return "/comm/bdpp/oa/%s";
+        }
+        if ("outsourcing".equals(type)) {
+            return "/comm/bdpp/oa/non/%s";
+        }
+        return "";
+    }
+
+    private String defaultSourceFilePattern(String type)
+    {
+        if ("employee".equals(type)) {
+            return "IOA_EMPLOYEE_JGTY_%s.dat";
+        }
+        if ("outsourcing".equals(type)) {
+            return "IOA_NON_EMPLOYEE_WIKI_%s.dat";
+        }
+        return "";
     }
 
     private String get(String key, String defaultValue)

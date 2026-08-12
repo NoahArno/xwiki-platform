@@ -19,6 +19,7 @@
  */
 package org.xwiki.oa.sync.internal.source;
 
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 
 import javax.inject.Named;
@@ -29,8 +30,9 @@ import org.xwiki.oa.sync.OASyncSource;
 import org.xwiki.oa.sync.model.OASyncParseResult;
 
 /**
- * 业务外包用户数据来源：文件格式未定义，暂为占位实现。默认未启用
- * （{@code xwiki.oa-sync.source.outsourcing.enabled=false}）。格式定稿后在此实现 {@link #parse(Path)}。
+ * 业务外包用户数据来源：
+ * {@code /comm/bdpp/oa/non/YYYYMMDD/IOA_NON_EMPLOYEE_WIKI_YYYYMMDD.dat}（GBK，CHAR06 分隔）。
+ * 默认未启用，需在 xwiki.cfg 设置 {@code xwiki.oa-sync.source.outsourcing.enabled=true} 开启（路径/文件名已有内置默认值）。
  *
  * @version $Id$
  */
@@ -39,6 +41,8 @@ import org.xwiki.oa.sync.model.OASyncParseResult;
 @Singleton
 public class OutsourcingOASyncSource extends AbstractOASyncSource
 {
+    private final OutsourcingFileParser parser = new OutsourcingFileParser();
+
     @Override
     public String getType()
     {
@@ -48,6 +52,10 @@ public class OutsourcingOASyncSource extends AbstractOASyncSource
     @Override
     public OASyncParseResult parse(Path file)
     {
-        throw new UnsupportedOperationException("外包用户文件格式未定义，解析尚未实现");
+        try {
+            return this.parser.parse(file, Charset.forName(this.configuration.getSourceEncoding(getType())));
+        } catch (Exception e) {
+            throw new RuntimeException("解析外包用户文件失败: " + e.getMessage(), e);
+        }
     }
 }

@@ -124,10 +124,11 @@ xwiki.oa-sync.source.employee.file-pattern=IOA_EMPLOYEE_JGTY_%s.dat
 xwiki.oa-sync.source.employee.encoding=GBK
 xwiki.oa-sync.source.employee.date-offset-days=1
 
-# ---------- 来源：业务外包（文件格式定稿后启用） ----------
-xwiki.oa-sync.source.outsourcing.enabled=false
-xwiki.oa-sync.source.outsourcing.base-path=/comm/bdpp/XXXX/%s   # 外包实际目录
-xwiki.oa-sync.source.outsourcing.file-pattern=XXXX_%s.dat       # 外包实际文件名模板
+# ---------- 来源：业务外包（IOA_NON_EMPLOYEE_WIKI_YYYYMMDD.dat，2026-08-12 格式定稿） ----------
+xwiki.oa-sync.source.outsourcing.enabled=true
+# 下方 base-path / file-pattern / encoding / date-offset-days 均有内置默认值，仅需按需覆盖：
+xwiki.oa-sync.source.outsourcing.base-path=/comm/bdpp/oa/non/%s
+xwiki.oa-sync.source.outsourcing.file-pattern=IOA_NON_EMPLOYEE_WIKI_%s.dat
 xwiki.oa-sync.source.outsourcing.encoding=GBK
 xwiki.oa-sync.source.outsourcing.date-offset-days=1
 

@@ -56,6 +56,44 @@ class DefaultOASyncConfigurationTest
         assertEquals(60000, this.config.getFtpTimeoutMs());
     }
 
+
+    @Test
+    void employeeDefaultsWithoutExplicitConfig()
+    {
+        this.config.configuration = this.source;
+        assertEquals("/comm/bdpp/oa/%s", this.config.getSourceBasePath("employee"));
+        assertEquals("IOA_EMPLOYEE_JGTY_%s.dat", this.config.getSourceFilePattern("employee"));
+        assertEquals("GBK", this.config.getSourceEncoding("employee"));
+        assertEquals(1, this.config.getSourceDateOffsetDays("employee"));
+        assertFalse(this.config.isSourceEnabled("employee"));
+    }
+
+    @Test
+    void outsourcingDefaultsWithoutExplicitConfig()
+    {
+        this.config.configuration = this.source;
+        assertEquals("/comm/bdpp/oa/non/%s", this.config.getSourceBasePath("outsourcing"));
+        assertEquals("IOA_NON_EMPLOYEE_WIKI_%s.dat", this.config.getSourceFilePattern("outsourcing"));
+        assertEquals("GBK", this.config.getSourceEncoding("outsourcing"));
+        assertEquals(1, this.config.getSourceDateOffsetDays("outsourcing"));
+        assertFalse(this.config.isSourceEnabled("outsourcing"));
+    }
+
+    @Test
+    void explicitOutsourcingConfigOverridesDefaults()
+    {
+        this.config.configuration = this.source;
+        when(this.source.getProperty("xwiki.oa-sync.source.outsourcing.enabled", Boolean.class)).thenReturn(true);
+        when(this.source.getProperty("xwiki.oa-sync.source.outsourcing.base-path", String.class))
+            .thenReturn("/custom/%s");
+        when(this.source.getProperty("xwiki.oa-sync.source.outsourcing.file-pattern", String.class))
+            .thenReturn("OTHER_%s.dat");
+
+        assertTrue(this.config.isSourceEnabled("outsourcing"));
+        assertEquals("/custom/%s", this.config.getSourceBasePath("outsourcing"));
+        assertEquals("OTHER_%s.dat", this.config.getSourceFilePattern("outsourcing"));
+    }
+
     @Test
     void readsPerSourceConfigWithDefaults()
     {

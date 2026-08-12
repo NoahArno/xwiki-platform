@@ -10,7 +10,7 @@
   <author>xwiki:XWiki.Admin</author>
   <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
   <version>1.1</version>
-  <title>OA 行员用户同步任务</title>
+  <title>OA 用户数据同步任务</title>
   <comment/>
   <minorEdit>false</minorEdit>
   <syntaxId>xwiki/2.1</syntaxId>
@@ -122,10 +122,10 @@
       <jobClass>org.xwiki.oa.sync.internal.job.OASyncJob</jobClass>
     </property>
     <property>
-      <jobDescription>每天从 FTP 同步行员用户数据（前一天，全量幂等）</jobDescription>
+      <jobDescription>每天从 FTP 同步 OA 用户数据（前一天，全量幂等；行员/外包按配置启用）</jobDescription>
     </property>
     <property>
-      <jobName>OA 行员用户同步</jobName>
+      <jobName>OA 用户同步</jobName>
     </property>
     <property>
       <script/>

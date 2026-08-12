@@ -19,38 +19,44 @@
 == OA 用户数据同步 ==
 
 (% class=&quot;xform&quot; %)
-* **数据日期**：默认同步前一天（`xwiki.oa-sync.source.&lt;type&gt;.date-offset-days`）
-* **定时**：每天 05:00，可在「应用 → Scheduler」修改 cron
+* **数据日期**：默认同步前一天（`xwiki.oa-sync.source.&lt;type&gt;.date-offset-days`），手动触发可传 `date=YYYYMMDD`
+* **定时**：每天 05:00，可在「应用 → Scheduler」修改 cron（同一任务会同步所有已启用的来源：行员/外包）
 * **记录**：每种来源保留最近 10 条
 * **状态说明**：SUCCESS=全部成功；PARTIAL_FAILURE=部分失败；FAILURE=整体失败（详见 errorLog）
 
 == 手动触发 ==
 
 {{html}}
-&lt;button id=&quot;oaSyncTrigger&quot; class=&quot;btn btn-primary&quot;&gt;立即同步：行员&lt;/button&gt;
+&lt;p&gt;
+&lt;button class=&quot;oa-sync-trigger btn btn-primary&quot; data-type=&quot;employee&quot;&gt;立即同步：行员&lt;/button&gt;
+&lt;button class=&quot;oa-sync-trigger btn btn-primary&quot; data-type=&quot;outsourcing&quot;&gt;立即同步：外包&lt;/button&gt;
+&lt;/p&gt;
 &lt;script&gt;
 (function () {
-  var btn = document.getElementById(&#x27;oaSyncTrigger&#x27;);
-  if (!btn) {
-    return;
-  }
-  btn.addEventListener(&#x27;click&#x27;, function () {
-    btn.disabled = true;
-    fetch(&#x27;$request.contextPath/rest/oa-sync/trigger?type=employee&#x27;, {
-      method: &#x27;POST&#x27;,
-      headers: { &#x27;Content-Type&#x27;: &#x27;application/json&#x27; },
-      body: &#x27;{}&#x27;
-    }).then(function (resp) {
-      return resp.json().catch(function () { return {}; }).then(function (data) {
-        var level = data.status === &#x27;SUCCESS&#x27; ? &#x27;done&#x27; : &#x27;warning&#x27;;
-        new XWiki.widgets.Notification(&#x27;[&#x27; + data.type + &#x27;] &#x27; + data.status + &#x27; 成功=&#x27; + data.success + &#x27; 失败=&#x27; + data.failed, level);
+  function bind(btn) {
+    btn.addEventListener(&#x27;click&#x27;, function () {
+      var type = btn.getAttribute(&#x27;data-type&#x27;);
+      btn.disabled = true;
+      fetch(&#x27;$request.contextPath/rest/oa-sync/trigger?type=&#x27; + type, {
+        method: &#x27;POST&#x27;,
+        headers: { &#x27;Content-Type&#x27;: &#x27;application/json&#x27; },
+        body: &#x27;{}&#x27;
+      }).then(function (resp) {
+        return resp.json().catch(function () { return {}; }).then(function (data) {
+          var level = data.status === &#x27;SUCCESS&#x27; ? &#x27;done&#x27; : &#x27;warning&#x27;;
+          new XWiki.widgets.Notification(&#x27;[&#x27; + data.type + &#x27;] &#x27; + data.status + &#x27; 成功=&#x27; + data.success + &#x27; 失败=&#x27; + data.failed, level);
+        });
+      }).catch(function (err) {
+        new XWiki.widgets.Notification(&#x27;触发失败：&#x27; + err, &#x27;error&#x27;);
+      }).finally(function () {
+        btn.disabled = false;
       });
-    }).catch(function (err) {
-      new XWiki.widgets.Notification(&#x27;触发失败：&#x27; + err, &#x27;error&#x27;);
-    }).finally(function () {
-      btn.disabled = false;
     });
-  });
+  }
+  var btns = document.querySelectorAll(&#x27;.oa-sync-trigger&#x27;);
+  for (var i = 0; i &lt; btns.length; i++) {
+    bind(btns[i]);
+  }
 })();
 &lt;/script&gt;
 {{/html}}
