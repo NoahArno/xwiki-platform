@@ -54,6 +54,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xpn.xwiki.XWiki;
 import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.XWikiException;
+import com.xpn.xwiki.internal.session.SessionRegistry;
 import com.xpn.xwiki.internal.user.UserAuthenticatedEventNotifier;
 
 /**
@@ -362,15 +363,25 @@ public class ZhixiOAuth2LoginAction extends HttpServlet
         String principalName = context.getWikiId() + ":" + user;
         SimplePrincipal principal = new SimplePrincipal(principalName);
 
+        // Session fixation protection: never reuse the session that held the OAuth2 state after a successful login.
+        HttpSession previousSession = request.getSession(false);
+        if (previousSession != null) {
+            previousSession.invalidate();
+        }
+
         javax.servlet.http.HttpServletRequest javaxRequest =
             org.xwiki.jakartabridge.servlet.JakartaServletBridge.toJavax(request);
         SecurityRequestWrapper wrappedRequest =
             new SecurityRequestWrapper(javaxRequest, null, null, "FORM");
         wrappedRequest.setUserPrincipal(principal);
 
-        // Store principal in HTTP session so SecurityFilter picks it up on the next request
+        // Store principal in a brand new HTTP session so SecurityFilter picks it up on the next request
         HttpSession session = request.getSession(true);
         session.setAttribute("org.securityfilter.filter.SecurityFilter.PRINCIPAL", principal);
+
+        // Single-session enforcement: invalidate any previous session of the same user.
+        Utils.getComponent(SessionRegistry.class)
+            .register(principalName, org.xwiki.jakartabridge.servlet.JakartaServletBridge.toJavax(session));
 
         // Notify the authentication success event
         UserAuthenticatedEventNotifier notifier =

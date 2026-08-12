@@ -40,6 +40,7 @@ import org.xwiki.model.reference.DocumentReference;
 import com.xpn.xwiki.XWiki;
 import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.XWikiException;
+import com.xpn.xwiki.internal.session.SessionRegistry;
 import com.xpn.xwiki.internal.user.UserAuthenticatedEventNotifier;
 
 /**
@@ -114,14 +115,24 @@ public class OALoginAction extends HttpServlet
             String principalName = context.getWikiId() + ":" + user;
             SimplePrincipal principal = new SimplePrincipal(principalName);
 
+            // Session fixation protection: never reuse the pre-authentication session after a successful login.
+            HttpSession previousSession = request.getSession(false);
+            if (previousSession != null) {
+                previousSession.invalidate();
+            }
+
             javax.servlet.http.HttpServletRequest javaxRequest =
                 org.xwiki.jakartabridge.servlet.JakartaServletBridge.toJavax(request);
             SecurityRequestWrapper wrappedRequest = new SecurityRequestWrapper(javaxRequest, null, null, "FORM");
             wrappedRequest.setUserPrincipal(principal);
 
-            // Store principal in HTTP session so SecurityFilter picks it up on next request
+            // Store principal in a brand new HTTP session so SecurityFilter picks it up on next request
             HttpSession session = request.getSession(true);
             session.setAttribute("org.securityfilter.filter.SecurityFilter.PRINCIPAL", principal);
+
+            // Single-session enforcement: invalidate any previous session of the same user.
+            Utils.getComponent(SessionRegistry.class)
+                .register(principalName, org.xwiki.jakartabridge.servlet.JakartaServletBridge.toJavax(session));
 
             // Notify authentication event
             UserAuthenticatedEventNotifier notifier =

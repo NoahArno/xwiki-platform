@@ -35,6 +35,7 @@ import org.xwiki.security.authentication.AuthenticationFailureManager;
 
 import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.XWikiException;
+import com.xpn.xwiki.internal.session.SessionRegistry;
 import com.xpn.xwiki.internal.user.UserAuthenticatedEventNotifier;
 import com.xpn.xwiki.web.Utils;
 
@@ -82,6 +83,11 @@ public class MyBasicAuthenticator extends BasicAuthenticator implements XWikiAut
             // login successful
             request.getSession().removeAttribute(LOGIN_ATTEMPTS);
 
+            // Session fixation protection: always generate a new session ID on successful login.
+            if (request.getSession(false) != null) {
+                request.changeSessionId();
+            }
+
             // make sure the Principal contains wiki name information
             if (!StringUtils.contains(principal.getName(), ':')) {
                 principal = new SimplePrincipal(context.getWikiId() + ":" + principal.getName());
@@ -90,6 +96,9 @@ public class MyBasicAuthenticator extends BasicAuthenticator implements XWikiAut
             request.setUserPrincipal(principal);
 
             this.getUserAuthenticatedEventNotifier().notify(principal.getName());
+
+            // Single-session enforcement: invalidate any previous session of the same user.
+            Utils.getComponent(SessionRegistry.class).register(principal.getName(), request.getSession());
 
             return false;
         } else {
@@ -124,6 +133,15 @@ public class MyBasicAuthenticator extends BasicAuthenticator implements XWikiAut
                 // login successful
                 request.getSession().removeAttribute(LOGIN_ATTEMPTS);
                 authenticationFailureManager.resetAuthenticationFailureCounter(username);
+
+                // Session fixation protection: generate a new session ID when this request establishes the
+                // authentication (i.e. when the session was not already authenticated). The session is not
+                // registered in the SessionRegistry here on purpose: this path runs on every request carrying a
+                // BASIC Authorization header (e.g. API clients), and registering would kick the interactive
+                // session of the same user.
+                if (request.getUserPrincipal() == null && request.getSession(false) != null) {
+                    request.changeSessionId();
+                }
 
                 // make sure the Principal contains wiki name information
                 if (!StringUtils.contains(principal.getName(), ':')) {

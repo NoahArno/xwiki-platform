@@ -38,6 +38,7 @@ import org.xwiki.security.authentication.AuthenticationFailureManager;
 
 import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.XWikiException;
+import com.xpn.xwiki.internal.session.SessionRegistry;
 import com.xpn.xwiki.internal.user.UserAuthenticatedEventNotifier;
 import com.xpn.xwiki.web.Utils;
 
@@ -55,6 +56,11 @@ public class MyFormAuthenticator extends FormAuthenticator implements XWikiAuthe
             this.userAuthenticatedEventNotifier = Utils.getComponent(UserAuthenticatedEventNotifier.class);
         }
         return this.userAuthenticatedEventNotifier;
+    }
+
+    private SessionRegistry getSessionRegistry()
+    {
+        return Utils.getComponent(SessionRegistry.class);
     }
 
     /**
@@ -242,9 +248,9 @@ public class MyFormAuthenticator extends FormAuthenticator implements XWikiAuthe
 
             authenticationFailureManager.resetAuthenticationFailureCounter(username);
 
-            // invalidate old session if the user was already authenticated, and they logged in as a different user
-            if (request.getUserPrincipal() != null && !username.equals(request.getRemoteUser())) {
-                request.getSession().invalidate();
+            // Session fixation protection: always generate a new session ID on successful login.
+            if (request.getSession(false) != null) {
+                request.changeSessionId();
             }
 
             // manage persistent login info, if persistent login management is enabled
@@ -267,6 +273,9 @@ public class MyFormAuthenticator extends FormAuthenticator implements XWikiAuthe
             request.setUserPrincipal(principal);
 
             this.getUserAuthenticatedEventNotifier().notify(principal.getName());
+
+            // Single-session enforcement: invalidate any previous session of the same user.
+            getSessionRegistry().register(principal.getName(), request.getSession());
 
             Boolean bAjax = (Boolean) context.get("ajax");
             if ((bAjax == null) || (!bAjax.booleanValue())) {

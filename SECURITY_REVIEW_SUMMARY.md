@@ -111,6 +111,9 @@
 | 4 | **扫描 wiki 数据库页面中的二开模板拼接**（详见第 6 节） | 开发+安全 | 待执行 |
 | 5 | SAST 工具将 Tomcat `org.apache.catalina.*`、Tika `org.apache.tika.utils.*` 标记为受信任库 | 安全 | 待执行 |
 | 6 | 保持 XWiki / Tomcat / Tika 补丁更新，跟踪 XWiki 安全公告 | 运维 | 持续 |
+| 7 | 会话安全改造（会话固定/多点登入/登出失效/密码 cookie）纳入版本管理，走代码评审后发布（详见第 10 节） | 开发 | 代码已完成，待评审发布 |
+| 8 | 前端"退出"改为调 `/xwiki/bin/logout/XWiki/XWikiLogout` 后再跳 OA，禁止只清 cookie | 前端 | 待执行 |
+| 9 | 部署 web.xml 加 `<session-config>` 会话超时；确认生产全站 HTTPS | 运维 | 待执行 |
 
 ---
 
@@ -333,3 +336,126 @@ WHERE o.XWO_CLASSNAME='XWiki.XWikiRights'
 | 2 | 用该账号复测全部报告 | 预期全部在权限门处被拦截 |
 | 3 | 检查 AllGroup/匿名/业务组是否被授 programming/script/admin | 有则移除（默认不应有） |
 | 4 | IAST 排除管理员会话；SAST 白名单可信库 | 平台侧配置 |
+
+---
+
+## 10. 会话安全专项：会话固定 / 多点登入 / 登出失效 / 密码 Cookie
+
+### 10.1 现状（已核实）
+
+XWiki 的认证状态 = `HttpSession` 属性 `org.securityfilter.filter.SecurityFilter.PRINCIPAL`（一个 `SimplePrincipal`，值为 `wiki:用户名`），由 `SecurityRequestWrapper.getUserPrincipal()` 每次从会话读取。登录入口有 3 个：
+
+| 入口 | 类 | 说明 |
+|---|---|---|
+| OA SSO | `OALoginAction`（`/xwiki/oa-login`） | 独立 Servlet，验签后直写会话 |
+| 知悉 OAuth2 | `ZhixiOAuth2LoginAction`（`/xwiki/zhixi-login`） | 独立 Servlet，state 校验后直写会话 |
+| 表单 / 基本认证 | `MyFormAuthenticator` / `MyBasicAuthenticator` | XWiki 标准认证流 |
+
+**服务端唯一真正让会话失效的代码**是 `LogoutAction.java:61-67`（`session.invalidate()`），它只在访问 `/bin/logout` 时触发；securityfilter 的 `FormAuthenticator.processLogout`（反编译确认）只清"记住我"cookie，**不失效会话**。
+
+### 10.2 问题 1：会话固定（Session Fixation）—— 真实
+
+**现象**：登录成功后 JSESSIONID 不变（"第一次登录和第二次登录的会话相同"），攻击者可预置会话 ID 后诱导受害者登录，从而冒充受害者。
+
+**根因**（登录成功均未重建/轮换会话）：
+- `OALoginAction.java`：`request.getSession(true)` 后直接把 principal 塞进**旧会话**；
+- `ZhixiOAuth2LoginAction.loginAndRedirect`：同样塞旧会话（该会话还曾存放 OAuth2 state）；
+- `MyFormAuthenticator.processLogin:245-247`：只有"已登录用户切换账号"才 `invalidate()`，**匿名→首次登录不轮换**。
+
+**修复**：所有入口在"未认证→已认证"跃迁时强制轮换会话：
+- `OALoginAction` / `ZhixiOAuth2LoginAction`：写 principal 前先 `invalidate()` 旧会话再新建；
+- `MyFormAuthenticator` / `MyBasicAuthenticator`：登录成功 `request.changeSessionId()`（仅当已有会话）。
+
+### 10.3 问题 2：多点登入（单会话控制）—— 真实
+
+**现象**：同一账号可多设备同时在线，旧会话不失效。
+
+**根因**：XWiki core 没有任何"用户→会话"注册表，Tomcat SessionManager 只认 JSESSIONID、不认识用户身份。
+
+**修复**：新增 `SessionRegistry` 组件（`com.xpn.xwiki.internal.session`）：
+- 登录成功后 `register(userId, session)`，把该用户旧会话 `invalidate()`（新登录踢旧会话）；
+- 通过会话内 `HttpSessionBindingListener` 在会话销毁（登出/超时/被踢）时自动清理映射，无需 web.xml 全局监听器；并有**惰性兜底清理**：读取时校验会话有效性，失效即原子移除，避免极端情况下残留失效条目（防内存泄露）；
+- 3 个登录入口统一接入；基本认证的**按请求校验路径**（`MyBasicAuthenticator.checkLogin`）刻意不注册，避免 API 客户端误踢交互会话。
+
+### 10.4 问题 3：登出/超时后会话仍有效 —— 真实
+
+**现象**：退出登录只清了前端 cookie，带原 JSESSIONID 调接口仍能访问。
+
+**根因（两层）**：
+1. **会话层**：`LogoutAction` 是唯一真正 `invalidate()` 会话的代码，但仅当请求命中 `/bin/logout` 才触发；若前端退出没请求该 URL（只清 cookie 或跳 OA），JSESSIONID 就一直有效；且 web.xml 无 `<session-config>`，只有 Tomcat 默认 30 分钟空闲超时。
+2. **Cookie 自动重登（更关键，即使登出 URL 正确也会中招）**：
+   - 每次表单登录都会写 `username`/`password`/`validation` 三 cookie（未勾"记住我"时是会话级 cookie，`rememberme` cookie 值为 `false`）；
+   - 登出请求虽然命中 `/xwiki/bin/logout`（`LogoutAction` 正确 `invalidate()` 了 JSESSIONID），但 securityfilter 的 `forgetLogin` 仅在 `rememberingLogin()` 为 true 时执行，而 `rememberingLogin()`（反编译确认）要求 **`rememberme` cookie 必须等于 `"true"`** —— 你们是 `"false"`，所以 **username/password/validation 没被清理**；
+   - 下一个请求（同浏览器或安全组重放抓到的整包 cookie）：`MyFormAuthenticator.processLogin`（`MyFormAuthenticator.java:172-203`）**不检查 rememberme 值**，直接读 username/password + validation 校验通过就 `authenticate()` 重新认证 → **静默重新登录**，旧 JSESSIONID 已死也拦不住。
+   - 结论：登出 URL 正确只保证了"会话层"失效；"cookie 层"（remember-me 自动重登）才是安全组复现"登出后调接口还能访问"的真正原因。
+
+**修复（本次代码）**：`SessionRegistry` 绑定监听器保证 `LogoutAction`/超时/被踢时映射自动清理（会话本身早已会被 `LogoutAction` 失效）。
+
+**仍需前端/运维配合（本次未改，因前端不在本仓库）**：
+1. 前端"退出"按钮必须改为先请求 `/xwiki/bin/logout/XWiki/XWikiLogout`（服务端 `invalidate()` + 清 cookie）再跳 OA 首页；**禁止只在前端删 cookie**；
+2. 在部署的 `WEB-INF/web.xml` 增加 `<session-config><session-timeout>30</session-timeout></session-config>`（按合规可另加 cookie `Secure`/`HttpOnly` 配置）。
+
+### 10.5 问题 4：cookie 里出现 username / password —— 真实
+
+**来源**：XWiki"记住我（Remember Me）"功能。登录请求带 `rememberme` 参数时，`MyFormAuthenticator.processLogin` 调用 `MyPersistentLoginManager.rememberLogin()`，向浏览器写 4 个 cookie：`username`、`password`、`rememberme`、`validation`。该 manager 在 `XWikiAuthServiceImpl.getAuthenticator` 里**无条件挂载**。
+
+**为什么弱**：
+- 值默认 `protection=all` 用 **DES/ECB/PKCS5Padding** 加密（密钥取前 8 字节），ECB 弱、可逆；
+- 密钥未在 xwiki.cfg 配置时**自动生成并写入 `WEB-INF/xwiki.properties`**，拿到服务器即可解出明文密码；
+- 非 HTTPS 时 `request.isSecure()` 为 false → cookie 不设 `Secure` 标志，明文传输；
+- `validation` 用 MD5 绑定 IP，同样弱。
+
+**为什么 `rememberme=false` 时仍有 username/password cookie**：登录表单的复选框名是 `j_rememberme`（`flamingo/login.vm:80`）。未勾选时表单不提交该参数 → `MyFormAuthenticator` 把 `null` 强转为 `"false"`（非 null，`MyFormAuthenticator.java:222-224`）→ `processLogin` 里 `if (rememberme != null)` 成立 → `rememberLogin()` **照样执行**，username/password/validation cookie 一律写入（只是按会话级 cookie 写、`rememberme` cookie 值为 `false`）。所以**每次表单登录都会写这组 cookie**。
+
+**修复**：**默认禁用记住我**——`XWikiAuthServiceImpl.getAuthenticator` 仅在 `xwiki.cfg` 显式设置 `xwiki.authentication.rememberme=1` 时才挂载 persistentLoginManager。禁用后：
+- 登录不再写 username/password cookie（问题 3 消除）；
+- `MyFormAuthenticator.java:172-203` 的"cookie 自动重登"路径被整体跳过，登出后重放 cookie 无法再认证（问题 2 的 cookie 层消除）；
+- PDF 导出不受影响（导出浏览器走会话 cookie，`AuthenticationCookieFilter` 仅用于 IP 变化时的重编码）。
+
+### 10.6 代码改动清单（本次会话安全改造）
+
+```
+A  xwiki-platform-core/xwiki-platform-oldcore/src/main/java/com/xpn/xwiki/internal/session/SessionRegistry.java
+A  xwiki-platform-core/xwiki-platform-oldcore/src/test/java/com/xpn/xwiki/internal/session/SessionRegistryTest.java
+M  xwiki-platform-core/xwiki-platform-oldcore/src/main/java/com/xpn/xwiki/web/OALoginAction.java
+M  xwiki-platform-core/xwiki-platform-oldcore/src/main/java/com/xpn/xwiki/web/ZhixiOAuth2LoginAction.java
+M  xwiki-platform-core/xwiki-platform-oldcore/src/main/java/com/xpn/xwiki/user/impl/xwiki/MyFormAuthenticator.java
+M  xwiki-platform-core/xwiki-platform-oldcore/src/main/java/com/xpn/xwiki/user/impl/xwiki/MyBasicAuthenticator.java
+M  xwiki-platform-core/xwiki-platform-oldcore/src/main/java/com/xpn/xwiki/user/impl/xwiki/XWikiAuthServiceImpl.java
+M  xwiki-platform-core/xwiki-platform-oldcore/src/main/resources/META-INF/components.txt
+```
+
+### 10.7 验证（已执行）
+
+```bash
+# Java 21，临时禁用 .mvn/extensions.xml 中 Develocity 扩展（测试后已恢复）
+mvn -s ~/.m2/settings-xwiki.xml -f pom.xml \
+  -pl xwiki-platform-core/xwiki-platform-oldcore \
+  -Dtest=SessionRegistryTest -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true \
+  -o test
+# 结果：Tests run: 6, Failures: 0, Errors: 0, BUILD SUCCESS
+
+# 回归：既有 16 项测试
+mvn -s ~/.m2/settings-xwiki.xml -f pom.xml \
+  -pl xwiki-platform-core/xwiki-platform-oldcore \
+  -Dtest=ClassLoaderSkinTest,EnvironmentSkinTest,UtilsTest \
+  -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true \
+  -o test
+# 结果：Tests run: 16, Failures: 0, Errors: 0, BUILD SUCCESS
+```
+
+### 10.8 上线后复测方法
+
+1. **会话固定**：`curl -c c.txt 站点` 记录 JSESSIONID → 登录 → 再看 c.txt，修复后 ID 必须变化；
+2. **多点登入**：浏览器 A 登录 user1 → 浏览器 B 登录 user1 → A 再访问应被登出（302/401）；
+3. **登出失效**：登录抓 JSESSIONID → 点退出（走 `/bin/logout`）→ `curl -b c.txt 访问` 应 302/401；
+4. **密码 cookie**：登录（勾"记住我"）后 DevTools 看 cookie，不再出现 `username`/`password`。
+
+### 10.9 遗留事项
+
+| # | 事项 | 负责方 |
+|---|---|---|
+| 1 | 前端"退出"改为调 `/xwiki/bin/logout/XWiki/XWikiLogout` 后再跳 OA | 前端 |
+| 2 | 部署 web.xml 加 `<session-config>` 超时（及 cookie Secure/HttpOnly） | 运维 |
+| 3 | 确认生产全站 HTTPS（否则会话/密码 cookie 无 Secure 标志） | 运维 |
+| 4 | 若未来必须启用"记住我"，需改为随机 token 方案 + 显式强加密密钥（AES-256-GCM），勿用默认 DES | 开发 |

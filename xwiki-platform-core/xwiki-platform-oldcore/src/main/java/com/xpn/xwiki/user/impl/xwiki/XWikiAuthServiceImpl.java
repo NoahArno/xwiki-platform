@@ -160,7 +160,13 @@ public class XWikiAuthServiceImpl extends AbstractXWikiAuthService
                         context.getURLFactory().createURL("XWiki", "XWikiLogin", "loginerror", context), context));
                 }
 
-                sconfig.setPersistentLoginManager(this.persistentLoginManagerProvider.get());
+                // Remember-me is disabled by default: it stores the username/password in weakly encrypted cookies
+                // (username, password, rememberme, validation), which is a known security risk. Re-enable only when
+                // explicitly required and protected by a strong encryption key and HTTPS:
+                // set xwiki.authentication.rememberme=1 in xwiki.cfg.
+                if ("1".equals(xwiki.Param("xwiki.authentication.rememberme"))) {
+                    sconfig.setPersistentLoginManager(this.persistentLoginManagerProvider.get());
+                }
 
                 MyFilterConfig fconfig = new MyFilterConfig();
                 fconfig.setInitParameter(FormAuthenticator.LOGIN_SUBMIT_PATTERN_KEY,
