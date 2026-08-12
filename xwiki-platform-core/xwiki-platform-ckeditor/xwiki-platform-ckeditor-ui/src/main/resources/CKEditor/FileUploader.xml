@@ -66,9 +66,22 @@
       ## Empty file (unfortunately getFileItemData returns null instead of an empty byte array).
       #set ($bytes = [])
     #end
-    #set ($discard = $document.addAttachment($fileName, $bytes))
-    #set ($discard = $document.save($services.localization.render('core.comment.uploadAttachmentComment', [$fileName])))
-    #sendSuccess($document $fileName)
+    ## XWIKI-24469: enforce the "upload_maxsize" preference also on the legacy upload path (used e.g. by the file
+    ## browser), so that the size limit is applied consistently with the temporary attachment upload path.
+    #set ($uploadMaxSize = $xwiki.getSpacePreferenceAsLong('upload_maxsize', 33554432))
+    #set ($uploadSize = 0)
+    #foreach ($fileItem in $xwiki.fileupload.getFileItems())
+      #if ($fileItem.fieldName == 'upload')
+        #set ($uploadSize = $fileItem.size)
+      #end
+    #end
+    #if ($uploadSize > $uploadMaxSize)
+      #sendError(400 "$services.localization.render('attachment.validation.filesize.rejected', [$uploadMaxSize])")
+    #else
+      #set ($discard = $document.addAttachment($fileName, $bytes))
+      #set ($discard = $document.save($services.localization.render('core.comment.uploadAttachmentComment', [$fileName])))
+      #sendSuccess($document $fileName)
+    #end
   #else
     ## Forbidden
     #sendError(403 'You are not allowed to perform this action.')
