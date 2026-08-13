@@ -399,6 +399,10 @@ xwiki.authentication.logoutpage=(/|/[^/]+/|/wiki/[^/]+/)logout/*
 #-# 知悉 (DOAP) OAuth2 SSO: XWiki callback URL (must be registered in DOAP).
 # xwiki.authentication.zhixi.redirect-uri=http://<xwiki-host>/xwiki/zhixi-login
 
+#-# Login/logout audit log: set to 0 to disable audit logging entirely (no records are written and
+#-# the AuditLog page shows a "disabled" notice). Default: 1 (enabled).
+# xwiki.authentication.audit-log.enabled=1
+
 #---------------------------------------
 # Editing
 #

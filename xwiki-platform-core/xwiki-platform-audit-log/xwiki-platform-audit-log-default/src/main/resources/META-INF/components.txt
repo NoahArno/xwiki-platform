@@ -1,0 +1,2 @@
+org.xwiki.audit.log.internal.AuditLogRecordClassInitializer
+org.xwiki.audit.log.internal.DefaultLoginAuditService
