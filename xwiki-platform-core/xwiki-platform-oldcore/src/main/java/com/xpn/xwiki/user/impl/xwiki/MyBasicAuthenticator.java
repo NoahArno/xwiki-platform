@@ -31,6 +31,9 @@ import org.securityfilter.authenticator.BasicAuthenticator;
 import org.securityfilter.filter.SecurityFilter;
 import org.securityfilter.filter.SecurityRequestWrapper;
 import org.securityfilter.realm.SimplePrincipal;
+import org.xwiki.audit.log.LoginAuditService;
+import org.xwiki.audit.log.LoginChannel;
+import org.xwiki.audit.log.LoginEventType;
 import org.xwiki.security.authentication.AuthenticationFailureManager;
 
 import com.xpn.xwiki.XWikiContext;
@@ -50,6 +53,11 @@ public class MyBasicAuthenticator extends BasicAuthenticator implements XWikiAut
             this.userAuthenticatedEventNotifier = Utils.getComponent(UserAuthenticatedEventNotifier.class);
         }
         return this.userAuthenticatedEventNotifier;
+    }
+
+    private LoginAuditService getLoginAuditService()
+    {
+        return Utils.getComponent(LoginAuditService.class);
     }
 
     @Override
@@ -100,10 +108,15 @@ public class MyBasicAuthenticator extends BasicAuthenticator implements XWikiAut
             // Single-session enforcement: invalidate any previous session of the same user.
             Utils.getComponent(SessionRegistry.class).register(principal.getName(), request.getSession());
 
+            this.getLoginAuditService().record(LoginEventType.LOGIN_SUCCESS, LoginChannel.BASIC, principal.getName(),
+                request.getRemoteAddr(), "基本认证登录成功");
+
             return false;
         } else {
             // login failed
             // show the basic authentication window again.
+            this.getLoginAuditService().record(LoginEventType.LOGIN_FAILURE, LoginChannel.BASIC, username,
+                request.getRemoteAddr(), "基本认证登录失败");
             showLogin(request.getCurrentRequest(), response);
             return true;
         }
