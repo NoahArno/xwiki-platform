@@ -33,6 +33,9 @@ import org.securityfilter.filter.URLPatternMatcher;
 import org.securityfilter.realm.SimplePrincipal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xwiki.audit.log.LoginAuditService;
+import org.xwiki.audit.log.LoginChannel;
+import org.xwiki.audit.log.LoginEventType;
 import org.xwiki.container.servlet.filters.SavedRequestManager;
 import org.xwiki.security.authentication.AuthenticationFailureManager;
 
@@ -61,6 +64,11 @@ public class MyFormAuthenticator extends FormAuthenticator implements XWikiAuthe
     private SessionRegistry getSessionRegistry()
     {
         return Utils.getComponent(SessionRegistry.class);
+    }
+
+    private LoginAuditService getLoginAuditService()
+    {
+        return Utils.getComponent(LoginAuditService.class);
     }
 
     /**
@@ -201,6 +209,8 @@ public class MyFormAuthenticator extends FormAuthenticator implements XWikiAuthe
                     request.setUserPrincipal(principal);
 
                     this.getUserAuthenticatedEventNotifier().notify(principal.getName());
+                    this.getLoginAuditService().record(LoginEventType.LOGIN_SUCCESS, LoginChannel.FORM,
+                        principal.getName(), request.getRemoteAddr(), "记住我 cookie 自动登录");
 
                 } else {
                     // Failed to authenticate, better cleanup the user stored in the session
@@ -273,6 +283,8 @@ public class MyFormAuthenticator extends FormAuthenticator implements XWikiAuthe
             request.setUserPrincipal(principal);
 
             this.getUserAuthenticatedEventNotifier().notify(principal.getName());
+            this.getLoginAuditService().record(LoginEventType.LOGIN_SUCCESS, LoginChannel.FORM, principal.getName(),
+                request.getRemoteAddr(), "表单登录成功");
 
             // Single-session enforcement: invalidate any previous session of the same user.
             getSessionRegistry().register(principal.getName(), request.getSession());
@@ -291,6 +303,8 @@ public class MyFormAuthenticator extends FormAuthenticator implements XWikiAuthe
             }
 
             authenticationFailureManager.recordAuthenticationFailure(username, request);
+            this.getLoginAuditService().record(LoginEventType.LOGIN_FAILURE, LoginChannel.FORM, username,
+                request.getRemoteAddr(), "表单登录失败");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }
 
