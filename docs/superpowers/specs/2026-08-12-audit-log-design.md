@@ -65,7 +65,7 @@ from doc.object(AuditLog.LogRecordClass) as record order by doc.creationDate des
 | 位置 | 记录内容 |
 |---|---|
 | `OALoginAction.doGet` | 成功（签名校验通过且用户存在）；失败（缺参 / 签名校验失败 / 用户不存在） |
-| `ZhixiOAuth2LoginAction` | 成功（`loginAndRedirect`）；失败（state 校验失败 / token 换取失败 / user_info 失败 / 用户不存在 / 用户被禁用） |
+| `ZhixiOAuth2LoginAction` | 成功（`loginAndRedirect`）；失败（state 校验失败 / token 换取失败 / user_info 失败 / 用户不存在）。注：知悉当前不检查用户启用状态，禁用账号登录会先记成功、再由后续按请求校验拒绝（与实现现状一致） |
 | `MyFormAuthenticator` | 表单登录成功 + 失败；cookie 自动重登成功（归 FORM 渠道） |
 | `MyBasicAuthenticator` | 仅 `processLogin(String username, ...)`（显式凭据提交路径）记成功 + 失败；`checkLogin` / `processLogin(SecurityRequestWrapper, ...)`（每请求校验路径）**不记**（同 `SessionRegistry` 的取舍：避免 API 客户端刷屏） |
 | `LogoutAction.action` | `session.invalidate()` 前从 session principal（`org.securityfilter.filter.SecurityFilter.PRINCIPAL`）取用户名，记 LOGOUT |
@@ -93,7 +93,7 @@ from doc.object(AuditLog.LogRecordClass) as record order by doc.creationDate des
 
 ## 9. 测试计划
 
-- `LoginAuditServiceTest`（audit-log-default）：
+- `DefaultLoginAuditServiceTest`（audit-log-default）：
   1. 开关开启时 record 成功写入；
   2. 开关关闭（enabled=0）时不写入；
   3. 超过 100 条时最旧记录被删除、总量回到 100；
@@ -119,7 +119,7 @@ A  xwiki-platform-core/xwiki-platform-audit-log/xwiki-platform-audit-log-default
 A  xwiki-platform-core/xwiki-platform-audit-log/xwiki-platform-audit-log-default/src/main/java/org/xwiki/audit/log/internal/DefaultLoginAuditService.java
 A  xwiki-platform-core/xwiki-platform-audit-log/xwiki-platform-audit-log-default/src/main/java/org/xwiki/audit/log/internal/AuditLogRecordClassInitializer.java
 A  xwiki-platform-core/xwiki-platform-audit-log/xwiki-platform-audit-log-default/src/main/resources/META-INF/components.txt
-A  xwiki-platform-core/xwiki-platform-audit-log/xwiki-platform-audit-log-default/src/test/java/org/xwiki/audit/log/internal/LoginAuditServiceTest.java
+A  xwiki-platform-core/xwiki-platform-audit-log/xwiki-platform-audit-log-default/src/test/java/org/xwiki/audit/log/internal/DefaultLoginAuditServiceTest.java
 A  xwiki-platform-core/xwiki-platform-audit-log/xwiki-platform-audit-log-ui/pom.xml
 A  xwiki-platform-core/xwiki-platform-audit-log/xwiki-platform-audit-log-ui/src/main/resources/AuditLog/WebHome.xml
 M  xwiki-platform-core/pom.xml                                        # 注册新模块
