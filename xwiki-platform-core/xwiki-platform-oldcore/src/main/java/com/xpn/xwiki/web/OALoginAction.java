@@ -35,6 +35,9 @@ import org.securityfilter.filter.SecurityRequestWrapper;
 import org.securityfilter.realm.SimplePrincipal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xwiki.audit.log.LoginAuditService;
+import org.xwiki.audit.log.LoginChannel;
+import org.xwiki.audit.log.LoginEventType;
 import org.xwiki.model.reference.DocumentReference;
 
 import com.xpn.xwiki.XWiki;
@@ -80,6 +83,8 @@ public class OALoginAction extends HttpServlet
             if (StringUtils.isAnyBlank(pid, userLoginId, timestamp, sign)) {
                 LOGGER.warn("OA SSO: missing required parameters. pid=[{}], userLoginId=[{}], timestamp=[{}]",
                     pid, userLoginId, timestamp);
+                recordAudit(LoginEventType.LOGIN_FAILURE, LoginChannel.OA, userLoginId,
+                    request.getRemoteAddr(), "OA 跳转登录失败：缺少必填参数");
                 writeError(response, "缺少必填参数（pid、userLoginId、timestamp、sign）");
                 return;
             }
@@ -97,6 +102,8 @@ public class OALoginAction extends HttpServlet
             if (!computedSign.equalsIgnoreCase(sign)) {
                 LOGGER.warn("OA SSO: signature verification failed for user [{}]. "
                     + "Expected=[{}], Received=[{}]", userLoginId, computedSign, sign);
+                recordAudit(LoginEventType.LOGIN_FAILURE, LoginChannel.OA, userLoginId,
+                    request.getRemoteAddr(), "OA 跳转登录失败：签名校验失败");
                 writeError(response, "签名校验失败");
                 return;
             }
@@ -105,6 +112,8 @@ public class OALoginAction extends HttpServlet
             String user = findUserByLoginId(userLoginId, context);
             if (user == null) {
                 LOGGER.warn("OA SSO: user [{}] not found in XWiki", userLoginId);
+                recordAudit(LoginEventType.LOGIN_FAILURE, LoginChannel.OA, userLoginId,
+                    request.getRemoteAddr(), "OA 跳转登录失败：用户 " + userLoginId + " 不存在");
                 writeError(response, "当前用户 " + userLoginId + " 不存在");
                 return;
             }
@@ -138,6 +147,8 @@ public class OALoginAction extends HttpServlet
             UserAuthenticatedEventNotifier notifier =
                 Utils.getComponent(UserAuthenticatedEventNotifier.class);
             notifier.notify(principalName);
+            recordAudit(LoginEventType.LOGIN_SUCCESS, LoginChannel.OA, principalName,
+                request.getRemoteAddr(), "OA 跳转登录成功");
 
             // ⑦ Redirect to wiki home page
             String redirectUrl = context.getURLFactory().createURL(
@@ -196,6 +207,15 @@ public class OALoginAction extends HttpServlet
         context.getWiki().prepareResources(context);
 
         return context;
+    }
+
+    /**
+     * Record an OA login audit event.
+     */
+    private void recordAudit(LoginEventType eventType, LoginChannel channel, String userName, String ip,
+        String detail)
+    {
+        Utils.getComponent(LoginAuditService.class).record(eventType, channel, userName, ip, detail);
     }
 
     /**
