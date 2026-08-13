@@ -21,6 +21,7 @@ package org.xwiki.audit.log.internal;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -86,7 +87,7 @@ public class DefaultLoginAuditService implements LoginAuditService
             }
             XWikiContext context = this.contextProvider.get();
             String wikiId = context.getWikiId();
-            String name = eventType.name() + "-" + System.currentTimeMillis() + "-" + Thread.currentThread().getId();
+            String name = eventType.name() + "-" + UUID.randomUUID();
             DocumentReference recordRef = new DocumentReference(wikiId, RECORD_SPACE, name);
             XWikiDocument doc = new XWikiDocument(recordRef);
             doc.setTitle(eventType.getDisplayName());

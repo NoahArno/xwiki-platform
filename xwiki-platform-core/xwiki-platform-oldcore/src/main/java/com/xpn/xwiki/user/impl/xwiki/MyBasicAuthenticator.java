@@ -31,6 +31,8 @@ import org.securityfilter.authenticator.BasicAuthenticator;
 import org.securityfilter.filter.SecurityFilter;
 import org.securityfilter.filter.SecurityRequestWrapper;
 import org.securityfilter.realm.SimplePrincipal;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xwiki.audit.log.LoginAuditService;
 import org.xwiki.audit.log.LoginChannel;
 import org.xwiki.audit.log.LoginEventType;
@@ -45,6 +47,8 @@ import com.xpn.xwiki.web.Utils;
 public class MyBasicAuthenticator extends BasicAuthenticator implements XWikiAuthenticator
 {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MyBasicAuthenticator.class);
+
     private UserAuthenticatedEventNotifier userAuthenticatedEventNotifier;
 
     private UserAuthenticatedEventNotifier getUserAuthenticatedEventNotifier()
@@ -55,9 +59,15 @@ public class MyBasicAuthenticator extends BasicAuthenticator implements XWikiAut
         return this.userAuthenticatedEventNotifier;
     }
 
-    private LoginAuditService getLoginAuditService()
+    private void recordAudit(LoginEventType eventType, LoginChannel channel, String userName, String ip,
+        String detail)
     {
-        return Utils.getComponent(LoginAuditService.class);
+        try {
+            Utils.getComponent(LoginAuditService.class).record(eventType, channel, userName, ip, detail);
+        } catch (RuntimeException e) {
+            // Audit logging must never break the login flow.
+            LOGGER.warn("Failed to record audit log event [{}] for user [{}]", eventType, userName, e);
+        }
     }
 
     @Override
@@ -108,14 +118,14 @@ public class MyBasicAuthenticator extends BasicAuthenticator implements XWikiAut
             // Single-session enforcement: invalidate any previous session of the same user.
             Utils.getComponent(SessionRegistry.class).register(principal.getName(), request.getSession());
 
-            this.getLoginAuditService().record(LoginEventType.LOGIN_SUCCESS, LoginChannel.BASIC, principal.getName(),
+            this.recordAudit(LoginEventType.LOGIN_SUCCESS, LoginChannel.BASIC, principal.getName(),
                 request.getRemoteAddr(), "基本认证登录成功");
 
             return false;
         } else {
             // login failed
             // show the basic authentication window again.
-            this.getLoginAuditService().record(LoginEventType.LOGIN_FAILURE, LoginChannel.BASIC, username,
+            this.recordAudit(LoginEventType.LOGIN_FAILURE, LoginChannel.BASIC, username,
                 request.getRemoteAddr(), "基本认证登录失败");
             showLogin(request.getCurrentRequest(), response);
             return true;

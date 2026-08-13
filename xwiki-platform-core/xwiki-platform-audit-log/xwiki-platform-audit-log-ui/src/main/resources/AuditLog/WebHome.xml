@@ -26,10 +26,15 @@
 #if (!$enabled)
 {{warning}}审计日志功能已关闭（`xwiki.authentication.audit-log.enabled=0`）。{{/warning}}
 #else
+#macro(escapeCell $value)
+#set ($cell = "$!value")
+#set ($cell = $cell.replace('&amp;', '&amp;amp;').replace('&lt;', '&amp;lt;').replace('&gt;', '&amp;gt;').replace('"', '&amp;quot;').replace("'", '&amp;#39;').replace('{', '&amp;#123;').replace('}', '&amp;#125;').replace('|', '&amp;#124;').replace('[', '&amp;#91;').replace(']', '&amp;#93;'))
+$cell
+#end
 #set ($pageSize = 20)
 #set ($page = 1)
 #set ($pageParam = "$!request.getParameter('page')")
-#if ($pageParam.matches('\\d+'))
+#if ($pageParam.matches('\d+'))
   #set ($page = $numbertool.toNumber($pageParam).intValue())
 #end
 #set ($all = $services.query.xwql('from doc.object(AuditLog.LogRecordClass) as record order by doc.creationDate desc').execute())
@@ -69,7 +74,7 @@
     #if ($channel == 'ZHIXI') #set ($channelName = '知悉') #end
     #if ($channel == 'FORM') #set ($channelName = '表单') #end
     #if ($channel == 'BASIC') #set ($channelName = '基本认证') #end
-|$!recordObj.getValue('eventTime')|$!recordObj.getValue('userName')|$eventName|$channelName|$!recordObj.getValue('ip')|$!recordObj.getValue('detail')
+|#escapeCell($recordObj.getValue('eventTime'))|#escapeCell($recordObj.getValue('userName'))|$eventName|$channelName|#escapeCell($recordObj.getValue('ip'))|#escapeCell($recordObj.getValue('detail'))
   #end
 #end
 #end

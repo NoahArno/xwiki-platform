@@ -215,7 +215,12 @@ public class OALoginAction extends HttpServlet
     private void recordAudit(LoginEventType eventType, LoginChannel channel, String userName, String ip,
         String detail)
     {
-        Utils.getComponent(LoginAuditService.class).record(eventType, channel, userName, ip, detail);
+        try {
+            Utils.getComponent(LoginAuditService.class).record(eventType, channel, userName, ip, detail);
+        } catch (RuntimeException e) {
+            // Audit logging must never break the login flow (e.g. if the audit-log module is not deployed).
+            LOGGER.warn("Failed to record audit log event [{}] for user [{}]", eventType, userName, e);
+        }
     }
 
     /**

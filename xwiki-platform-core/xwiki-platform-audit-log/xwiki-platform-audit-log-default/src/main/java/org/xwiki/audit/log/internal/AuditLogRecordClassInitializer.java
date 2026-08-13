@@ -26,7 +26,6 @@ import org.xwiki.component.annotation.Component;
 import org.xwiki.model.reference.LocalDocumentReference;
 
 import com.xpn.xwiki.doc.AbstractMandatoryClassInitializer;
-import com.xpn.xwiki.doc.XWikiDocument;
 import com.xpn.xwiki.objects.classes.BaseClass;
 
 /**
@@ -62,11 +61,5 @@ public class AuditLogRecordClassInitializer extends AbstractMandatoryClassInitia
         xclass.addTextField("ip", "IP", 40);
         xclass.addTextAreaField("detail", "Detail", 60, 5);
         xclass.addDateField("eventTime", "Event Time");
-    }
-
-    @Override
-    public boolean updateDocument(XWikiDocument document)
-    {
-        return super.updateDocument(document);
     }
 }

@@ -66,9 +66,15 @@ public class MyFormAuthenticator extends FormAuthenticator implements XWikiAuthe
         return Utils.getComponent(SessionRegistry.class);
     }
 
-    private LoginAuditService getLoginAuditService()
+    private void recordAudit(LoginEventType eventType, LoginChannel channel, String userName, String ip,
+        String detail)
     {
-        return Utils.getComponent(LoginAuditService.class);
+        try {
+            Utils.getComponent(LoginAuditService.class).record(eventType, channel, userName, ip, detail);
+        } catch (RuntimeException e) {
+            // Audit logging must never break the login flow.
+            LOGGER.warn("Failed to record audit log event [{}] for user [{}]", eventType, userName, e);
+        }
     }
 
     /**
@@ -209,7 +215,7 @@ public class MyFormAuthenticator extends FormAuthenticator implements XWikiAuthe
                     request.setUserPrincipal(principal);
 
                     this.getUserAuthenticatedEventNotifier().notify(principal.getName());
-                    this.getLoginAuditService().record(LoginEventType.LOGIN_SUCCESS, LoginChannel.FORM,
+                    this.recordAudit(LoginEventType.LOGIN_SUCCESS, LoginChannel.FORM,
                         principal.getName(), request.getRemoteAddr(), "记住我 cookie 自动登录");
 
                 } else {
@@ -283,7 +289,7 @@ public class MyFormAuthenticator extends FormAuthenticator implements XWikiAuthe
             request.setUserPrincipal(principal);
 
             this.getUserAuthenticatedEventNotifier().notify(principal.getName());
-            this.getLoginAuditService().record(LoginEventType.LOGIN_SUCCESS, LoginChannel.FORM, principal.getName(),
+            this.recordAudit(LoginEventType.LOGIN_SUCCESS, LoginChannel.FORM, principal.getName(),
                 request.getRemoteAddr(), "表单登录成功");
 
             // Single-session enforcement: invalidate any previous session of the same user.
@@ -303,7 +309,7 @@ public class MyFormAuthenticator extends FormAuthenticator implements XWikiAuthe
             }
 
             authenticationFailureManager.recordAuthenticationFailure(username, request);
-            this.getLoginAuditService().record(LoginEventType.LOGIN_FAILURE, LoginChannel.FORM, username,
+            this.recordAudit(LoginEventType.LOGIN_FAILURE, LoginChannel.FORM, username,
                 request.getRemoteAddr(), "表单登录失败");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }

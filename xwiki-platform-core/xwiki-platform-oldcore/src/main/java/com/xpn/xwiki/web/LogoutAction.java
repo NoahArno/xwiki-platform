@@ -62,14 +62,16 @@ public class LogoutAction extends XWikiAction
         // the next user on the same computer
         HttpSession currentSession = request.getSession(false);
         if (currentSession != null) {
-            // Record the explicit logout before the session is destroyed.
-            String userName = null;
-            Object principal = currentSession.getAttribute("org.securityfilter.filter.SecurityFilter.PRINCIPAL");
-            if (principal != null) {
-                userName = principal.toString();
+            // Record the explicit logout before the session is destroyed. getRemoteUser() reads the principal from the
+            // security wrapper, which is how the session principal is stored for ALL channels (OA/Zhixi/form/basic).
+            String userName = request.getRemoteUser();
+            try {
+                Utils.getComponent(LoginAuditService.class).record(LoginEventType.LOGOUT, null, userName,
+                    request.getRemoteAddr(), "主动登出");
+            } catch (RuntimeException e) {
+                // Audit logging must never break the logout flow (e.g. if the audit-log module is not deployed).
+                LOGGER.warn("Failed to record audit logout event", e);
             }
-            Utils.getComponent(LoginAuditService.class).record(LoginEventType.LOGOUT, null, userName,
-                request.getRemoteAddr(), "主动登出");
 
             synchronized (currentSession) {
                 currentSession.invalidate();
