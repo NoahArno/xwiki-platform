@@ -45,6 +45,9 @@ import org.securityfilter.filter.SecurityRequestWrapper;
 import org.securityfilter.realm.SimplePrincipal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xwiki.audit.log.LoginAuditService;
+import org.xwiki.audit.log.LoginChannel;
+import org.xwiki.audit.log.LoginEventType;
 import org.xwiki.model.reference.DocumentReference;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -188,6 +191,8 @@ public class ZhixiOAuth2LoginAction extends HttpServlet
 
             if (savedState == null || !savedState.equals(state)) {
                 LOGGER.warn("Zhixi OAuth2: state mismatch. saved=[{}], received=[{}]", savedState, state);
+                Utils.getComponent(LoginAuditService.class).record(LoginEventType.LOGIN_FAILURE, LoginChannel.ZHIXI, "",
+                    request.getRemoteAddr(), "知悉登录失败：CSRF state 校验失败");
                 writeError(response, "CSRF 校验失败");
                 return;
             }
@@ -197,6 +202,8 @@ public class ZhixiOAuth2LoginAction extends HttpServlet
             // ② Exchange authorization code for access token
             String accessToken = exchangeToken(code, context);
             if (accessToken == null) {
+                Utils.getComponent(LoginAuditService.class).record(LoginEventType.LOGIN_FAILURE, LoginChannel.ZHIXI, "",
+                    request.getRemoteAddr(), "知悉登录失败：获取访问令牌失败");
                 writeError(response, "获取访问令牌失败");
                 return;
             }
@@ -204,6 +211,8 @@ public class ZhixiOAuth2LoginAction extends HttpServlet
             // ③ Fetch user info from DOAP
             ZhixiUserInfo userInfo = fetchUserInfo(accessToken, context);
             if (userInfo == null) {
+                Utils.getComponent(LoginAuditService.class).record(LoginEventType.LOGIN_FAILURE, LoginChannel.ZHIXI, "",
+                    request.getRemoteAddr(), "知悉登录失败：获取用户信息失败");
                 writeError(response, "获取用户信息失败");
                 return;
             }
@@ -212,6 +221,9 @@ public class ZhixiOAuth2LoginAction extends HttpServlet
             String user = findUserByLoginId(userInfo.getUsername(), context);
             if (user == null) {
                 LOGGER.warn("Zhixi OAuth2: user [{}] not found in XWiki", userInfo.getUsername());
+                Utils.getComponent(LoginAuditService.class).record(LoginEventType.LOGIN_FAILURE, LoginChannel.ZHIXI,
+                    userInfo.getUsername(), request.getRemoteAddr(),
+                    "知悉登录失败：用户 " + userInfo.getUsername() + " 不存在");
                 writeError(response, "当前用户 " + userInfo.getUsername() + " 不存在");
                 return;
             }
@@ -387,6 +399,10 @@ public class ZhixiOAuth2LoginAction extends HttpServlet
         UserAuthenticatedEventNotifier notifier =
             Utils.getComponent(UserAuthenticatedEventNotifier.class);
         notifier.notify(principalName);
+
+        // Record the successful login in the audit log
+        Utils.getComponent(LoginAuditService.class).record(LoginEventType.LOGIN_SUCCESS, LoginChannel.ZHIXI,
+            principalName, request.getRemoteAddr(), "知悉 OAuth2 登录成功");
 
         // Redirect to the wiki home page
         String redirectUrl = context.getURLFactory().createURL(
