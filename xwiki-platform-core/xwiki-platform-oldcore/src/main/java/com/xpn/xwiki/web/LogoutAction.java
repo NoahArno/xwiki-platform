@@ -26,6 +26,8 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xwiki.audit.log.LoginAuditService;
+import org.xwiki.audit.log.LoginEventType;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.model.EntityType;
 import org.xwiki.model.reference.DocumentReference;
@@ -60,6 +62,15 @@ public class LogoutAction extends XWikiAction
         // the next user on the same computer
         HttpSession currentSession = request.getSession(false);
         if (currentSession != null) {
+            // Record the explicit logout before the session is destroyed.
+            String userName = null;
+            Object principal = currentSession.getAttribute("org.securityfilter.filter.SecurityFilter.PRINCIPAL");
+            if (principal != null) {
+                userName = principal.toString();
+            }
+            Utils.getComponent(LoginAuditService.class).record(LoginEventType.LOGOUT, null, userName,
+                request.getRemoteAddr(), "主动登出");
+
             synchronized (currentSession) {
                 currentSession.invalidate();
                 // Early registration of a new session, so that the client gets to know the new session identifier early
