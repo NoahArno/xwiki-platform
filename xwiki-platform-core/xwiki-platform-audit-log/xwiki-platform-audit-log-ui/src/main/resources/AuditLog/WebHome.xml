@@ -1,0 +1,172 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<xwikidoc version="1.5" reference="AuditLog.WebHome" locale="">
+  <web>AuditLog</web>
+  <name>WebHome</name>
+  <language/>
+  <defaultLanguage/>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <parent>Main.WebHome</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title>登录/登出审计日志</title>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>xwiki/2.1</syntaxId>
+  <hidden>true</hidden>
+  <content>{{velocity}}
+== 登录/登出审计日志 ==
+
+(% class="xform" %)
+* **说明**：记录登录成功、登录失败与主动登出；仅保留最近 100 条，每页显示 20 条。
+
+#set ($enabledValue = "$!xcontext.getWiki().Param('xwiki.authentication.audit-log.enabled')")
+#set ($enabled = ($enabledValue == '' || $enabledValue == '1'))
+#if (!$enabled)
+{{warning}}审计日志功能已关闭（`xwiki.authentication.audit-log.enabled=0`）。{{/warning}}
+#else
+#set ($pageSize = 20)
+#set ($page = 1)
+#set ($pageParam = "$!request.getParameter('page')")
+#if ($pageParam.matches('\\d+'))
+  #set ($page = $numbertool.toNumber($pageParam).intValue())
+#end
+#set ($all = $services.query.xwql('from doc.object(AuditLog.LogRecordClass) as record order by doc.creationDate desc').execute())
+#set ($total = $all.size())
+#set ($maxPage = 1)
+#if ($total > 0)
+  #set ($maxPage = (($total + $pageSize - 1) / $pageSize))
+#end
+#if ($page > $maxPage)
+  #set ($page = $maxPage)
+#end
+#if (1 > $page)
+  #set ($page = 1)
+#end
+#set ($fromIndex = ($page - 1) * $pageSize)
+#set ($toIndex = $fromIndex + $pageSize)
+#if ($toIndex > $total)
+  #set ($toIndex = $total)
+#end
+
+#if ($total == 0)
+{{info}}暂无审计记录。{{/info}}
+#else
+|=时间|=用户|=事件|=渠道|=IP|=详情
+#foreach ($name in $all.subList($fromIndex, $toIndex))
+  #set ($recordDoc = $xwiki.getDocument($name))
+  #set ($recordObj = $recordDoc.getObject('AuditLog.LogRecordClass'))
+  #if ($recordObj)
+    #set ($eventType = "$!recordObj.getValue('eventType')")
+    #set ($channel = "$!recordObj.getValue('channel')")
+    #set ($eventName = '')
+    #if ($eventType == 'LOGIN_SUCCESS') #set ($eventName = '登录成功') #end
+    #if ($eventType == 'LOGIN_FAILURE') #set ($eventName = '登录失败') #end
+    #if ($eventType == 'LOGOUT') #set ($eventName = '登出') #end
+    #set ($channelName = '—')
+    #if ($channel == 'OA') #set ($channelName = 'OA') #end
+    #if ($channel == 'ZHIXI') #set ($channelName = '知悉') #end
+    #if ($channel == 'FORM') #set ($channelName = '表单') #end
+    #if ($channel == 'BASIC') #set ($channelName = '基本认证') #end
+|$!recordObj.getValue('eventTime')|$!recordObj.getValue('userName')|$eventName|$channelName|$!recordObj.getValue('ip')|$!recordObj.getValue('detail')
+  #end
+#end
+#end
+
+== 分页 ==
+(% class="xform" %)共 $total 条 / $maxPage 页
+#if ($page > 1)
+  #set ($prevPage = $page - 1)
+  #set ($prevUrl = $doc.getURL('view', "page=$prevPage"))
+  [[上一页>>$prevUrl]]
+#end
+#if ($maxPage > $page)
+  #set ($nextPage = $page + 1)
+  #set ($nextUrl = $doc.getURL('view', "page=$nextPage"))
+  [[下一页>>$nextUrl]]
+#end
+#end
+{{/velocity}}</content>
+  <object>
+    <name>AuditLog.WebHome</name>
+    <number>0</number>
+    <className>XWiki.XWikiRights</className>
+    <guid>6f5d0b63-4700-0000-0000-00000000a001</guid>
+    <class>
+      <name>XWiki.XWikiRights</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <allow>
+        <defaultValue>1</defaultValue>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>allow</displayType>
+        <name>allow</name>
+        <number>4</number>
+        <prettyName>Allow/Deny</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </allow>
+      <groups>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>1</multiSelect>
+        <name>groups</name>
+        <number>1</number>
+        <picker>1</picker>
+        <prettyName>Groups</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <sort>none</sort>
+        <classType>com.xpn.xwiki.objects.classes.GroupsClass</classType>
+      </groups>
+      <levels>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>1</multiSelect>
+        <name>levels</name>
+        <number>2</number>
+        <picker>1</picker>
+        <prettyName>Levels</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <sort>none</sort>
+        <classType>com.xpn.xwiki.objects.classes.LevelsClass</classType>
+      </levels>
+      <users>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <multiSelect>1</multiSelect>
+        <name>users</name>
+        <number>3</number>
+        <picker>1</picker>
+        <prettyName>Users</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <sort>none</sort>
+        <classType>com.xpn.xwiki.objects.classes.UsersClass</classType>
+      </users>
+    </class>
+    <property>
+      <allow>1</allow>
+    </property>
+    <property>
+      <groups>XWiki.XWikiAdminGroup</groups>
+    </property>
+    <property>
+      <levels>view</levels>
+    </property>
+    <property>
+      <users/>
+    </property>
+  </object>
+</xwikidoc>
