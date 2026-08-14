@@ -56,6 +56,33 @@
     </dependency>
   </dependencies>
   <build>
+    <plugins>
+      <!-- flavor-data 的 packager data goal 会在 target/data 生成 XWiki 数据目录（HSQLDB 数据库 +
+           本地扩展仓库）；重复执行不清理会报 "Extension ... is already installed on namespace
+           [wiki:xwiki]"。每次构建前只清 target/data，保证 data goal 可重复执行。 -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <id>clean-flavor-data</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>clean</goal>
+            </goals>
+            <configuration>
+              <excludeDefaultDirectories>true</excludeDefaultDirectories>
+              <filesets>
+                <fileset>
+                  <directory>${project.build.directory}/data</directory>
+                </fileset>
+              </filesets>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
     <pluginManagement>
       <plugins>
         <!-- Generate a full XWiki permanent directory (including an HSQLDB-filled database) -->
