@@ -661,6 +661,20 @@
       <scope>runtime</scope>
     </dependency>
 
+    <!-- 登录/登出审计日志（自定义二开模块） -->
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-audit-log-api</artifactId>
+      <version>${project.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-audit-log-default</artifactId>
+      <version>${project.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+
     <!-- TODO: remove when https://jira.xwiki.org/browse/XWIKI-19932 is fixed
         In the non-legacy WAR because:
            * the migration UI is in part of the default flavor

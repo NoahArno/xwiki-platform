@@ -90,5 +90,12 @@
       <version>${project.version}</version>
       <type>xar</type>
     </dependency>
+    <!-- 登录/登出审计日志页面（自定义二开模块，仅主 Wiki） -->
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-audit-log-ui</artifactId>
+      <version>${project.version}</version>
+      <type>xar</type>
+    </dependency>
   </dependencies>
 </project>
