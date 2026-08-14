@@ -116,6 +116,24 @@
           <groupId>io.opentelemetry</groupId>
           <artifactId>opentelemetry-exporter-otlp</artifactId>
         </exclusion>
+        <!-- rocketmq-client/common 5.5.0 同时声明 io.github.aliyunmq:rocketmq-slf4j-api 和
+             rocketmq-logback-classic，两个 jar 都内置同一套 shaded 的
+             org.apache.rocketmq.logging.org.slf4j.* 类，会触发发行包 duplicate-finder 的
+             war-check-duplicates 冲突；logback-classic 已完整内置 slf4j（校验过无缺失），
+             因此排除 slf4j-api，保留 logback-classic 作为内部日志实现 -->
+        <exclusion>
+          <groupId>io.github.aliyunmq</groupId>
+          <artifactId>rocketmq-slf4j-api</artifactId>
+        </exclusion>
+        <!-- rocketmq-common 5.5.0 直接声明 org.apache.tomcat:annotations-api:6.0.53，它自带的
+             javax.annotation.* / javax.persistence.* 与 XWiki 自身的 javax.annotation-api、
+             javax.persistence-api（Hibernate）重复，触发发行包 duplicate-finder 冲突；
+             rocketmq-common jar 经字节码扫描无任何 javax.annotation/javax.persistence 引用，
+             纯为冗余依赖，直接排除 -->
+        <exclusion>
+          <groupId>org.apache.tomcat</groupId>
+          <artifactId>annotations-api</artifactId>
+        </exclusion>
         <exclusion>
           <groupId>io.opentelemetry</groupId>
           <artifactId>opentelemetry-exporter-prometheus</artifactId>
