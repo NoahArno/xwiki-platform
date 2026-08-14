@@ -116,7 +116,7 @@ xwiki.doap-mq.consume-thread-max=8
 - **只禁用、不启用**：不满足禁用条件时保持用户原状态；
 - **坏消息处理**：`staffId` 为空 → WARN 丢弃不重试；body 非 JSON / 处理器异常 → 返回重试（RocketMQ 默认重试 16 次后进死信队列）；
 - **多节点部署**：多个 XWiki 节点共用同一 `consumer-group` 即集群消费；如需每个节点都消费，给不同节点配不同组名；
-- **依赖对齐**：pom 中已排除 `fastjson`（1.x 的 Jersey 2 JAX-RS 钩子与 XWiki 18 / Jersey 3 冲突）、`netty-all`（避免覆盖平台 netty 4.2）、`commons-logging`（XWiki 用 jcl-over-slf4j 桥接）、OpenTelemetry exporter（与平台 OTel 1.59.0 对齐）；
+- **依赖对齐**：pom 中已排除 `fastjson`（1.x 的 Jersey 2 JAX-RS 钩子与 XWiki 18 / Jersey 3 冲突）、`netty-all`（避免覆盖平台 netty 4.2）、`commons-logging`（XWiki 用 jcl-over-slf4j 桥接）、OpenTelemetry exporter（与平台 OTel 1.59.0 对齐）、`rocketmq-slf4j-api`（与 `rocketmq-logback-classic` 重复内置 shaded slf4j）、`tomcat annotations-api`（与 XWiki 自带 javax.annotation-api/javax.persistence-api 重复，rocketmq-common 无实际引用）；
 - **字段变更**：字段名、`outsourcing`、`dismission`、组名等常量集中在
   `xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-api/src/main/java/org/xwiki/oa/sync/mq/DoapMqConstants.java`，
   后续按实际消息调整一处即可。
