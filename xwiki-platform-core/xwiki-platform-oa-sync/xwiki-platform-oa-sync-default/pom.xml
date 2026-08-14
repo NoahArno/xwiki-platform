@@ -98,6 +98,21 @@
           <groupId>commons-logging</groupId>
           <artifactId>commons-logging</artifactId>
         </exclusion>
+        <!-- rocketmq-remoting 传递进来的旧 netty（netty-all 4.0.x / tcnative 1.1.33.Fork26）
+             会与平台自带 netty 4.2（Solr/ZooKeeper 依赖）冲突：
+             - netty-tcnative-boringssl-static 1.1.33.Fork26 触发发行包 enforcer 的
+               RequireUpperBoundDeps（平台侧是 2.0.70.Final）
+             - netty-all 4.0.x 会把旧版 io.netty.* 打满整个 classpath，覆盖平台 netty 4.2 模块
+             运行时由平台自带 netty 提供；DOAP MQ 默认关闭（xwiki.doap-mq.enabled=false），
+             启用前需验证与平台 netty 4.2 的兼容性 -->
+        <exclusion>
+          <groupId>io.netty</groupId>
+          <artifactId>netty-all</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>io.netty</groupId>
+          <artifactId>netty-tcnative-boringssl-static</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 

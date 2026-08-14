@@ -59,6 +59,26 @@
     <module>xwiki-platform-distribution-flavor-xip</module>
   </modules>
 
+  <build>
+    <plugins>
+      <!-- 发行包 XAR 模块在 process-resources 阶段会把工具模块生成的 hibernate.cfg.xml /
+           xwiki.cfg / xwiki.properties 拷进 target/classes；这些不是 wiki 页面，且 hibernate.cfg.xml
+           含 DOCTYPE 会导致 xar 插件解析失败，因此从 XAR 打包中排除（配置文件由 distribution-war
+           模块直接打进 WEB-INF，不属于 flavor 的 wiki 页面 XAR）。 -->
+      <plugin>
+        <groupId>org.xwiki.commons</groupId>
+        <artifactId>xwiki-commons-tool-xar-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/META-INF/**</exclude>
+            <exclude>hibernate.cfg.xml</exclude>
+            <exclude>xwiki.cfg</exclude>
+            <exclude>xwiki.properties</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
   <profiles>
     <profile>
       <id>flavor-integration-tests</id>

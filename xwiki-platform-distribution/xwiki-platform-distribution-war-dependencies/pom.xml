@@ -647,6 +647,20 @@
       <scope>runtime</scope>
     </dependency>
 
+    <!-- OA 用户数据同步（行员 + 业务外包，自定义二开模块） -->
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-oa-sync-api</artifactId>
+      <version>${project.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-oa-sync-default</artifactId>
+      <version>${project.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+
     <!-- TODO: remove when https://jira.xwiki.org/browse/XWIKI-19932 is fixed
         In the non-legacy WAR because:
            * the migration UI is in part of the default flavor

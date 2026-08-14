@@ -83,5 +83,12 @@
       <version>${project.version}</version>
       <type>xar</type>
     </dependency>
+    <!-- OA 用户数据同步记录页 + 手动触发 + 定时任务（自定义二开模块，仅主 Wiki） -->
+    <dependency>
+      <groupId>org.xwiki.platform</groupId>
+      <artifactId>xwiki-platform-oa-sync-ui</artifactId>
+      <version>${project.version}</version>
+      <type>xar</type>
+    </dependency>
   </dependencies>
 </project>
