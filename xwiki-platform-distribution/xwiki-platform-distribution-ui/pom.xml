@@ -34,4 +34,25 @@
     <module>xwiki-platform-distribution-ui-base</module>
     <module>xwiki-platform-distribution-ui-admin-user</module>
   </modules>
+
+  <build>
+    <plugins>
+      <!-- distribution 父 POM 的 remote-resource 插件会在 process-resources 阶段把工具模块生成的
+           hibernate.cfg.xml / xwiki.cfg / xwiki.properties 拷进 target/classes；这些不是 wiki 页面，
+           且 hibernate.cfg.xml 含 DOCTYPE 会导致 xar 插件解析失败，因此从 XAR 打包中排除
+           （配置文件由 distribution-war 模块直接打进 WEB-INF）。 -->
+      <plugin>
+        <groupId>org.xwiki.commons</groupId>
+        <artifactId>xwiki-commons-tool-xar-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/META-INF/**</exclude>
+            <exclude>hibernate.cfg.xml</exclude>
+            <exclude>xwiki.cfg</exclude>
+            <exclude>xwiki.properties</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
