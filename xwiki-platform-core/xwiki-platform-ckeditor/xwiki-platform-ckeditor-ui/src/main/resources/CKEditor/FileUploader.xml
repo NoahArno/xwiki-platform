@@ -90,6 +90,17 @@
 
 ## Old way of uploading, with a save of the document for each upload.
 #macro (handleUploadRequest)
+  ## When the multipart request has already been validated at parsing time (see FileUploadUtils), a rejected
+  ## attachment (too big or disallowed mimetype) is stored as an exception in the context. Surface it to the user
+  ## instead of continuing with an empty file list. See XWIKI-24469.
+  #if ($xcontext.get('exception'))
+    #set ($validationException = $xcontext.get('exception'))
+    #if ($validationException.translationKey)
+      #sendError(400 "$services.localization.render($validationException.translationKey, $validationException.translationParameters)")
+    #else
+      #sendError(400 "$services.localization.render('ckeditor.upload.error.emptyReturn')")
+    #end
+  #else
   #set ($fileName = $xwiki.fileupload.getFileName('upload'))
   #if ("$!fileName" != '')
     #if ($services.csrf.isTokenValid($request.form_token))
@@ -107,6 +118,7 @@
   #else
     ## Bad Request
     #sendError(400 "$services.localization.render('ckeditor.upload.error.emptyReturn')")
+  #end
   #end
 #end
 

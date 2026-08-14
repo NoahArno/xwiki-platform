@@ -36,7 +36,6 @@ import org.apache.commons.fileupload.disk.DiskFileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload.servlet.ServletRequestContext;
-import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xwiki.attachment.validation.AttachmentValidationException;
@@ -45,7 +44,6 @@ import org.xwiki.internal.attachment.PartAttachmentAccessWrapper;
 
 import com.xpn.xwiki.XWikiException;
 import com.xpn.xwiki.plugin.fileupload.FileUploadPluginApi;
-import com.xpn.xwiki.web.UploadAction;
 
 /**
  * File upload related tools.
@@ -100,7 +98,12 @@ public final class FileUploadUtils
         if (!parts.isEmpty()) {
             List<FileItem> items = new ArrayList<>(parts.size());
             for (Part part : parts) {
-                if (Strings.CS.startsWith(part.getName(), UploadAction.FILE_FIELD_NAME)) {
+                // Validate all file parts whatever their field name is, so that the configured attachment
+                // restrictions (maximum size and allowed/blocked mimetypes) are enforced for every upload
+                // mechanism. Before, only the parts named after UploadAction.FILE_FIELD_NAME (i.e. "filepath")
+                // were validated, which let other upload mechanisms (e.g. the CKEditor uploads using the "upload"
+                // field name) bypass the restrictions. See XWIKI-24469.
+                if (part.getSubmittedFileName() != null) {
                     attachmentValidator.validateAttachment(new PartAttachmentAccessWrapper(part));
                 }
                 items.add(new PartFileItem(part));
