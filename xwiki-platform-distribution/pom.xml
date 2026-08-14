@@ -474,6 +474,12 @@
                   <ignoredResourcePattern>builddef.lst</ignoredResourcePattern>
                   <!-- Silly mistakes... -->
                   <ignoredResourcePattern>.gitignore</ignoredResourcePattern>
+                  <!-- distribution 的 jar 模块（如 distribution-migrations）会带上 remote-resource 生成的
+                       配置文件，与 WAR 自己的 WEB-INF 副本重复；运行时使用的是 WAR 根目录的副本，
+                       忽略该重复 -->
+                  <ignoredResourcePattern>hibernate.cfg.xml</ignoredResourcePattern>
+                  <ignoredResourcePattern>xwiki.cfg</ignoredResourcePattern>
+                  <ignoredResourcePattern>xwiki.properties</ignoredResourcePattern>
                 </ignoredResourcePatterns>
                 <ignoredClassPatterns>
                   <!-- Java 9 modules descriptor (should probably be fixed in the plugin) -->
