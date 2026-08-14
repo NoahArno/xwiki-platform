@@ -591,13 +591,24 @@ rendering.transformations = $xwikiRenderingTransformations
 # extension.repositories = store.xwiki.com:xwiki:https://store.xwiki.com/xwiki/rest/
 # extension.repositories = extensions.xwiki.org:xwiki:https://extensions.xwiki.org/xwiki/rest/
 #-#
+#-# Intranet / offline deployments: set an empty list to disable ALL remote extension repositories, including the
+#-# defaults above (nexus.xwiki.org, store.xwiki.com, extensions.xwiki.org). This avoids UnknownHostException errors
+#-# when the server has no access to the Internet. Extensions can then only be installed from local files (XIP/JAR/XAR),
+#-# explicit URLs or any repository explicitly listed in this list.
+#-#
 #-# To not have any repository enabled (including disabling default repositories) you can explicitly make this list
 #-# empty:
 # extension.repositories=
+#-#
+#-# NOTE: this fork defaults to an empty repository list (intranet deployment). To restore the standard XWiki remote
+#-# repositories (or point to internal mirrors), build with -DxwikiExtensionRepositories=... or uncomment the default
+#-# repository lines above in the generated xwiki.properties.
 #if ($xwikiExtensionRepositories)
 #foreach ($extensionRepository in $xwikiExtensionRepositories.split(','))
 extension.repositories = $extensionRepository
 #end
+#else
+extension.repositories=
 #end
 
 #-# [Since 2.5]
