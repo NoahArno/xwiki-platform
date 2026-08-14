@@ -3,7 +3,7 @@
 本文档说明如何接入知脉(DOAP)用户数据 MQ 消费同步：消费 RocketMQ 集群 `TOPIC_DOAP_USER` 上的用户消息，仅同步**外包**用户到 XWiki。
 
 - 模块：`xwiki-platform-core/xwiki-platform-oa-sync`
-- MQ：Apache RocketMQ 4.7.1（`rocketmq-client`）
+- MQ：Apache RocketMQ 5.5.0（`rocketmq-client`）
 - 功能：外包用户建号 / 加入统一权限组 / 条件禁用
 
 ## 1. 功能概述
@@ -31,7 +31,14 @@ xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
 
 > 注意：仓库自带的 Develocity Maven 扩展（`.mvn/extensions.xml`）在部分本机 Maven 环境下会初始化报错，可临时将该文件改名后构建，构建完再改回。
 
-## 3. 部署到 Tomcat
+## 3. 部署
+
+### 方式一：标准发行 WAR（推荐）
+
+oa-sync 已随发行包打进标准 WAR（`war-dependencies` 引入 oa-sync-api/default，flavor 附带 oa-sync-ui），
+直接重新构建并部署标准 WAR 即可，`WEB-INF/lib` 会自动带上 oa-sync 与 RocketMQ 客户端，无需手动拷 jar。
+
+### 方式二：往现有实例手动补 jar
 
 将以下 jar 拷贝到 `.../apache-tomcat-11.0.22/webapps/xwiki/WEB-INF/lib/`：
 
@@ -40,19 +47,19 @@ xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
 - `xwiki-platform-oa-sync-api-18.1.0.jar`（若之前已部署过 OA 同步模块可跳过）
 - `xwiki-platform-oa-sync-default-18.1.0.jar`（本次更新，覆盖旧版）
 
-**RocketMQ 4.7.1 相关 jar（新增，来源为本地 `~/.m2/repository`）**
+**RocketMQ 5.5.0 相关 jar（新增，来源为本地 `~/.m2/repository`）**
 
 | jar | 路径 |
 |---|---|
-| rocketmq-client-4.7.1.jar | `org/apache/rocketmq/rocketmq-client/4.7.1/` |
-| rocketmq-common-4.7.1.jar | `org/apache/rocketmq/rocketmq-common/4.7.1/` |
-| rocketmq-remoting-4.7.1.jar | `org/apache/rocketmq/rocketmq-remoting/4.7.1/` |
-| rocketmq-logging-4.7.1.jar | `org/apache/rocketmq/rocketmq-logging/4.7.1/` |
-| fastjson-1.2.69.jar | `com/alibaba/fastjson/1.2.69/` |
-| netty-all-4.0.42.Final.jar | `io/netty/netty-all/4.0.42.Final/` |
-| netty-tcnative-boringssl-static-1.1.33.Fork26.jar（仅 TLS 需要） | `io/netty/netty-tcnative-boringssl-static/1.1.33.Fork26/` |
+| rocketmq-client-5.5.0.jar | `org/apache/rocketmq/rocketmq-client/5.5.0/` |
+| rocketmq-common-5.5.0.jar | `org/apache/rocketmq/rocketmq-common/5.5.0/` |
+| rocketmq-remoting-5.5.0.jar | `org/apache/rocketmq/rocketmq-remoting/5.5.0/` |
+| rocketmq-rocksdb-1.0.6.jar | `org/apache/rocketmq/rocketmq-rocksdb/1.0.6/` |
 
-> `slf4j-api`、`commons-lang3`、`guava` 等 XWiki 已自带，无需重复拷贝。
+> 说明：
+> - `fastjson`、`netty-all`、`commons-logging` 已在 pom 中排除，**不要**手动拷贝；
+> - netty 由平台自带（4.2，Solr/ZooKeeper 依赖）提供，启用 MQ 前请先实测 RocketMQ 客户端与平台 netty 4.2 的兼容性；
+> - `slf4j-api`、`commons-lang3`、`guava`、OpenTelemetry（1.59.0）等 XWiki 已自带并对齐，无需重复拷贝。
 
 重启 Tomcat：`shutdown.sh` → `startup.sh`。
 
@@ -72,6 +79,8 @@ xwiki.doap-mq.tags=TAG_USER_CREATE,TAG_USER_UPDATE,TAG_USER_DELETE
 xwiki.doap-mq.consume-thread-min=1
 xwiki.doap-mq.consume-thread-max=8
 ```
+
+> 以上配置项已写入仓库 `xwiki.cfg.vm` 模板，发行包生成的 `xwiki.cfg` 自带（默认注释关闭）；现有实例需手动在 `WEB-INF/xwiki.cfg` 追加（本机实例已追加）。
 
 ## 5. 消息格式
 
@@ -107,6 +116,7 @@ xwiki.doap-mq.consume-thread-max=8
 - **只禁用、不启用**：不满足禁用条件时保持用户原状态；
 - **坏消息处理**：`staffId` 为空 → WARN 丢弃不重试；body 非 JSON / 处理器异常 → 返回重试（RocketMQ 默认重试 16 次后进死信队列）；
 - **多节点部署**：多个 XWiki 节点共用同一 `consumer-group` 即集群消费；如需每个节点都消费，给不同节点配不同组名；
+- **依赖对齐**：pom 中已排除 `fastjson`（1.x 的 Jersey 2 JAX-RS 钩子与 XWiki 18 / Jersey 3 冲突）、`netty-all`（避免覆盖平台 netty 4.2）、`commons-logging`（XWiki 用 jcl-over-slf4j 桥接）、OpenTelemetry exporter（与平台 OTel 1.59.0 对齐）；
 - **字段变更**：字段名、`outsourcing`、`dismission`、组名等常量集中在
   `xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-api/src/main/java/org/xwiki/oa/sync/mq/DoapMqConstants.java`，
   后续按实际消息调整一处即可。
