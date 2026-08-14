@@ -45,5 +45,9 @@ XWiki.Attachment.Validation.Code.AttachmentMimetypeRestrictionClass_allowedMimet
 XWiki.Attachment.Validation.Code.AttachmentMimetypeRestrictionClass_allowedMimetypes.hint=定义允许的附件MIME类型列表。默认情况下，此列表为空，但可以在其中指定一个以逗号分隔的允许的MIME类型列表。请注意可以使用通配符（*）来接受任何媒体类型。一旦此列表非空，任何未列出MIME类型的附件都将被拒绝。例如，如果您只想接受纯文本和任何类型的图像，您可以将列表设置为：text/plain,image/*
 XWiki.Attachment.Validation.Code.AttachmentMimetypeRestrictionClass_blockedMimetypes=不允许的MIME类型 
 XWiki.Attachment.Validation.Code.AttachmentMimetypeRestrictionClass_blockedMimetypes.hint=定义拒绝的附件MIME类型列表。默认情况下，此列表为空，但您可以指定一个被阻止的MIME类型的逗号分隔列表。请注意可以使用通配符（*）来接受任何媒体类型。一旦此列表非空，任何匹配列出的MIME类型之一的附件都将被拒绝。例如，如果您想拒绝纯文本和任何类型的图像，您可以将列表设置为：text/plain,image/*
+XWiki.Attachment.Validation.Code.AttachmentMimetypeRestrictionClass_allowedExtensions=允许的扩展名
+XWiki.Attachment.Validation.Code.AttachmentMimetypeRestrictionClass_allowedExtensions.hint=定义允许的附件文件扩展名列表，用逗号分隔（例如 pdf,docx,jpg）。开头的点可省略，比较不区分大小写。一旦此列表非空，任何扩展名不在列表中的附件都将被拒绝。
+XWiki.Attachment.Validation.Code.AttachmentMimetypeRestrictionClass_blockedExtensions=不允许的扩展名
+XWiki.Attachment.Validation.Code.AttachmentMimetypeRestrictionClass_blockedExtensions.hint=定义拒绝的附件文件扩展名列表，用逗号分隔（例如 exe,dmg）。开头的点可省略，比较不区分大小写。一旦此列表非空，任何扩展名匹配列表之一的附件都将被拒绝。
 </content>
 </xwikidoc>

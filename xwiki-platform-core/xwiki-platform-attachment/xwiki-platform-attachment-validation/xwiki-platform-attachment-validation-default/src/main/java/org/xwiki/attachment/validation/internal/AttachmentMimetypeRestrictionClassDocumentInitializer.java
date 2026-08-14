@@ -67,6 +67,16 @@ public class AttachmentMimetypeRestrictionClassDocumentInitializer extends Abstr
     public static final String BLOCKED_MIMETYPES_FIELD = "blockedMimetypes";
 
     /**
+     * Field name for the allowed file extensions.
+     */
+    public static final String ALLOWED_EXTENSIONS_FIELD = "allowedExtensions";
+
+    /**
+     * Field name for the denied file extensions.
+     */
+    public static final String BLOCKED_EXTENSIONS_FIELD = "blockedExtensions";
+
+    /**
      * Default constructor.
      */
     public AttachmentMimetypeRestrictionClassDocumentInitializer()
@@ -79,5 +89,7 @@ public class AttachmentMimetypeRestrictionClassDocumentInitializer extends Abstr
     {
         xclass.addStaticListField(ALLOWED_MIMETYPES_FIELD, "Allowed Mimetypes", 1, true, "", DISPLAYTYPE_INPUT);
         xclass.addStaticListField(BLOCKED_MIMETYPES_FIELD, "Blocked Mimetypes", 1, true, "", DISPLAYTYPE_INPUT);
+        xclass.addStaticListField(ALLOWED_EXTENSIONS_FIELD, "Allowed Extensions", 1, true, "", DISPLAYTYPE_INPUT);
+        xclass.addStaticListField(BLOCKED_EXTENSIONS_FIELD, "Blocked Extensions", 1, true, "", DISPLAYTYPE_INPUT);
     }
 }

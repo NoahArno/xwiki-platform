@@ -65,6 +65,44 @@ public interface AttachmentValidationConfiguration
     List<String> getBlockerMimetypes(DocumentReference documentReference);
 
     /**
+     * @return the list of allowed attachment file extensions of the current document (e.g. "pdf", "docx"). The dot
+     *     prefix is optional and the comparison is case-insensitive.
+     */
+    default List<String> getAllowedExtensions()
+    {
+        return List.of();
+    }
+
+    /**
+     * @param documentReference the reference of a document
+     * @return the list of allowed attachment file extensions of the provided document (e.g. "pdf", "docx"). The dot
+     *     prefix is optional and the comparison is case-insensitive.
+     */
+    default List<String> getAllowedExtensions(DocumentReference documentReference)
+    {
+        return getAllowedExtensions();
+    }
+
+    /**
+     * @return the list of blocked attachment file extensions of the current document (e.g. "exe", "dmg"). The dot
+     *     prefix is optional and the comparison is case-insensitive.
+     */
+    default List<String> getBlockedExtensions()
+    {
+        return List.of();
+    }
+
+    /**
+     * @param documentReference the reference of a document
+     * @return the list of blocked attachment file extensions of the provided document (e.g. "exe", "dmg"). The dot
+     *     prefix is optional and the comparison is case-insensitive.
+     */
+    default List<String> getBlockedExtensions(DocumentReference documentReference)
+    {
+        return getBlockedExtensions();
+    }
+
+    /**
      * @param entityReference the entity reference to use as the context when looking for the configuration
      * @return the max allowed file size in bytes
      * @since 15.5RC1

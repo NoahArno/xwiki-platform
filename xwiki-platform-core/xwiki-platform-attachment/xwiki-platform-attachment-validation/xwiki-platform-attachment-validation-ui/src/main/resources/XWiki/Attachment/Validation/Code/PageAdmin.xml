@@ -38,7 +38,8 @@
   <hidden>true</hidden>
   <content>{{velocity output="false"}}
 #set ($params = {
-  'mimetypes': ['allowedMimetypes', 'blockedMimetypes']
+  'mimetypes': ['allowedMimetypes', 'blockedMimetypes'],
+  'extensions': ['allowedExtensions', 'blockedExtensions']
 })
 #set ($paramClass = 'XWiki.Attachment.Validation.Code.AttachmentMimetypeRestrictionClass')
 #set ($objectPolicy = 'updateOrCreate')

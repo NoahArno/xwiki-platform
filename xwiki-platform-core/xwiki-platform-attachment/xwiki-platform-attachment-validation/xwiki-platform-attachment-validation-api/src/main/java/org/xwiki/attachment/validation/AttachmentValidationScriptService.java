@@ -80,6 +80,54 @@ public class AttachmentValidationScriptService implements ScriptService
     }
 
     /**
+     * @return the list of allowed attachment file extensions of the current document (e.g. "pdf", "docx"). The dot
+     *     prefix is optional and the comparison is case-insensitive.
+     */
+    public List<String> getAllowedExtensions()
+    {
+        return getAttachmentValidationConfiguration()
+            .map(AttachmentValidationConfiguration::getAllowedExtensions)
+            .orElse(List.of());
+    }
+
+    /**
+     * @param documentReference the reference of a document
+     * @return the list of allowed attachment file extensions of the provided document (e.g. "pdf", "docx"). The dot
+     *     prefix is optional and the comparison is case-insensitive.
+     */
+    public List<String> getAllowedExtensions(DocumentReference documentReference)
+    {
+        return getAttachmentValidationConfiguration()
+            .map(attachmentValidationConfiguration -> attachmentValidationConfiguration.getAllowedExtensions(
+                documentReference))
+            .orElse(List.of());
+    }
+
+    /**
+     * @return the list of blocked attachment file extensions of the current document (e.g. "exe", "dmg"). The dot
+     *     prefix is optional and the comparison is case-insensitive.
+     */
+    public List<String> getBlockedExtensions()
+    {
+        return getAttachmentValidationConfiguration()
+            .map(AttachmentValidationConfiguration::getBlockedExtensions)
+            .orElse(List.of());
+    }
+
+    /**
+     * @param documentReference the reference of a document
+     * @return the list of blocked attachment file extensions of the provided document (e.g. "exe", "dmg"). The dot
+     *     prefix is optional and the comparison is case-insensitive.
+     */
+    public List<String> getBlockedExtensions(DocumentReference documentReference)
+    {
+        return getAttachmentValidationConfiguration()
+            .map(attachmentValidationConfiguration -> attachmentValidationConfiguration.getBlockedExtensions(
+                documentReference))
+            .orElse(List.of());
+    }
+
+    /**
      * @return the list of blocker attachment mimetype of the current document. A joker (@code '*') can be used to match
      *     any media (e.g., "image/png", "text/*")
      */

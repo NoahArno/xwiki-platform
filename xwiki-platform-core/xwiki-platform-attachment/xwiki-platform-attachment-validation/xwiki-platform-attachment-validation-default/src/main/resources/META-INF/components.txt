@@ -7,3 +7,4 @@ org.xwiki.attachment.validation.internal.DefaultAttachmentValidator
 org.xwiki.attachment.validation.internal.AttachmentValidationExceptionMapper
 org.xwiki.attachment.validation.internal.step.FileSizeAttachmentValidationStep
 org.xwiki.attachment.validation.internal.step.MimetypeAttachmentValidationStep
+org.xwiki.attachment.validation.internal.step.FileExtensionAttachmentValidationStep

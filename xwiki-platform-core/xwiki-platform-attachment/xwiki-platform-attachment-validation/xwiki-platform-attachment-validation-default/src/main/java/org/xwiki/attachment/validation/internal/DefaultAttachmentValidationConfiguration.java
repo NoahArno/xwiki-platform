@@ -45,6 +45,8 @@ import static com.xpn.xwiki.plugin.fileupload.FileUploadPlugin.UPLOAD_MAXSIZE_PA
 import static org.apache.commons.lang3.exception.ExceptionUtils.getRootCauseMessage;
 import static org.xwiki.attachment.validation.internal.AttachmentMimetypeRestrictionClassDocumentInitializer.ALLOWED_MIMETYPES_FIELD;
 import static org.xwiki.attachment.validation.internal.AttachmentMimetypeRestrictionClassDocumentInitializer.BLOCKED_MIMETYPES_FIELD;
+import static org.xwiki.attachment.validation.internal.AttachmentMimetypeRestrictionClassDocumentInitializer.ALLOWED_EXTENSIONS_FIELD;
+import static org.xwiki.attachment.validation.internal.AttachmentMimetypeRestrictionClassDocumentInitializer.BLOCKED_EXTENSIONS_FIELD;
 
 /**
  * Default implementation of the attachment configuration. Looks for the configuration:
@@ -64,6 +66,10 @@ public class DefaultAttachmentValidationConfiguration implements AttachmentValid
     private static final String ATTACHMENT_MIMETYPE_ALLOW_LIST_PROPERTY = "attachment.upload.allowList";
 
     private static final String ATTACHMENT_MIMETYPE_BLOCK_LIST_PROPERTY = "attachment.upload.blockList";
+
+    private static final String ATTACHMENT_EXTENSION_ALLOW_LIST_PROPERTY = "attachment.upload.allowExtensions";
+
+    private static final String ATTACHMENT_EXTENSION_BLOCK_LIST_PROPERTY = "attachment.upload.blockExtensions";
 
     @Inject
     @Named(DefaultAttachmentMimetypeRestrictionSpacesConfigurationSource.HINT)
@@ -105,6 +111,30 @@ public class DefaultAttachmentValidationConfiguration implements AttachmentValid
     public List<String> getBlockerMimetypes(DocumentReference documentReference)
     {
         return wrapWithScope(documentReference, this::getBlockerMimetypes);
+    }
+
+    @Override
+    public List<String> getAllowedExtensions()
+    {
+        return getPropertyWithFallback(ALLOWED_EXTENSIONS_FIELD, ATTACHMENT_EXTENSION_ALLOW_LIST_PROPERTY);
+    }
+
+    @Override
+    public List<String> getAllowedExtensions(DocumentReference documentReference)
+    {
+        return wrapWithScope(documentReference, this::getAllowedExtensions);
+    }
+
+    @Override
+    public List<String> getBlockedExtensions()
+    {
+        return getPropertyWithFallback(BLOCKED_EXTENSIONS_FIELD, ATTACHMENT_EXTENSION_BLOCK_LIST_PROPERTY);
+    }
+
+    @Override
+    public List<String> getBlockedExtensions(DocumentReference documentReference)
+    {
+        return wrapWithScope(documentReference, this::getBlockedExtensions);
     }
 
     @Override
