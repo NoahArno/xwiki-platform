@@ -97,6 +97,7 @@ class DefaultLoginAuditServiceTest
         this.wiki = this.oldcore.getSpyXWiki();
         Utils.setComponentManager(this.oldcore.getMocker());
         when(this.contextProvider.get()).thenReturn(this.context);
+        when(this.configuration.containsKey("xwiki.authentication.audit-log.enabled")).thenReturn(true);
         when(this.configuration.getProperty(eq("xwiki.authentication.audit-log.enabled"), eq(Boolean.class)))
             .thenReturn(true);
     }
@@ -128,12 +129,25 @@ class DefaultLoginAuditServiceTest
     @Test
     void skipsWriteWhenDisabled() throws Exception
     {
+        when(this.configuration.containsKey("xwiki.authentication.audit-log.enabled")).thenReturn(true);
         when(this.configuration.getProperty(eq("xwiki.authentication.audit-log.enabled"), eq(Boolean.class)))
             .thenReturn(false);
 
         this.service.record(LoginEventType.LOGIN_SUCCESS, LoginChannel.FORM, "wiki:XWiki.admin", "127.0.0.1", "x");
 
         verify(this.wiki, never()).saveDocument(any(XWikiDocument.class), anyString(), any(XWikiContext.class));
+    }
+
+    @Test
+    void recordsEventWhenKeyAbsent() throws Exception
+    {
+        // The feature is enabled by default: a missing xwiki.cfg key must NOT disable audit logging.
+        when(this.configuration.containsKey("xwiki.authentication.audit-log.enabled")).thenReturn(false);
+
+        this.service.record(LoginEventType.LOGIN_SUCCESS, LoginChannel.FORM, "wiki:XWiki.admin", "127.0.0.1", "x");
+
+        XWikiDocument doc = captureSavedDocument();
+        assertNotNull(doc.getXObject(new DocumentReference(this.context.getWikiId(), "AuditLog", "LogRecordClass")));
     }
 
     @Test

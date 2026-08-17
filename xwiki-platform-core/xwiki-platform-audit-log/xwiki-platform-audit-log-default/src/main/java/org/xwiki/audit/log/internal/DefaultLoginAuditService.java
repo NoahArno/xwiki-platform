@@ -131,7 +131,11 @@ public class DefaultLoginAuditService implements LoginAuditService
 
     private boolean isEnabled()
     {
-        Boolean enabled = this.configuration.getProperty(CONFIG_ENABLED, Boolean.class);
-        return enabled == null || enabled;
+        // A missing key means enabled (the feature is on by default). Note that we cannot rely on
+        // getProperty(key, Boolean.class) returning null for a missing key: the xwikicfg ConfigurationSource
+        // converts a missing Boolean property to Boolean.FALSE rather than null, so we explicitly check for
+        // the presence of the key first.
+        return !this.configuration.containsKey(CONFIG_ENABLED)
+            || Boolean.TRUE.equals(this.configuration.getProperty(CONFIG_ENABLED, Boolean.class));
     }
 }
