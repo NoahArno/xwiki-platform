@@ -1,0 +1,94 @@
+= 复杂页面内容（宏密集） =
+
+{{info}}
+这是信息提示框宏。
+{{/info}}
+
+{{warning}}
+这是警告框宏。
+{{/warning}}
+
+{{success}}
+这是成功框宏。
+{{/success}}
+
+{{error}}
+这是错误框宏。
+{{/error}}
+
+== 表格宏 ==
+
+|=字段1|=字段2|=字段3|=字段4|=字段5|
+|值1|值2|值3|值4|值5|
+|值1|值2|值3|值4|值5|
+|值1|值2|值3|值4|值5|
+|值1|值2|值3|值4|值5|
+
+== 代码块宏 ==
+
+{{code language="java"}}
+public class Demo {
+    public static void main(String[] args) {
+        System.out.println("Hello XWiki Performance Test");
+    }
+}
+{{/code}}
+
+{{code language="xml"}}
+<configuration>
+    <property name="key1">value1</property>
+    <property name="key2">value2</property>
+</configuration>
+{{/code}}
+
+== 引用宏 ==
+
+{{quote}}
+这是一段引用文本，用于测试引用宏的渲染开销。
+{{/quote}}
+
+== 锚点与内链 ==
+
+[[跳转到章节三|#章节三]]
+
+[[外部链接|https://www.xwiki.org/]]
+
+[[首页|Main.WebHome]]
+
+== 章节二 ==
+
+这是一段普通的段落文本，用于填充页面内容。这段文本足够长，用来模拟真实页面的文字量，
+让页面渲染和保存时有足够的内容处理量。
+
+== 章节三 ==
+
+{{note}}
+注意宏。
+{{/note}}
+
+{{box}}
+普通盒子宏。
+{{/box}}
+
+{{message}}
+消息宏。
+{{/message}}
+
+== 列表嵌套 ==
+
+* 一级项目 A
+** 二级项目 A1
+*** 三级项目 A1a
+* 一级项目 B
+** 二级项目 B1
+* 一级项目 C
+
+== 术语宏 ==
+
+{{term}}
+术语一：这是术语一的内容解释。
+{{/term}}
+
+{{term}}
+术语二：这是术语二的内容解释。
+{{/term}}
