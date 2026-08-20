@@ -70,7 +70,7 @@
           </elementProp>
           <elementProp name="authHeader" elementType="Argument">
             <stringProp name="Argument.name">authHeader</stringProp>
-            <stringProp name="Argument.value">Basic ${__base64Encode(${perf.user}:${perf.pass})}</stringProp>
+            <stringProp name="Argument.value">${authHeader}</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
         </collectionProp>
@@ -127,6 +127,17 @@
               </elementProp>
             </collectionProp>
           </HeaderManager>
+          <hashTree/>
+          <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="生成认证头" enabled="true">
+            <stringProp name="cacheKey"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="script">import java.util.Base64
+String uname = vars.get("perf.user")
+String pwd = vars.get("perf.pass")
+vars.put("authHeader", "Basic " + Base64.getEncoder().encodeToString((uname + ":" + pwd).getBytes("UTF-8")))</stringProp>
+            <stringProp name="scriptLanguage">groovy</stringProp>
+          </JSR223PreProcessor>
           <hashTree/>
           <CookieManager guiclass="CookiePanel" testclass="CookieManager" testname="HTTP Cookie Manager" enabled="true">
             <collectionProp name="CookieManager.cookies"/>

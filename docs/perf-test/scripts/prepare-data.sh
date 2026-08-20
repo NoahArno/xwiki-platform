@@ -37,7 +37,7 @@ BASE="http://${HOST}:${PORT}/${CONTEXT}"
 AUTH=(-u "${ADMIN_USER}:${ADMIN_PASS}")
 
 rest() { # $1=method $2=path $3=json(可选)
-  local args=(-s -o /dev/null -w '%{http_code}' -X "$1" "${AUTH[@]}")
+  local args=(-s -o /dev/null -w '%{http_code}' --max-time 30 --connect-timeout 10 -X "$1" "${AUTH[@]}")
   if [[ -n "${3:-}" ]]; then
     curl "${args[@]}" -H "Content-Type: application/json" --data "$3" "${BASE}$2"
   else
@@ -52,7 +52,21 @@ print(json.dumps({'title': sys.argv[1], 'content': sys.argv[2], 'syntax': 'xwiki
 " "$1" "$2"
 }
 
+# 生成 XWiki 密码存储值 hash:<算法>:<salt>:<hexdigest>（salt 前缀拼接，见 PasswordClass）
+# $1=明文密码 → 存储值
+hash_password() {
+  python3 -c "
+import hashlib, secrets, sys
+pw = sys.argv[1]
+salt = secrets.token_hex(32)
+digest = hashlib.sha512((salt + pw).encode()).hexdigest()
+print('hash:SHA-512:%s:%s' % (salt, digest))
+" "$1"
+}
+
 json_user() { # $1=邮箱 $2=密码 $3=名 → JSON
+  local stored
+  stored=$(hash_password "$2")
   python3 -c "
 import json, sys
 obj = {'className': 'XWiki.XWikiUsers', 'properties': [
@@ -63,41 +77,46 @@ obj = {'className': 'XWiki.XWikiUsers', 'properties': [
     {'name': 'last_name', 'value': '压测'},
 ]}
 print(json.dumps(obj, ensure_ascii=False))
-" "$1" "$2" "$3"
+" "$1" "$stored" "$3"
 }
 
-# 创建或跳过页面；$1=Space/Page（斜杠分隔，含嵌套空间）$2=标题 $3=内容
+# 创建页面（幂等：已存在则 PUT 覆盖为新版本，可修复软删除后的旧版本状态）；
+# $1=Space/Page（斜杠分隔，含嵌套空间）$2=标题 $3=内容
 create_page() {
   local space="${1%/*}" page="${1##*/}"
-  local code
-  code=$(rest "GET" "/rest/wikis/xwiki/spaces/${space}/pages/${page}")
-  if [[ "$code" == "200" ]]; then
-    return 0  # 已存在，跳过
-  fi
   local json
   json=$(json_page "$2" "$3")
+  local code
   code=$(rest "PUT" "/rest/wikis/xwiki/spaces/${space}/pages/${page}" "$json")
-  if [[ "$code" != "201" && "$code" != "200" ]]; then
+  if [[ "$code" != "201" && "$code" != "200" && "$code" != "202" ]]; then
     echo "创建页面 $1 失败: HTTP $code" >&2
     return 1
   fi
 }
 
 # 创建用户（页面 + XWikiUsers 对象）；$1=用户名
+# 对象存在则强制 PUT 更新密码（修复旧密码格式/软删除重建后的脏状态），不存在则 POST 创建
 create_user() {
-  local code
+  local code num json body
   create_page "XWiki/$1" "$1" "压测用户 $1"
-  # 对象已存在则跳过
-  code=$(rest "GET" "/rest/wikis/xwiki/spaces/XWiki/pages/$1/objects/XWikiUsers")
-  if [[ "$code" == "200" ]]; then
-    return 0
-  fi
-  local json
   json=$(json_user "$1@local.test" "$USER_PASS" "$1")
-  code=$(rest "POST" "/rest/wikis/xwiki/spaces/XWiki/pages/$1/objects" "$json")
-  if [[ "$code" != "201" && "$code" != "200" ]]; then
-    echo "创建用户 $1 失败: HTTP $code" >&2
-    return 1
+  body=$(curl -s --max-time 30 "${AUTH[@]}" \
+    "${BASE}/rest/wikis/xwiki/spaces/XWiki/pages/$1/objects/XWikiUsers")
+  num=$(printf '%s' "$body" | python3 -c "
+import json, sys
+try:
+    d = json.load(sys.stdin)
+    sums = d.get('objectSummaries', [])
+    print(sums[0]['number'] if sums else '')
+except Exception:
+    print('')
+")
+  if [[ -n "$num" ]]; then
+    code=$(rest "PUT" "/rest/wikis/xwiki/spaces/XWiki/pages/$1/objects/XWikiUsers/$num" "$json")
+    [[ "$code" == "200" || "$code" == "202" ]] || { echo "更新用户 $1 密码失败: HTTP $code" >&2; return 1; }
+  else
+    code=$(rest "POST" "/rest/wikis/xwiki/spaces/XWiki/pages/$1/objects" "$json")
+    [[ "$code" == "201" || "$code" == "200" ]] || { echo "创建用户 $1 失败: HTTP $code" >&2; return 1; }
   fi
 }
 
