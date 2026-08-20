@@ -78,6 +78,9 @@
     </TestPlan>
     <hashTree>
       <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults" enabled="true">
+        <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+          <collectionProp name="Arguments.arguments"/>
+        </elementProp>
         <stringProp name="HTTPSampler.domain">${perf.host}</stringProp>
         <stringProp name="HTTPSampler.port">${perf.port}</stringProp>
         <stringProp name="HTTPSampler.protocol">${perf.protocol}</stringProp>
