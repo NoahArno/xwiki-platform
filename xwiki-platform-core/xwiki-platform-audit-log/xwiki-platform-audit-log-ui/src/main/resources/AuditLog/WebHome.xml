@@ -28,9 +28,12 @@
 #else
 #macro(escapeCell $value)
 #set ($cell = "$!value")
-#set ($cell = $cell.replace('&amp;', '&amp;amp;').replace('&lt;', '&amp;lt;').replace('&gt;', '&amp;gt;').replace('"', '&amp;quot;').replace("'", '&amp;#39;').replace('{', '&amp;#123;').replace('}', '&amp;#125;').replace('|', '&amp;#124;').replace('[', '&amp;#91;').replace(']', '&amp;#93;'))
-$cell
-#end
+#if ($cell != '')
+#set ($cell = $cell.replaceAll('\n', ' '))
+## 用官方 escape 按 xwiki/2.1 语法做 ~ 前缀转义：单元格内字面显示且不拆裂表格行、不执行宏（防止用户名等用户输入注入 {{velocity}} 等宏）。
+## 注意：行尾必须带 ## 吞掉换行，否则宏输出尾部换行会把表格行拆成多行（每个单元格变成独立一行）。
+$!services.rendering.escape($cell, 'xwiki/2.1')##
+#end#end
 #set ($pageSize = 20)
 #set ($page = 1)
 #set ($pageParam = "$!request.getParameter('page')")
