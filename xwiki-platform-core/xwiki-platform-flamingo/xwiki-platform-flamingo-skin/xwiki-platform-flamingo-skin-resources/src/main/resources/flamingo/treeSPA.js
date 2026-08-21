@@ -455,15 +455,15 @@
       return;
     }
 
+    // Don't intercept pagination nodes.
+    if (isPaginationNode(anchor)) {
+      return;
+    }
+
     // Same page: swallow the click entirely (no full reload, no AJAX).
     if (isSamePage(url, window.location.href)) {
       event.preventDefault();
       event.stopPropagation();
-      return;
-    }
-
-    // Don't intercept pagination nodes.
-    if (isPaginationNode(anchor)) {
       return;
     }
 
