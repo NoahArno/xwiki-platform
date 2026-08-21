@@ -48,9 +48,13 @@ for i in $(seq 1 "$SPACE_COUNT"); do
   [[ $((i % 100)) -eq 0 ]] && echo "  已清理 ${i}/${SPACE_COUNT}"
 done
 
-echo "== 删除保存测试页面（含 split 模式 _N 后缀页） =="
-for i in $(seq 1 100); do
-  del_page "${SAVE_PAGE}_${i}" || true
+echo "== 删除保存测试页面（含 split 模式 _{线程}_{迭代} 后缀页） =="
+# 两层循环覆盖 50 线程 × 200 迭代的页面；如并发/时长更大可调上限
+for i in $(seq 1 200); do
+  for j in $(seq 1 200); do
+    del_page "${SAVE_PAGE}_${i}_${j}" || true
+  done
+  [[ $((i % 20)) -eq 0 ]] && echo "  已清理线程 ${i}/200"
 done
 del_page "$SAVE_PAGE"
 

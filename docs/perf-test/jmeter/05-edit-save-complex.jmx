@@ -48,7 +48,7 @@
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>          <elementProp name="perf.threads.solo" elementType="Argument">
             <stringProp name="Argument.name">perf.threads.solo</stringProp>
-            <stringProp name="Argument.value">${__P(perf.threads.solo,2)}</stringProp>
+            <stringProp name="Argument.value">${__P(perf.threads.solo,1)}</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>          <elementProp name="perf.threads.split" elementType="Argument">
             <stringProp name="Argument.name">perf.threads.split</stringProp>
@@ -297,7 +297,8 @@ vars.put("saveContent", new File(vars.get("perf.saveContentFile")).getText("UTF-
 String uname = vars.get("perf.userPrefix") + (ctx.getThreadNum() + 1)
 String pwd = vars.get("perf.pass")
 vars.put("authHeader", "Basic " + Base64.getEncoder().encodeToString((uname + ":" + pwd).getBytes("UTF-8")))
-vars.put("saveContent", new File(vars.get("perf.saveContentFile")).getText("UTF-8"))</stringProp>
+vars.put("saveContent", new File(vars.get("perf.saveContentFile")).getText("UTF-8"))
+vars.put("saveTarget", vars.get("perf.savePage") + "_" + (ctx.getThreadNum() + 1) + "_" + (vars.getIteration() + 1))</stringProp>
             <stringProp name="scriptLanguage">groovy</stringProp>
           </JSR223PreProcessor>
           <hashTree/>
@@ -320,7 +321,7 @@ vars.put("saveContent", new File(vars.get("perf.saveContentFile")).getText("UTF-
               </elementProp>
             </collectionProp>
           </elementProp>
-          <stringProp name="HTTPSampler.path">${perf.context}/bin/edit/${perf.savePage}_${__threadNum}</stringProp>
+          <stringProp name="HTTPSampler.path">${perf.context}/bin/edit/${saveTarget}</stringProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
@@ -425,14 +426,14 @@ vars.put("saveContent", new File(vars.get("perf.saveContentFile")).getText("UTF-
                 <stringProp name="Argument.name">isNew</stringProp>
               </elementProp>              <elementProp name="xredirect" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">true</boolProp>
-                <stringProp name="Argument.value">/${perf.context}/bin/view/${perf.savePage}_${__threadNum}</stringProp>
+                <stringProp name="Argument.value">/${perf.context}/bin/view/${saveTarget}</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
                 <boolProp name="HTTPArgument.use_equals">true</boolProp>
                 <stringProp name="Argument.name">xredirect</stringProp>
               </elementProp>
             </collectionProp>
           </elementProp>
-          <stringProp name="HTTPSampler.path">${perf.context}/bin/save/${perf.savePage}_${__threadNum}</stringProp>
+          <stringProp name="HTTPSampler.path">${perf.context}/bin/save/${saveTarget}</stringProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">false</boolProp>
           <boolProp name="HTTPSampler.auto_redirects">false</boolProp>
