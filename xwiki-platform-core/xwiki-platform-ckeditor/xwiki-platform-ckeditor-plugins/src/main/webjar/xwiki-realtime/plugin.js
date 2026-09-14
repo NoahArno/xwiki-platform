@@ -297,7 +297,11 @@
    */
   function asyncRequireCallback(asyncCallback, resolve, reject) {
     return (...args) => {
-      Promise.try(asyncCallback, ...args).then(resolve).catch(reject);
+      // We can't use Promise.try() because it is not supported by all the browsers we target: it requires Chrome 128+
+      // and Firefox 134+. The Promise constructor catches the exceptions thrown synchronously by its executor, which
+      // gives us the exact same behavior: a synchronous exception thrown by the callback results in a rejected promise
+      // instead of an uncaught error.
+      new Promise((resolveCallback) => resolveCallback(asyncCallback(...args))).then(resolve).catch(reject);
     };
   }
 
