@@ -19,3 +19,4 @@ org.xwiki.oa.sync.internal.mq.handler.DoapUserUpdateHandler
 org.xwiki.oa.sync.internal.mq.handler.DoapUserDeleteHandler
 org.xwiki.oa.sync.internal.excel.OutsourcingExcelParser
 org.xwiki.oa.sync.internal.excel.ExcelImportExecutor
+org.xwiki.oa.sync.internal.excel.OutsourcingExcelImportService
