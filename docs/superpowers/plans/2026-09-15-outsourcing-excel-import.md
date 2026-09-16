@@ -2471,22 +2471,27 @@ git commit -m "外包Excel导入：新增导入统计与编排服务（并发建
 | Minor | `runAll` 自身抛异常（线程池已关闭等）会带崩导入且不留记录 | 包 `try/catch(RuntimeException)` → 写 FAILURE 记录后**原样抛出**（不转 `IOException`，这是内部失败，REST 应按 500 处理） |
 | Minor | `TYPE` 为 `public`（无跨包使用者，却让类型字符串事实上成为 API） | 收为包级可见 |
 | Minor | `UserOutcome` 分类用 `else` 兜底，会把未来新增的 `Status` 静默算成"已存在/成功" | 改显式 `CREATED` / `else if (EXISTED)` / `else` 按失败处理 |
-| Minor | `failCount` 只看逐用户失败 ⇒ 会出现 `PARTIAL_FAILURE` 却 `failCount=0` 的自相矛盾记录 | `failCount = result.getErrors().size()`；`errorLog` 加 `[错误]`/`[警告]` 前缀 |
-| Minor | `saveFailureRecord` 把 `"Excel 解析失败"` 前缀写死，但建号阶段整体失败也复用它，记录成 `[错误] Excel 解析失败: 建号阶段整体失败: …` | 该方法只加 `[错误] ` 前缀，具体阶段由调用方写进 message |
+| Minor | `failCount` 一度改为 error 条目数（为消除 `PARTIAL_FAILURE` 配 `failCount=0` 的观感）| **已回退为 `result.getFailed()`**：`OASyncResult.getFailCount()` 的 api javadoc 明写是 "the number of **failed users**"，FTP 链路 `DefaultOASyncService` 也是 `total = success + failed`，而 `OASync/WebHome.xml` 用**同一张表**展示两条链路的记录、只靠 `syncType` 列区分 —— 改口径会让同一展示字段在两条链路含义不同。`status` 是**运行级**（有 error 即 PARTIAL），`failCount` 是**用户级**，两者本就不同维度，不矛盾 |
+| Minor | `saveFailureRecord` 把 `"Excel 解析失败"` 前缀写死，但建号阶段整体失败也复用它，记录成 `[错误] Excel 解析失败: 建号阶段整体失败: …` | 该方法只加 `[错误] ` 前缀，具体阶段由调用方写进 message；并增加 `total` 参数，建号阶段整体失败时记上 `totalCount` 且文案说明"已建号数量未知，重跑幂等" |
+| Minor | `writesParseErrorsAndWarningsIntoTheRecord` 名不副实：helper 只塞 errors，`[警告] ` 前缀零覆盖 | 新增带 warnings 的 helper，断言两个前缀都出现 |
+| Minor | 新增的"runAll 整体失败留记录""`outcomes` 长度护栏"两处行为零覆盖 | 各补一个用例；完成日志也带上状态与错误/警告数（否则入组失败时日志印 `失败=[0]` 会被误读） |
 
-用例 6 → 9，全模块 106 → 109。
+用例 6 → 11，全模块 106 → 111。
 
 **关键设计收敛**：**状态判定只有一处真相** —— `ExcelImportResult.getStatus()`。
 Task 6 的 REST 响应**必须**复用它（计划里那行已同步改为 `response.put("status", result.getStatus().name())`），
 **不要**再写 `result.getFailed() == 0 ? …`，否则两处映射会再次漂移，重演这次"组没加成却报绿色成功"。
 
-**`failCount` 的口径取舍**（需知悉）：`failCount` 现在 = error 条目数，把行级解析错误与入组整体失败也计入，
-好处是 `PARTIAL_FAILURE` 不再配 `failCount=0`；代价是 `successCount + failCount` **可能不等于** `total`
-（行级解析错误对应的行不在 `total` 里）。这是刻意的：状态的权威来源是 `errors` 是否为空，不是计数关系。
+**`getStatus()` 永不返回 `FAILURE`**：文件级失败（解析不出、建号阶段整体失败）走 service 抛异常 +
+另写一条 `FAILURE` 记录，不经过这个方法。Task 6 里若 catch 到解析异常，**不要**把它映射成 `PARTIAL_FAILURE`。
 
 **反证时的一个坑**（实施者踩到过，值得记）：断言 `result.getStatus()` 的用例
 **不会因为改 `saveRecord` 而失败**——两者无因果关系。要钉住状态修复，需要分别反证
 "改 `saveRecord` 的状态来源"和"改 `ExcelImportResult.getStatus()`"两处。
+
+**`failCount` 口径的回归保护**：`treatsGroupWriteFailureAsPartialFailure` 里断言了
+记录的 `getFailCount() == 0`（该场景 errors 有 1 条而 failed 为 0，正是两种口径的分歧点）。
+此前把口径改成 error 条目数时**一个用例都没失败**，所以这个断言是补上的。
 
 ---
 
