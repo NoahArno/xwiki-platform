@@ -89,7 +89,7 @@ public class OutsourcingExcelImportService
             parsed = this.parser.parse(excel);
         } catch (IOException e) {
             LOGGER.error("外包 Excel 导入: 解析失败", e);
-            saveFailureRecord(e.getMessage(), context);
+            saveFailureRecord("Excel 解析失败: " + e.getMessage(), context);
             throw e;
         }
 
@@ -202,7 +202,7 @@ public class OutsourcingExcelImportService
         OASyncResult record = new OASyncResult(TYPE, LocalDate.now(), OASyncTriggerType.MANUAL,
             LocalDateTime.now());
         record.setStatus(OASyncResult.Status.FAILURE);
-        record.getErrorLog().add("[错误] Excel 解析失败: " + message);
+        record.getErrorLog().add("[错误] " + message);
         record.setEndTime(LocalDateTime.now());
         try {
             this.recordStore.save(record, context);
