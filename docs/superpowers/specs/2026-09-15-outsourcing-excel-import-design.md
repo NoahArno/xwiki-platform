@@ -46,6 +46,43 @@ MQ 侧的权威行为定义在
 
 > 明确排除的方案：复用文件链路的 `UserGroupSynchronizer`。它按机构分组（组名 `orgCode_1`、标题 `orgName_外包组`，见 `OutsourcingFileParser` 第 110 行），与已确认的"单一固定组"直接冲突。
 
+### 2.1 实施中发现并修复的 MQ 现存 bug（**会改变线上行为，需知悉**）
+
+实施 Task 4 时发现 MQ 侧原有的入组实现有一个严重 bug，必须一并修复：
+
+```java
+BaseObject memberObject = groupDoc.getXObject(groupClassRef);   // ← 返回该类的“第一个”对象
+if (memberObject == null) {
+    memberObject = groupDoc.newXObject(groupClassRef, context);
+}
+memberObject.setStringValue("member", userFullName);
+```
+
+`XWikiDocument.getXObject(DocumentReference)` 的语义是「返回该类的**第一个**非空对象」
+（`xwiki-platform-oldcore/.../doc/XWikiDocument.java` L3132-3146：遍历取到第一个非 null 就 `break`）。
+因此当组里已有成员、而新用户**不是**成员时，这段代码会**覆盖第一个已有成员**而不是新增对象。
+
+**净效果：「开发中心科技外包组」永远只能容纳一个外包用户**，每来一个新用户就把第一个人挤掉。
+现有单测只加过单个用户，所以从未暴露。已用回归用例实证：
+
+```
+修复前 keepsAllMembersWhenAddingSeveralUsers:
+  expected: <[XWiki.10086, XWiki.10087, XWiki.10088]> but was: <[XWiki.10088]>
+```
+
+**这是对 §2 "对外行为逐字不变"原则的一处有意例外**：修复后的行为才是原本就该有的行为。
+不修的话，Excel 全量导入 ~800 人只会剩下最后一个人，功能直接失效。
+
+**连带影响**：线上那个组当前很可能只保留了最后一个外包用户（其余成员的成员对象被陆续覆盖）。
+本次 Excel 初次全量导入会把所有人重新加回来，因此**不需要额外的一次性数据修复动作**——
+这也是"先做全量导入再做增量"这个顺序的额外收益。
+
+**修复方式**：为每个待加成员 `newXObject` 创建**新**对象，绝不复用已有对象；
+并按 200 个成员一块分批保存（避免 800 个 XObject 挤在一个 revision 里）。
+
+> 顺带核对：`internal/sync/UserGroupSynchronizer`（文件链路的行员/外包同步）里有同名的
+> `addMemberIfMissing`，但它**已经是**无条件 `newXObject`（L140），不存在同类 bug，无需改动。
+
 ## 3. 模块结构与变更清单
 
 `xwiki-platform-oa-sync-api` **不需要改动**：`DoapUserSynchronizer` 位于 default 模块内部，是同模块组件，可直接注入，且 MQ 的对外契约（`DoapUserMessageHandler` / `DoapMqConstants`）不变。
