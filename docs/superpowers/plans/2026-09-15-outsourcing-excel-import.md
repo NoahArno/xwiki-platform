@@ -2694,38 +2694,84 @@ Expected: `Tests run: 1, Failures: 0, Errors: 0`
 内存占用随**文件大小**而非行数增长，超大文件可以把堆打爆。
 800 行不是问题，但端点是管理员可反复调用的入口，必须有闸门。
 
-实现要点（与现有 `catch (IOException)` 分支复用同一套"文件级失败"处理：
+实现要点：
+
+**(a) 先在 `OutsourcingExcelImportService` 加一个"只记文件级失败"的 public 入口**
+（REST 资源在 `internal.rest` 包、service 在 `internal.excel` 包，**跨包所以不能是包级可见**；
+但它是内部包的类、不属于 api 模块，因此不会变成对外 API）：
+
+```java
+    /**
+     * 记录一次文件级失败：供 REST 层在"上传超限"等尚未进入 {@link #importFrom} 的场景使用。
+     *
+     * @param message the failure description
+     * @param context the XWiki context
+     */
+    public void recordFileFailure(String message, XWikiContext context)
+    {
+        saveFailureRecord(0, message, context);
+    }
+```
+
+> 注意 `saveFailureRecord` 在 Task 5 复审后已是**三参数** `(int total, String message, XWikiContext)`，
+> 这里传 `0`（还没解析，无有效工号数）。
+
+**(b) REST 资源里的体积闸门**：
 
 ```java
     /**
      * 上传体积上限：10 MiB。800 行的 xlsx 通常远小于此，超限只可能是传错文件或恶意构造。
+     * <p>
+     * {@code WorkbookFactory.create(InputStream)} 是 DOM 式加载，整个文件进内存，
+     * 内存占用随文件大小而非行数增长，所以必须有这道闸门。
      */
-    private static final long MAX_UPLOAD_BYTES = 10L * 1024 * 1024;
+    private static final int MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 ```
 
-在读取 body 前先限制输入流，超限时按 §7.2 记 `FAILURE` 并返回 400（不要抛 500）。
-用 `jakarta.ws.rs.core.StreamingOutput` 之外的最简做法：包一层计数输入流，
-或在写文件前用 `body.readNBytes((int) MAX_UPLOAD_BYTES + 1)` 判断长度：
+在 `try` 块内、调用 `importFrom` 之前：
 
 ```java
-        byte[] content = body.readNBytes((int) MAX_UPLOAD_BYTES + 1);
-        if (content.length > MAX_UPLOAD_BYTES) {
-            this.excelImportService.recordFailure("上传文件超过 " + (MAX_UPLOAD_BYTES / 1024 / 1024) + " MiB 上限", context);
-            return Response.status(Response.Status.BAD_REQUEST)
-                .entity("{\"status\":\"FAILURE\",\"message\":\"上传文件超过体积上限\"}")
-                .type(MediaType.APPLICATION_JSON).build();
-        }
-        ExcelImportResult result = this.excelImportService.importFrom(new ByteArrayInputStream(content), context);
+            byte[] content = body.readNBytes(MAX_UPLOAD_BYTES + 1);
+            if (content.length > MAX_UPLOAD_BYTES) {
+                // 按 §7.2：文件级失败要落一条 FAILURE 记录，并返回 400（不是 500）
+                this.excelImportService.recordFileFailure(
+                    "上传文件超过 " + (MAX_UPLOAD_BYTES / 1024 / 1024) + " MiB 上限", context);
+                return badRequest("上传文件超过体积上限");
+            }
+            ExcelImportResult result =
+                this.excelImportService.importFrom(new ByteArrayInputStream(content), context);
 ```
 
-> 若 `OutsourcingExcelImportService` 届时没有公开的"只记失败"入口，
-> 就给 `saveFailureRecord(String, XWikiContext)` 开一个包可见的 `recordFailure(...)` 方法仅供本端点使用，
-> 不要为此新增公开 API 到 api 模块。
+并把 `catch (IOException e)` 那个分支也改用同一个 `badRequest(...)` 辅助方法，避免两处重复拼 JSON：
+
+```java
+    private Response badRequest(String message) throws Exception
+    {
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("status", OASyncResult.Status.FAILURE.name());
+        response.put("message", message);
+        return Response.status(Response.Status.BAD_REQUEST)
+            .entity(OBJECT_MAPPER.writeValueAsString(response))
+            .type(MediaType.APPLICATION_JSON).build();
+    }
+```
+
+需补 import：`java.io.ByteArrayInputStream`。
 
 **验收**：构造一个大于 10 MiB 的文件上传，必须返回 **400**（不是 500），
 且 `OASync.WebHome` 的最近同步记录里出现一条 `FAILURE` 记录。
 
-- [ ] **Step 6: 提交**
+- [ ] **Step 6: 顺手补一行 javadoc（Task 5 复审的建议）**
+
+在 `ExcelImportResult.getStatus()` 的 javadoc 里补一句，让读这个类的人不必回看计划修订段就知道边界：
+
+```java
+     * @return {@code PARTIAL_FAILURE} if any error was recorded, otherwise {@code SUCCESS}；
+     *         该方法**永不返回 {@code FAILURE}** —— 文件级失败（解析不出、建号阶段整体失败）
+     *         由调用方另写一条 {@code FAILURE} 记录，不经过这里
+```
+
+- [ ] **Step 7: 提交**
 
 ```bash
 git add xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/java/org/xwiki/oa/sync/internal/rest/OASyncRESTResource.java \
