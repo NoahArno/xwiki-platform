@@ -22,22 +22,30 @@ package org.xwiki.oa.sync.internal.rest;
 import java.io.ByteArrayInputStream;
 
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import org.junit.jupiter.api.Test;
 import org.xwiki.model.reference.DocumentReference;
+import org.xwiki.oa.sync.internal.excel.ExcelImportResult;
 import org.xwiki.oa.sync.internal.excel.OutsourcingExcelImportService;
 import org.xwiki.security.authorization.AccessDeniedException;
 import org.xwiki.security.authorization.ContextualAuthorizationManager;
 import org.xwiki.security.authorization.Right;
 
+import com.xpn.xwiki.XWiki;
+import com.xpn.xwiki.XWikiContext;
+import com.xpn.xwiki.store.XWikiStoreInterface;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for the admin-only Excel import endpoint of {@link OASyncRESTResource}.
@@ -51,6 +59,30 @@ class OASyncRESTResourceTest
 
     private final OASyncRESTResource resource = new OASyncRESTResource();
 
+    /**
+     * 构造一个能返回可用 {@link XWikiContext} 的资源实例。{@code importOutsourcingExcel} 的
+     * {@code finally} 会调用 {@code context.getWiki().getStore().cleanUp(context)}，所以这三层
+     * mock 必须串起来，否则 NPE。
+     */
+    private OASyncRESTResource newResourceWithContext()
+    {
+        XWikiContext context = mock(XWikiContext.class);
+        XWiki wiki = mock(XWiki.class);
+        XWikiStoreInterface store = mock(XWikiStoreInterface.class);
+        when(context.getWiki()).thenReturn(wiki);
+        when(wiki.getStore()).thenReturn(store);
+
+        OASyncRESTResource testableResource = new OASyncRESTResource()
+        {
+            {
+                this.xcontextProvider = () -> context;
+            }
+        };
+        testableResource.authorizationManager = this.authorizationManager;
+        testableResource.excelImportService = this.importService;
+        return testableResource;
+    }
+
     @Test
     void rejectsNonAdminWithForbidden() throws Exception
     {
@@ -63,9 +95,65 @@ class OASyncRESTResourceTest
             .when(this.authorizationManager).checkAccess(Right.ADMIN);
 
         WebApplicationException exception = assertThrows(WebApplicationException.class,
-            () -> this.resource.importOutsourcingExcel(new ByteArrayInputStream(new byte[0])));
+            () -> this.resource.importOutsourcingExcel(new ByteArrayInputStream(new byte[0]),
+                MediaType.APPLICATION_OCTET_STREAM));
 
         assertEquals(Response.Status.FORBIDDEN.getStatusCode(), exception.getResponse().getStatus());
         verify(this.importService, never()).importFrom(any(), any());
+    }
+
+    @Test
+    void rejectsUploadsLargerThanTheLimitWithoutImporting() throws Exception
+    {
+        OASyncRESTResource testableResource = newResourceWithContext();
+        byte[] tooBig = new byte[OASyncRESTResource.MAX_UPLOAD_BYTES + 1];
+
+        Response response = testableResource.importOutsourcingExcel(
+            new ByteArrayInputStream(tooBig), MediaType.APPLICATION_OCTET_STREAM);
+
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+        // 超限要落一条 FAILURE 记录，且绝不能进入导入
+        verify(this.importService).recordFileFailure(anyString(), any());
+        verify(this.importService, never()).importFrom(any(), any());
+    }
+
+    @Test
+    void acceptsUploadExactlyAtTheLimit() throws Exception
+    {
+        OASyncRESTResource testableResource = newResourceWithContext();
+        when(this.importService.importFrom(any(), any())).thenReturn(new ExcelImportResult());
+        byte[] atLimit = new byte[OASyncRESTResource.MAX_UPLOAD_BYTES];
+
+        Response response = testableResource.importOutsourcingExcel(
+            new ByteArrayInputStream(atLimit), MediaType.APPLICATION_OCTET_STREAM);
+
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        verify(this.importService).importFrom(any(), any());
+    }
+
+    @Test
+    void rejectsRequestWithoutContentType() throws Exception
+    {
+        OASyncRESTResource testableResource = newResourceWithContext();
+
+        Response response = testableResource.importOutsourcingExcel(new ByteArrayInputStream(new byte[0]), null);
+
+        assertEquals(Response.Status.UNSUPPORTED_MEDIA_TYPE.getStatusCode(), response.getStatus());
+        verify(this.importService, never()).importFrom(any(), any());
+    }
+
+    @Test
+    void triggerAlsoRejectsNonAdmin() throws Exception
+    {
+        this.resource.authorizationManager = this.authorizationManager;
+        doThrow(new AccessDeniedException(Right.ADMIN,
+            new DocumentReference("xwiki", "XWiki", "Admin"),
+            new DocumentReference("xwiki", "XWiki", "WebHome")))
+            .when(this.authorizationManager).checkAccess(Right.ADMIN);
+
+        WebApplicationException exception = assertThrows(WebApplicationException.class,
+            () -> this.resource.trigger(null, null));
+
+        assertEquals(Response.Status.FORBIDDEN.getStatusCode(), exception.getResponse().getStatus());
     }
 }
