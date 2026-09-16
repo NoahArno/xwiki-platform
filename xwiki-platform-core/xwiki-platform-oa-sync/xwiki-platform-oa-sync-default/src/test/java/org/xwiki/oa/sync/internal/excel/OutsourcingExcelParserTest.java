@@ -22,11 +22,15 @@ package org.xwiki.oa.sync.internal.excel;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -35,6 +39,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -73,7 +78,9 @@ class OutsourcingExcelParserTest
     @Test
     void readsNumericCellWithoutScientificNotation() throws Exception
     {
-        Path file = numericXlsx(new String[] { "姓名", "staff_id" },
+        Path file = xlsxWithStyledBColumn(
+            (workbook, cell, rawValue) -> cell.setCellValue(Double.parseDouble(rawValue)),
+            new String[] { "姓名", "staff_id" },
             new String[] { "张三", "10086" });
 
         assertEquals(List.of("10086"), parse(file).getUsernames());
@@ -157,6 +164,134 @@ class OutsourcingExcelParserTest
     }
 
     @Test
+    void ignoresCellDisplayFormatForNumericStaffId() throws Exception
+    {
+        // 回归：数字型 + 千分位显示格式。DataFormatter 会渲染成 "10,086"，
+        // 逗号不在非法字符集里，会被静默接受并建出错误用户，必须取原始数值文本。
+        Path file = xlsxWithStyledBColumn((workbook, cell, rawValue) -> {
+            cell.setCellValue(Double.parseDouble(rawValue));
+            CellStyle style = workbook.createCellStyle();
+            style.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
+            cell.setCellStyle(style);
+        }, new String[] { "姓名", "staff_id" },
+            new String[] { "张三", "10086" });
+
+        assertEquals(List.of("10086"), parse(file).getUsernames());
+    }
+
+    @Test
+    void rejectsDateFormattedStaffIdCell() throws Exception
+    {
+        Path file = xlsxWithStyledBColumn((workbook, cell, rawValue) -> {
+            cell.setCellValue(Double.parseDouble(rawValue));
+            CellStyle style = workbook.createCellStyle();
+            style.setDataFormat(workbook.createDataFormat().getFormat("yyyy-mm-dd"));
+            cell.setCellStyle(style);
+        }, new String[] { "姓名", "staff_id" },
+            new String[] { "张三", "45000" });
+
+        OutsourcingExcelParseResult result = parse(file);
+
+        assertTrue(result.getUsernames().isEmpty());
+        assertEquals(1, result.getErrors().size());
+        assertTrue(result.getErrors().get(0).contains("日期格式"), result.getErrors().get(0));
+    }
+
+    @Test
+    void rejectsFormulaStaffIdCell() throws Exception
+    {
+        Path file = xlsxWithStyledBColumn(
+            (workbook, cell, rawValue) -> cell.setCellFormula("\"" + rawValue + "\""),
+            new String[] { "姓名", "staff_id" },
+            new String[] { "张三", "T001" });
+
+        OutsourcingExcelParseResult result = parse(file);
+
+        assertTrue(result.getUsernames().isEmpty());
+        assertEquals(1, result.getErrors().size());
+        assertTrue(result.getErrors().get(0).contains("公式"), result.getErrors().get(0));
+    }
+
+    @Test
+    void stripsFullWidthSpacesAroundStaffId() throws Exception
+    {
+        Path file = xlsx(new String[] { "姓名", "staff_id" },
+            new String[] { "张三", "\u3000T001\u3000" });
+
+        assertEquals(List.of("T001"), parse(file).getUsernames());
+    }
+
+    @Test
+    void rejectsNonBreakingSpaceInsideStaffId() throws Exception
+    {
+        Path file = xlsx(new String[] { "姓名", "staff_id" },
+            new String[] { "张三", "T\u00A0001" });
+
+        OutsourcingExcelParseResult result = parse(file);
+
+        assertTrue(result.getUsernames().isEmpty());
+        assertEquals(1, result.getErrors().size());
+        assertTrue(result.getErrors().get(0).contains("非法字符"), result.getErrors().get(0));
+    }
+
+    @Test
+    void acceptsStaffIdOf255CharactersAndRejects256() throws Exception
+    {
+        Path accepted = xlsx(new String[] { "姓名", "staff_id" },
+            new String[] { "张三", "T".repeat(255) });
+        assertEquals(1, parse(accepted).getUsernames().size());
+
+        Path rejected = xlsx(new String[] { "姓名", "staff_id" },
+            new String[] { "张三", "T".repeat(256) });
+        OutsourcingExcelParseResult result = parse(rejected);
+        assertTrue(result.getUsernames().isEmpty());
+        assertTrue(result.getErrors().get(0).contains("过长"), result.getErrors().get(0));
+    }
+
+    @Test
+    void ignoresDataOutsideTheFirstSheet() throws Exception
+    {
+        try (XSSFWorkbook workbook = new XSSFWorkbook()) {
+            Sheet first = workbook.createSheet("第一个");
+            Row firstHeader = first.createRow(0);
+            firstHeader.createCell(0).setCellValue("姓名");
+            firstHeader.createCell(1).setCellValue("staff_id");
+
+            Sheet second = workbook.createSheet("第二个");
+            Row secondHeader = second.createRow(0);
+            secondHeader.createCell(0).setCellValue("姓名");
+            secondHeader.createCell(1).setCellValue("staff_id");
+            Row secondRow = second.createRow(1);
+            secondRow.createCell(0).setCellValue("张三");
+            secondRow.createCell(1).setCellValue("T999");
+
+            assertTrue(parse(save(workbook, "two-sheets.xlsx")).getUsernames().isEmpty());
+        }
+    }
+
+    @Test
+    void failsOnEmptyFile() throws Exception
+    {
+        Path file = this.tempDir.resolve("empty-bytes.xlsx");
+        Files.write(file, new byte[0]);
+
+        try (InputStream input = Files.newInputStream(file)) {
+            assertThrows(IOException.class, () -> this.parser.parse(input));
+        }
+    }
+
+    @Test
+    void failsWhenContentIsNotAWorkbook() throws Exception
+    {
+        Path file = this.tempDir.resolve("not-excel.xlsx");
+        Files.write(file, "this is definitely not a workbook".getBytes(StandardCharsets.UTF_8));
+
+        try (InputStream input = Files.newInputStream(file)) {
+            assertThrows(IOException.class, () -> this.parser.parse(input));
+        }
+    }
+
+    @Test
     void failsWhenWorkbookHasNoSheet() throws Exception
     {
         Path file = this.tempDir.resolve("empty.xlsx");
@@ -191,12 +326,19 @@ class OutsourcingExcelParserTest
         }
     }
 
+    private final AtomicInteger fileCounter = new AtomicInteger();
+
     private Path xlsx(String[]... rows) throws IOException
     {
-        return write(new XSSFWorkbook(), rows);
+        return write(new XSSFWorkbook(), "test.xlsx", rows);
     }
 
-    private Path numericXlsx(String[]... rows) throws IOException
+    private Path xls(String[]... rows) throws IOException
+    {
+        return write(new HSSFWorkbook(), "legacy.xls", rows);
+    }
+
+    private Path xlsxWithStyledBColumn(CellStyler styler, String[]... rows) throws IOException
     {
         try (XSSFWorkbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("Sheet1");
@@ -206,24 +348,19 @@ class OutsourcingExcelParserTest
                     if (rows[r][c] == null) {
                         continue;
                     }
-                    // 工号列（B）刻意写成数字型单元格，验证 DataFormatter 的取数行为
+                    Cell cell = row.createCell(c);
                     if (c == OutsourcingExcelParser.STAFF_ID_COLUMN && r > 0) {
-                        row.createCell(c).setCellValue(Double.parseDouble(rows[r][c]));
+                        styler.style(workbook, cell, rows[r][c]);
                     } else {
-                        row.createCell(c).setCellValue(rows[r][c]);
+                        cell.setCellValue(rows[r][c]);
                     }
                 }
             }
-            return save(workbook, "numeric.xlsx");
+            return save(workbook, "styled.xlsx");
         }
     }
 
-    private Path xls(String[]... rows) throws IOException
-    {
-        return write(new HSSFWorkbook(), rows);
-    }
-
-    private Path write(Workbook workbook, String[]... rows) throws IOException
+    private Path write(Workbook workbook, String fileName, String[]... rows) throws IOException
     {
         try (Workbook wb = workbook) {
             Sheet sheet = wb.createSheet("Sheet1");
@@ -235,16 +372,24 @@ class OutsourcingExcelParserTest
                     }
                 }
             }
-            return save(wb, "test.xlsx");
+            return save(wb, fileName);
         }
     }
 
     private Path save(Workbook workbook, String name) throws IOException
     {
-        Path file = this.tempDir.resolve(name);
+        Path file = this.tempDir.resolve(this.fileCounter.incrementAndGet() + "-" + name);
         try (OutputStream out = Files.newOutputStream(file)) {
             workbook.write(out);
         }
         return file;
+    }
+
+    /**
+     * 用来自定义 B 列单元格的写入方式（数字格式 / 日期格式 / 公式）。
+     */
+    private interface CellStyler
+    {
+        void style(Workbook workbook, Cell cell, String rawValue);
     }
 }

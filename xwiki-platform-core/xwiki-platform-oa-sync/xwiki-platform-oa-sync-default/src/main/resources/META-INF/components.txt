@@ -17,3 +17,4 @@ org.xwiki.oa.sync.internal.mq.DoapUserSynchronizer
 org.xwiki.oa.sync.internal.mq.handler.DoapUserCreateHandler
 org.xwiki.oa.sync.internal.mq.handler.DoapUserUpdateHandler
 org.xwiki.oa.sync.internal.mq.handler.DoapUserDeleteHandler
+org.xwiki.oa.sync.internal.excel.OutsourcingExcelParser
