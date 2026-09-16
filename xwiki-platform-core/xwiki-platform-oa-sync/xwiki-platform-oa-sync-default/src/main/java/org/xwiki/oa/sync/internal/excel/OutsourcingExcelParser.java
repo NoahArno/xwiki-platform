@@ -105,8 +105,6 @@ public class OutsourcingExcelParser
     {
         try {
             return WorkbookFactory.create(input);
-        } catch (IOException e) {
-            throw e;
         } catch (RuntimeException e) {
             throw new IOException("无法解析 Excel 文件: " + e.getMessage(), e);
         }
@@ -124,7 +122,7 @@ public class OutsourcingExcelParser
             if (isBlankRow(row, formatter)) {
                 return;
             }
-            staffId = readStaffId(row.getCell(STAFF_ID_COLUMN), formatter).strip();
+            staffId = normalize(readStaffId(row.getCell(STAFF_ID_COLUMN), formatter));
         } catch (Exception e) {
             result.getErrors().add("第 " + displayRow(rowIndex) + " 行读取失败: " + e.getMessage());
             return;
@@ -175,9 +173,31 @@ public class OutsourcingExcelParser
             if (DateUtil.isCellDateFormatted(cell)) {
                 throw new IllegalArgumentException("staff_id 单元格是日期格式，无法确定取值");
             }
-            return NumberToTextConverter.toText(cell.getNumericCellValue());
+            double value = cell.getNumericCellValue();
+            String text = NumberToTextConverter.toText(value);
+            // NumberToTextConverter 模仿 Excel，只输出 15 位有效数字（javadoc:
+            // "No more than 15 significant figures are output"），16 位以上的数值工号会被
+            // 静默四舍五入成另一个工号。这里回读比对，丢精度就拒绝，避免"静默建错号"。
+            if (Double.parseDouble(text) != value) {
+                throw new IllegalArgumentException(
+                    "staff_id 数值超过 Excel 可精确表示的 15 位有效数字，精度已丢失，请把该列设为文本格式");
+            }
+            return text;
         }
         return formatter.formatCellValue(cell);
+    }
+
+    /**
+     * 去掉首尾的空白与 Unicode 空格分隔符。{@code strip()} 只按 {@code Character.isWhitespace}
+     * 处理，去不掉不换行空格 U+00A0；从 Word/邮件粘贴过来的表格常带这类首尾空白，
+     * 不清理会让本可修复的行变成错误行。只裁首尾，**内部**的空格仍然交给非法字符集拦截。
+     *
+     * @param raw the raw cell text
+     * @return the text with leading and trailing whitespace stripped
+     */
+    private String normalize(String raw)
+    {
+        return raw.replaceAll("^[\\s\\p{Zs}]+", "").replaceAll("[\\s\\p{Zs}]+$", "");
     }
 
     private boolean isBlankRow(Row row, DataFormatter formatter)

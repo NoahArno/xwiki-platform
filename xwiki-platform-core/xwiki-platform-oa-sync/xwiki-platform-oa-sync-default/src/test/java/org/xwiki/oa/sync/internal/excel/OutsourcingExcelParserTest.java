@@ -22,7 +22,6 @@ package org.xwiki.oa.sync.internal.excel;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -49,6 +48,8 @@ class OutsourcingExcelParserTest
 {
     @TempDir
     Path tempDir;
+
+    private final AtomicInteger fileCounter = new AtomicInteger();
 
     private final OutsourcingExcelParser parser = new OutsourcingExcelParser();
 
@@ -180,6 +181,23 @@ class OutsourcingExcelParserTest
     }
 
     @Test
+    void rejectsNumericStaffIdBeyondExcelPrecision() throws Exception
+    {
+        // 回归：NumberToTextConverter 只输出 15 位有效数字，16 位数值会被静默四舍五入成
+        // 另一个工号并建号成功，必须回读比对后拒绝
+        Path file = xlsxWithStyledBColumn(
+            (workbook, cell, rawValue) -> cell.setCellValue(Double.parseDouble(rawValue)),
+            new String[] { "姓名", "staff_id" },
+            new String[] { "张三", "1234567890123456" });
+
+        OutsourcingExcelParseResult result = parse(file);
+
+        assertTrue(result.getUsernames().isEmpty());
+        assertEquals(1, result.getErrors().size());
+        assertTrue(result.getErrors().get(0).contains("精度"), result.getErrors().get(0));
+    }
+
+    @Test
     void rejectsDateFormattedStaffIdCell() throws Exception
     {
         Path file = xlsxWithStyledBColumn((workbook, cell, rawValue) -> {
@@ -201,7 +219,7 @@ class OutsourcingExcelParserTest
     void rejectsFormulaStaffIdCell() throws Exception
     {
         Path file = xlsxWithStyledBColumn(
-            (workbook, cell, rawValue) -> cell.setCellFormula("\"" + rawValue + "\""),
+            (workbook, cell, rawValue) -> cell.setCellFormula("A2"),
             new String[] { "姓名", "staff_id" },
             new String[] { "张三", "T001" });
 
@@ -217,6 +235,15 @@ class OutsourcingExcelParserTest
     {
         Path file = xlsx(new String[] { "姓名", "staff_id" },
             new String[] { "张三", "\u3000T001\u3000" });
+
+        assertEquals(List.of("T001"), parse(file).getUsernames());
+    }
+
+    @Test
+    void stripsNonBreakingSpacesAroundStaffId() throws Exception
+    {
+        Path file = xlsx(new String[] { "姓名", "staff_id" },
+            new String[] { "张三", "\u00A0T001\u00A0" });
 
         assertEquals(List.of("T001"), parse(file).getUsernames());
     }
@@ -283,8 +310,12 @@ class OutsourcingExcelParserTest
     @Test
     void failsWhenContentIsNotAWorkbook() throws Exception
     {
-        Path file = this.tempDir.resolve("not-excel.xlsx");
-        Files.write(file, "this is definitely not a workbook".getBytes(StandardCharsets.UTF_8));
+        // 以 PK\x03\x04 开头的伪 zip：POI 会当成 OOXML 尝试打开并抛 unchecked 的
+        // NotOfficeXmlFileException，正是必须被转成 IOException 的那类输入
+        // （纯 ASCII 文本抛的本来就是 checked IOException，钉不住这个修复）
+        byte[] fakeZip = { 'P', 'K', 3, 4, 20, 0, 0, 0, 8, 0, 'n', 'o', 't', ' ', 'a', ' ', 'z', 'i', 'p' };
+        Path file = this.tempDir.resolve("fake-zip.xlsx");
+        Files.write(file, fakeZip);
 
         try (InputStream input = Files.newInputStream(file)) {
             assertThrows(IOException.class, () -> this.parser.parse(input));
@@ -325,8 +356,6 @@ class OutsourcingExcelParserTest
             return this.parser.parse(input);
         }
     }
-
-    private final AtomicInteger fileCounter = new AtomicInteger();
 
     private Path xlsx(String[]... rows) throws IOException
     {
