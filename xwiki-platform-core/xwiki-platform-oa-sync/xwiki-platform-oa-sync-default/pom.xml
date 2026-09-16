@@ -85,6 +85,14 @@
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
     </dependency>
+    <!-- Apache POI：解析外包用户 Excel（.xlsx / .xls）。
+         版本由根 pom 的 dependencyManagement 统一管理（poi.version=5.5.1），此处不写版本。
+         用 compile 而非 provided：poi-ooxml 需要保证运行期一定在 WEB-INF/lib 中，
+         provided 若无人提供会直接 ClassNotFoundException。 -->
+    <dependency>
+      <groupId>org.apache.poi</groupId>
+      <artifactId>poi-ooxml</artifactId>
+    </dependency>
 
     <!-- RocketMQ 客户端（DOAP 用户数据 MQ 消费）
          RocketMQ 5.x 起 remoting 不再依赖 fastjson，但 rocketmq-common 仍传递依赖 fastjson

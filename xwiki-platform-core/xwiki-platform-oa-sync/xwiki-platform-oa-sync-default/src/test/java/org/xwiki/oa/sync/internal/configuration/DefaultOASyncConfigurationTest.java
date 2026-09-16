@@ -111,4 +111,27 @@ class DefaultOASyncConfigurationTest
         assertEquals(1, this.config.getSourceDateOffsetDays("employee"));
         assertFalse(this.config.isSourceEnabled("outsourcing"));
     }
+
+    @Test
+    void excelImportThreadsDefaultsToFour()
+    {
+        this.config.configuration = this.source;
+
+        assertEquals(4, this.config.getExcelImportThreads());
+    }
+
+    @Test
+    void excelImportThreadsIsClampedToValidRange()
+    {
+        this.config.configuration = this.source;
+
+        when(this.source.getProperty("xwiki.oa-sync.excel.threads", Integer.class)).thenReturn(0);
+        assertEquals(1, this.config.getExcelImportThreads());
+
+        when(this.source.getProperty("xwiki.oa-sync.excel.threads", Integer.class)).thenReturn(99);
+        assertEquals(8, this.config.getExcelImportThreads());
+
+        when(this.source.getProperty("xwiki.oa-sync.excel.threads", Integer.class)).thenReturn(6);
+        assertEquals(6, this.config.getExcelImportThreads());
+    }
 }

@@ -413,6 +413,9 @@ xwiki.authentication.logoutpage=(/|/[^/]+/|/wiki/[^/]+/)logout/*
 # xwiki.doap-mq.consume-thread-min=1
 # xwiki.doap-mq.consume-thread-max=8
 
+#-# Excel 全量导入科技外包用户时的建号并发线程数（默认 4，有效范围 1..8）
+# xwiki.oa-sync.excel.threads=4
+
 
 #-# Login/logout audit log: set to 0 to disable audit logging entirely (no records are written and
 #-# the AuditLog page shows a "disabled" notice). Default: 1 (enabled).

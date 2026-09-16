@@ -128,6 +128,13 @@ public class DefaultOASyncConfiguration implements OASyncConfiguration
         return (value == null || value.isBlank()) ? defaultValue : value.trim();
     }
 
+    @Override
+    public int getExcelImportThreads()
+    {
+        int threads = getInt("xwiki.oa-sync.excel.threads", 4);
+        return Math.max(1, Math.min(threads, 8));
+    }
+
     private int getInt(String key, int defaultValue)
     {
         Integer value = this.configuration.getProperty(key, Integer.class);

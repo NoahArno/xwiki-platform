@@ -85,6 +85,12 @@ public interface OASyncConfiguration
     int getSourceDateOffsetDays(String type);
 
     /**
+     * @return the number of worker threads used to create users during the outsourcing Excel import,
+     *         default 4, clamped to 1..8
+     */
+    int getExcelImportThreads();
+
+    /**
      * @return the wiki space where sync record and org-group classes/pages live
      */
     default String getRecordSpace()
