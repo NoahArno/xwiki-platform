@@ -22,6 +22,7 @@ package org.xwiki.oa.sync.internal.excel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -52,8 +53,8 @@ import com.xpn.xwiki.XWikiContext;
  * 每个任务拥有独立的 XWiki 执行上下文（因而有独立的 Hibernate session），
  * 任务结束后释放该上下文的存储会话。
  * <p>
- * 线程池大小来自 {@code xwiki.oa-sync.excel.threads}；整体等待受
- * {@value #TIMEOUT_MINUTES} 分钟超时约束，超时/异常的任务在结果列表中占位 {@code null}。
+ * 线程池大小来自 {@code xwiki.oa-sync.excel.threads}；整体等待受默认 10 分钟超时约束，
+ * 超时/异常的任务在结果列表中占位 {@code null}。
  *
  * @version $Id$
  */
@@ -64,9 +65,14 @@ public class ExcelImportExecutor implements Initializable, Disposable
     private static final Logger LOGGER = LoggerFactory.getLogger(ExcelImportExecutor.class);
 
     /**
-     * 整体等待超时（分钟）：超过后请求直接返回已拿到的部分结果。
+     * 整体等待超时（纳秒），默认 10 分钟。
+     * <p>
+     * 刻意声明为包级可见的**非 final** 字段：若写成 {@code private static final long} 并参与
+     * {@code TimeUnit.MINUTES.toNanos(...)} 这类编译期常量表达式，值会被内联进字节码，
+     * 连反射都改不了，单测无法注入更短的超时，超时分支就永远测不到
+     * （该分支曾因此潜伏了一个"丢弃已完成结果"的缺陷）。
      */
-    private static final long TIMEOUT_MINUTES = 10;
+    long timeoutNanos = TimeUnit.MINUTES.toNanos(10);
 
     private static final AtomicInteger THREAD_COUNTER = new AtomicInteger();
 
@@ -94,7 +100,7 @@ public class ExcelImportExecutor implements Initializable, Disposable
     }
 
     /**
-     * 并发执行全部任务并等待结束，结果与入参顺序一一对应；失败/超时的位置为 {@code null}。
+     * 并发执行全部任务并等待结束，结果与入参顺序一一对应；失败/超时/未等待到的位置为 {@code null}。
      *
      * @param tasks the per-user tasks
      * @param <T> the task result type
@@ -107,28 +113,84 @@ public class ExcelImportExecutor implements Initializable, Disposable
             futures.add(this.executorService.submit(contextualize(task)));
         }
 
-        long deadline = System.nanoTime() + TimeUnit.MINUTES.toNanos(TIMEOUT_MINUTES);
+        long deadline = System.nanoTime() + this.timeoutNanos;
         List<T> results = new ArrayList<>(futures.size());
-        for (Future<T> future : futures) {
-            results.add(await(future, deadline));
+        for (int index = 0; index < futures.size(); index++) {
+            Future<T> future = futures.get(index);
+            if (future.isDone()) {
+                // 已完成的任务无论 deadline 是否到期都必须收割：futures 是按提交顺序等待的，
+                // 一个慢任务不能把它后面那些早已成功的任务一起毒化成 null
+                results.add(harvest(future, index));
+                continue;
+            }
+            long remaining = deadline - System.nanoTime();
+            if (remaining <= 0) {
+                LOGGER.error("外包 Excel 导入整体超时，未完成任务数=[{}]", futures.size() - index);
+                collectRemaining(futures, index, results);
+                break;
+            }
+            results.add(await(future, remaining, index));
         }
         return results;
     }
 
-    private <T> T await(Future<T> future, long deadline)
+    /**
+     * 整体超时后的收尾：已完成的任务照常收割，尚未开始的取消掉，已在运行的放弃等待。
+     *
+     * @param futures the submitted futures
+     * @param fromIndex the first index still outstanding
+     * @param results the result list to fill, mutated in place
+     * @param <T> the task result type
+     */
+    private <T> void collectRemaining(List<Future<T>> futures, int fromIndex, List<T> results)
     {
-        long remaining = deadline - System.nanoTime();
-        if (remaining <= 0) {
-            LOGGER.error("外包 Excel 导入整体超时，剩余任务结果被丢弃");
-            return null;
+        for (int index = fromIndex; index < futures.size(); index++) {
+            Future<T> future = futures.get(index);
+            if (future.isDone() && !future.isCancelled()) {
+                results.add(harvest(future, index));
+            } else {
+                // 取消还没开始跑的任务，避免 HTTP 响应结束后它们仍在后台继续；已在运行的取消不掉，
+                // 只能放弃等待（建号幂等，重跑即可补上）
+                future.cancel(false);
+                results.add(null);
+            }
         }
+    }
+
+    private <T> T await(Future<T> future, long remaining, int index)
+    {
         try {
             return future.get(remaining, TimeUnit.NANOSECONDS);
         } catch (TimeoutException e) {
-            LOGGER.error("外包 Excel 导入任务超时", e);
+            LOGGER.error("外包 Excel 导入任务超时: index=[{}]", index);
             return null;
         } catch (ExecutionException e) {
-            LOGGER.error("外包 Excel 导入任务异常", e.getCause());
+            LOGGER.error("外包 Excel 导入任务异常: index=[{}]", index, e.getCause());
+            return null;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.warn("外包 Excel 导入等待被中断，剩余任务不再等待: index=[{}]", index);
+            return null;
+        }
+    }
+
+    /**
+     * 收割一个已经结束的任务的结果；异常与取消都回落为 {@code null}。
+     *
+     * @param future an already finished future
+     * @param index the task index, for logging
+     * @param <T> the task result type
+     * @return the task result, or {@code null} if it failed or was cancelled
+     */
+    private <T> T harvest(Future<T> future, int index)
+    {
+        try {
+            return future.get();
+        } catch (ExecutionException e) {
+            LOGGER.error("外包 Excel 导入任务异常: index=[{}]", index, e.getCause());
+            return null;
+        } catch (CancellationException e) {
+            LOGGER.warn("外包 Excel 导入任务已被取消: index=[{}]", index);
             return null;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -167,9 +229,15 @@ public class ExcelImportExecutor implements Initializable, Disposable
 
     private void cleanupStore()
     {
-        XWikiContext context = this.contextProvider.get();
-        if (context != null && context.getWiki() != null) {
-            context.getWiki().getStore().cleanUp(context);
+        try {
+            XWikiContext context = this.contextProvider.get();
+            if (context != null && context.getWiki() != null) {
+                context.getWiki().getStore().cleanUp(context);
+            }
+        } catch (Exception e) {
+            // 本方法在 finally 里执行：若异常抛出会覆盖任务本身的异常，且让 failure 永远读不到，
+            // 原始根因被彻底丢弃。因此这里只记录，绝不改变任务结果。
+            LOGGER.error("外包 Excel 导入: 清理会话失败，可能泄漏连接", e);
         }
     }
 
@@ -177,8 +245,9 @@ public class ExcelImportExecutor implements Initializable, Disposable
     public void dispose() throws ComponentLifecycleException
     {
         if (this.executorService != null) {
+            // 刻意不置 null：置 null 会让 dispose 之后再调 runAll 变成裸 NPE，
+            // 保留则 submit 会自然抛 RejectedExecutionException，更容易定位
             this.executorService.shutdownNow();
-            this.executorService = null;
         }
     }
 }
