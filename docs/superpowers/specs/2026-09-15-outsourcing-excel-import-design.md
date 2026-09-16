@@ -334,7 +334,17 @@ fetch('$request.contextPath/rest/oa-sync/outsourcing-excel', {
 - `type` = `outsourcing-excel`
 - `triggerType` = `MANUAL`
 - `syncDate` = 导入当天
-- `totalCount` / `successCount` / `failCount` = 解析行数 / 成功建号或已在册数 / 失败数
+- `totalCount` / `successCount` / `failCount` = 解析工号数 / 成功建号或已在册数 / **失败用户数**
+
+  > **两个计数的口径要分清**（实施评审时确认过）：
+  > - `failCount` 是**用户级**的，沿用 `OASyncResult` 的 api 约定（javadoc 原文 "the number of
+  >   **failed users**"），也与 FTP 链路的 `total = success + failed` 一致 —— 因为
+  >   `OASync/WebHome.xml` 用**同一张表**展示两条链路的记录，只靠 `syncType` 列区分，
+  >   口径不同会让同一个展示字段含义漂移。因此它**不包含**行级解析错误与入组整体失败。
+  > - `status` 是**运行级**的：只要有 error（行级解析错误、逐用户失败、或入组整体失败）就是
+  >   `PARTIAL_FAILURE`。所以出现"`PARTIAL_FAILURE` 且 `failCount=0`"（例如入组整体失败）是正常的
+  >   ——两者本就是不同维度，具体原因看 `errorLog` 里的 `[错误]` 条目。
+  > - 相应地 `successCount + failCount` **可能不等于** `totalCount`（行级解析错误对应的行不计入 `totalCount`）。
 - `errorLog` = 行级 + 用户级错误明细
 
 **已知局限**：`OASyncResult` 没有操作人字段，无法记录"谁导入的"。操作人写入日志（`LOGGER.info`）。若后续审计要求入库，需给记录类加字段，属额外范围。
