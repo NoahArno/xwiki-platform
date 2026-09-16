@@ -460,6 +460,9 @@ body 为合法 JSON 且保留 `AccessDeniedException` 作为 cause。
   >   `PARTIAL_FAILURE`。所以出现"`PARTIAL_FAILURE` 且 `failCount=0`"（例如入组整体失败）是正常的
   >   ——两者本就是不同维度，具体原因看 `errorLog` 里的 `[错误]` 条目。
   > - 相应地 `successCount + failCount` **可能不等于** `totalCount`（行级解析错误对应的行不计入 `totalCount`）。
+  > - **`FAILURE` 记录（文件级失败）是例外口径**：那类记录一条用户都没处理成功，因此写
+  >   `failCount = totalCount`（保持 `total = success + fail`），语义是"**未确认成功的用户数**"
+  >   而不是"尝试过并失败的用户数"。解析失败那条 `total=0` 因而 `failCount=0`，仍然自洽。
 - `errorLog` = 行级 + 用户级错误明细
 
 **已知局限**：`OASyncResult` 没有操作人字段，无法记录"谁导入的"。操作人写入日志（`LOGGER.info`）。若后续审计要求入库，需给记录类加字段，属额外范围。
