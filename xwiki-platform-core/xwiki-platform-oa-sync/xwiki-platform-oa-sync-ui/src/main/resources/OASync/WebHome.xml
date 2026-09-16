@@ -74,12 +74,27 @@
 &lt;input type=&quot;file&quot; id=&quot;oa-excel-file&quot; accept=&quot;.xlsx&quot; /&gt;
 &lt;button class=&quot;btn btn-primary&quot; id=&quot;oa-excel-upload&quot;&gt;上传并导入&lt;/button&gt;
 &lt;span id=&quot;oa-excel-status&quot; style=&quot;margin-left:8px&quot;&gt;&lt;/span&gt;
+&lt;div id=&quot;oa-excel-errors&quot; style=&quot;margin-top:8px&quot;&gt;&lt;/div&gt;
 &lt;/p&gt;
 &lt;script&gt;
 (function () {
   var fileInput = document.getElementById(&#x27;oa-excel-file&#x27;);
   var button = document.getElementById(&#x27;oa-excel-upload&#x27;);
   var status = document.getElementById(&#x27;oa-excel-status&#x27;);
+  function renderErrors(errors) {
+    var container = document.getElementById(&#x27;oa-excel-errors&#x27;);
+    container.textContent = &#x27;&#x27;;
+    if (!errors || errors.length === 0) {
+      return;
+    }
+    var title = document.createElement(&#x27;div&#x27;);
+    title.textContent = &#x27;失败明细（共 &#x27; + errors.length + &#x27; 条）:&#x27;;
+    container.appendChild(title);
+    var pre = document.createElement(&#x27;pre&#x27;);
+    // 用 textContent 而不是 innerHTML：错误里含 Excel 原始工号（用户可控输入）
+    pre.textContent = errors.join(&#x27;\n&#x27;);
+    container.appendChild(pre);
+  }
   button.addEventListener(&#x27;click&#x27;, function () {
     if (!fileInput.files || fileInput.files.length === 0) {
       new XWiki.widgets.Notification(&#x27;请先选择 .xlsx 文件&#x27;, &#x27;warning&#x27;);
@@ -102,6 +117,9 @@
           // 同时留在页面上：Notification 会在 2~5 秒后自动消失，
           // 而一次导入可能持续数分钟，管理员需要能事后回看摘要
           status.textContent = summary;
+          // errors 数组一次也没被渲染过，而这张摘要不随导入刷新；
+          // 没有它时 PARTIAL_FAILURE 在页面上完全没有可读原因
+          renderErrors(data.errors);
         } else {
           var failure = &#x27;导入失败：&#x27; + (data.message || resp.status);
           new XWiki.widgets.Notification(failure, &#x27;error&#x27;);
@@ -135,8 +153,12 @@
   #set ($recordObj = $recordDoc.getObject(&#x27;OASync.SyncRecordClass&#x27;))
   #if ($recordObj)
 |$recordObj.getValue(&#x27;syncType&#x27;)|$recordObj.getValue(&#x27;syncDate&#x27;)|$recordObj.getValue(&#x27;triggerType&#x27;)|$recordObj.getValue(&#x27;status&#x27;)|$recordObj.getValue(&#x27;totalCount&#x27;)|$recordObj.getValue(&#x27;successCount&#x27;)|$recordObj.getValue(&#x27;failCount&#x27;)|$recordObj.getValue(&#x27;startTime&#x27;)
-#if (&quot;$!recordObj.getValue(&#x27;errorLog&#x27;)&quot; != &#x27;&#x27;)
-|(% colspan=&quot;9&quot; %){{code}}$recordObj.getValue(&#x27;errorLog&#x27;){{/code}}
+#set ($rawErrorLog = $recordObj.getValue(&#x27;errorLog&#x27;))
+## 中和花括号，使渲染结果里不可能出现 {{（工号里可含 / ，如 {{/code}} 会闭合 code 宏并注入 wiki 语法）
+## 取舍：&#123; 在 {{code}} 里可能被 HTML 转义后显示成字面量而不是 { —— 安全优先，接受该显示差异
+#set ($safeErrorLog = $rawErrorLog.replace(&#x27;{&#x27;, &#x27;&amp;#123;&#x27;).replace(&#x27;}&#x27;, &#x27;&amp;#125;&#x27;))
+#if (&quot;$!safeErrorLog&quot; != &#x27;&#x27;)
+|(% colspan=&quot;9&quot; %){{code}}$safeErrorLog{{/code}}
 #end
   #end
 #end

@@ -19,6 +19,7 @@
  */
 package org.xwiki.oa.sync.internal.excel;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -34,13 +35,19 @@ import org.apache.poi.ss.usermodel.FormulaError;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.MockedStatic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link OutsourcingExcelParser}.
@@ -294,6 +301,29 @@ class OutsourcingExcelParserTest
             secondRow.createCell(1).setCellValue("T999");
 
             assertTrue(parse(save(workbook, "two-sheets.xlsx")).getUsernames().isEmpty());
+        }
+    }
+
+    @Test
+    void convertsUncheckedFailureAfterTheWorkbookIsOpenedIntoIOException() throws Exception
+    {
+        // 回归：openWorkbook 只包住 WorkbookFactory.create；workbook 打开**之后**的 POI 读取
+        // （POIXMLException / IllegalStateException / close() 异常等）仍可能抛 unchecked。
+        // 若 parse 外层不统一兜底，service/REST 的 catch (IOException) 抓不到 →
+        // HTTP 500 且不落 FAILURE 记录。这里用 mock workbook 精确模拟"已打开、随后抛 unchecked"。
+        Workbook workbook = mock(Workbook.class);
+        Sheet sheet = mock(Sheet.class);
+        when(workbook.getNumberOfSheets()).thenReturn(1);
+        when(workbook.getSheetAt(0)).thenReturn(sheet);
+        when(sheet.getLastRowNum()).thenThrow(new IllegalStateException("POI 内部状态损坏"));
+
+        try (MockedStatic<WorkbookFactory> factory = mockStatic(WorkbookFactory.class)) {
+            factory.when(() -> WorkbookFactory.create(any(InputStream.class))).thenReturn(workbook);
+
+            IOException failure = assertThrows(IOException.class,
+                () -> this.parser.parse(new ByteArrayInputStream(new byte[0])));
+
+            assertTrue(failure.getMessage().contains("解析 Excel 内容失败"), failure.getMessage());
         }
     }
 

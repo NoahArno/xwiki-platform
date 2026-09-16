@@ -301,6 +301,8 @@ class OutsourcingExcelImportServiceTest
         verify(this.recordStore, times(1)).save(captor.capture(), eq(this.context));
         assertEquals(OASyncResult.Status.FAILURE, captor.getValue().getStatus());
         assertEquals(2, captor.getValue().getTotalCount());
+        // 整体失败时一个用户都没处理成功，按 total = success + fail 的口径未处理者计入失败
+        assertEquals(2, captor.getValue().getFailCount());
         verify(this.synchronizer, never()).ensureUser(any(), any());
     }
 

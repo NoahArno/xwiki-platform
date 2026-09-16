@@ -266,8 +266,8 @@ public class DoapUserSynchronizer
         if (groupDoc.isNew()) {
             XWikiDocument doc = new XWikiDocument(groupRef);
             doc.setTitle(DoapMqConstants.OUTSOURCING_GROUP_NAME);
-            wiki.saveDocument(doc, "DOAP MQ sync: 创建权限组 " + DoapMqConstants.OUTSOURCING_GROUP_NAME, context);
-            LOGGER.info("DOAP MQ 创建权限组: [{}]", DoapMqConstants.OUTSOURCING_GROUP_NAME);
+            wiki.saveDocument(doc, "OA sync: 创建权限组 " + DoapMqConstants.OUTSOURCING_GROUP_NAME, context);
+            LOGGER.info("OA 用户同步创建权限组: [{}]", DoapMqConstants.OUTSOURCING_GROUP_NAME);
         }
     }
 }

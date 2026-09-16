@@ -38,6 +38,7 @@ import org.xwiki.oa.sync.internal.mq.DoapUserSynchronizer;
 import org.xwiki.oa.sync.internal.store.SyncRecordStore;
 import org.xwiki.oa.sync.model.OASyncResult;
 import org.xwiki.oa.sync.model.OASyncTriggerType;
+import org.xwiki.oa.sync.mq.DoapMqConstants;
 
 import com.xpn.xwiki.XWikiContext;
 
@@ -45,6 +46,9 @@ import com.xpn.xwiki.XWikiContext;
  * 科技外包用户 Excel 全量导入编排：解析 → 并发建号 → 串行批量入组 → 统计 → 写同步记录。
  * <p>
  * 只增量补齐：建号幂等、入组幂等，不触碰 Excel 之外的用户。
+ * <p>
+ * 已知覆盖缺口：没有"同一批用户经 MQ 增量同步与经 Excel 全量导入后最终状态等价"的用例。
+ * 两条链路共用 {@link DoapUserSynchronizer}，但等价性未被测试钉住，本次不补。
  *
  * @version $Id$
  */
@@ -103,6 +107,8 @@ public class OutsourcingExcelImportService
         List<String> usernames = parsed.getUsernames();
 
         // 阶段 1：并发建号（每个任务有独立的执行上下文与 Hibernate session）
+        // 已知取舍：阶段 1 的每个任务是固定主 wiki 的 stub 上下文，阶段 2 用的是请求上下文，
+        // 两阶段并非同一个 XWikiContext；当前两者指向同一 wiki，故行为一致，此处只记录不改。
         List<Callable<UserOutcome>> tasks = new ArrayList<>(usernames.size());
         for (String username : usernames) {
             tasks.add(() -> ensureUser(username));
@@ -149,7 +155,10 @@ public class OutsourcingExcelImportService
             result.setAlreadyMember(memberFullNames.size() - added);
         } catch (Exception e) {
             LOGGER.error("外包 Excel 导入: 批量入组失败", e);
-            result.getErrors().add("批量加入「开发中心科技外包组」失败: " + e.getMessage());
+            result.getErrors().add("批量加入「" + DoapMqConstants.OUTSOURCING_GROUP_NAME + "」失败: "
+                + e.getMessage());
+            // 已知取舍（不改行为）：入组整体失败时 joinedGroup / alreadyMember 都保持 0，
+            // 即"未知"被写成 0；状态由 PARTIAL_FAILURE + errors 反映，不依赖这两个计数
         }
 
         saveRecord(result, context);
@@ -217,6 +226,9 @@ public class OutsourcingExcelImportService
         OASyncResult record = new OASyncResult(TYPE, LocalDate.now(), OASyncTriggerType.MANUAL,
             LocalDateTime.now());
         record.setTotalCount(total);
+        // 整体失败时一个用户都没处理成功，把未处理的计入失败数，
+        // 以维持 total = success + fail 的不变量（与 FTP 链路口径一致）
+        record.setFailCount(total);
         record.setStatus(OASyncResult.Status.FAILURE);
         record.getErrorLog().add("[错误] " + message);
         record.setEndTime(LocalDateTime.now());

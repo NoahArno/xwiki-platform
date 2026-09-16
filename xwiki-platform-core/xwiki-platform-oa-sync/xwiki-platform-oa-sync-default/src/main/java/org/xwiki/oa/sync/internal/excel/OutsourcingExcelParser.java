@@ -91,6 +91,13 @@ public class OutsourcingExcelParser
             for (int rowIndex = HEADER_ROW_INDEX + 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
                 parseRow(sheet.getRow(rowIndex), rowIndex, formatter, seen, result);
             }
+        } catch (IOException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            // workbook 打开**之后**的 POI 读取仍可能抛 unchecked（POIXMLException /
+            // IllegalStateException / close() 异常等），必须同样转成 IOException，
+            // 否则上游"文件级失败"的分支抓不到 → 500 且不落 FAILURE 记录
+            throw new IOException("解析 Excel 内容失败: " + e.getMessage(), e);
         }
         return result;
     }

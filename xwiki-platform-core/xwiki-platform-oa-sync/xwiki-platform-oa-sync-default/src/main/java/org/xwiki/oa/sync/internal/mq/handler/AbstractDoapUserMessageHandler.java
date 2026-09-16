@@ -64,6 +64,17 @@ public abstract class AbstractDoapUserMessageHandler implements DoapUserMessageH
         try {
             this.synchronizer.sync(message, this.contextProvider.get());
         } finally {
+            // 与 ExcelImportExecutor 一致：removeContext 只清 ThreadLocal，不关 Hibernate session，
+            // 因此必须先 cleanUp 释放连接，否则消费线程会持续泄漏数据库连接。
+            // 清理是 best-effort，绝不能改变消息处理结果，故整个清理块都吞异常。
+            try {
+                XWikiContext context = this.contextProvider.get();
+                if (context != null && context.getWiki() != null) {
+                    context.getWiki().getStore().cleanUp(context);
+                }
+            } catch (Exception e) {
+                // 清理是 best-effort，绝不能改变消息处理结果
+            }
             this.execution.removeContext();
         }
     }

@@ -164,9 +164,31 @@ class OASyncRESTResourceTest
             .when(this.authorizationManager).checkAccess(Right.ADMIN);
 
         WebApplicationException exception = assertThrows(WebApplicationException.class,
-            () -> this.resource.trigger(null, null));
+            () -> this.resource.trigger(null, null, MediaType.APPLICATION_JSON));
 
         assertEquals(Response.Status.FORBIDDEN.getStatusCode(), exception.getResponse().getStatus());
+    }
+
+    @Test
+    void triggerRejectsRequestWithoutContentType() throws Exception
+    {
+        OASyncRESTResource testableResource = newResourceWithContext();
+
+        Response response = testableResource.trigger(null, null, null);
+
+        // 跨站 fetch 不带 body 就不会发 Content-Type，而 JAX-RS 仍把请求路由到 trigger；
+        // 若不在这里拦住，免 token 就能直达 syncAll（管理员身份触发全量同步）
+        assertEquals(Response.Status.UNSUPPORTED_MEDIA_TYPE.getStatusCode(), response.getStatus());
+    }
+
+    @Test
+    void triggerRejectsBlankContentType() throws Exception
+    {
+        OASyncRESTResource testableResource = newResourceWithContext();
+
+        Response response = testableResource.trigger(null, null, "  ");
+
+        assertEquals(Response.Status.UNSUPPORTED_MEDIA_TYPE.getStatusCode(), response.getStatus());
     }
 
     @Test

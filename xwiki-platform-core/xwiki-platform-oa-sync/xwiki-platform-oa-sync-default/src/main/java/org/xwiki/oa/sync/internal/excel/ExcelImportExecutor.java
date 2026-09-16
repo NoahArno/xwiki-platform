@@ -87,6 +87,12 @@ public class ExcelImportExecutor implements Initializable, Disposable
 
     private ExecutorService executorService;
 
+    /**
+     * 创建常驻线程池。
+     * <p>
+     * 已知取舍：线程池由单例组件持有、只在初始化时按
+     * {@code xwiki.oa-sync.excel.threads} 建一次，因此改该配置后必须重启 XWiki 才生效。
+     */
     @Override
     public void initialize()
     {

@@ -74,9 +74,10 @@ public class OASyncRESTResource extends XWikiResource implements XWikiRestCompon
     /**
      * 上传体积上限：10 MiB。800 行的 xlsx 通常远小于此，超限只可能是传错文件或恶意构造。
      * <p>
-     * {@code WorkbookFactory.create(InputStream)} 是 DOM 式加载，会先把整个上传内容读进内存
-     * （因此必须在读之前用这道闸门限制**读取量**）；解压后的 XML 峰值另由 POI 的
-     * {@code ZipSecureFile} 比率限制兜底。注意本闸门只限制读取量，不限制请求带宽。
+     * 注意：这只是**读取量**闸门，不是内存上限。{@code WorkbookFactory.create(InputStream)}
+     * 是 DOM 式加载，会把整个工作簿解析进内存；压缩的 xlsx 解压后可达上传体积的约 100 倍，
+     * POI 的 {@code ZipSecureFile} 比率限制只是一层兜底，并不能把峰值内存压到 10 MiB 以内。
+     * 本闸门也不限制请求带宽，因此不构成 OOM 防护。
      */
     static final int MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
@@ -102,14 +103,22 @@ public class OASyncRESTResource extends XWikiResource implements XWikiRestCompon
      *
      * @param type the source type to await (optional; all enabled sources run anyway)
      * @param date optional data date in YYYYMMDD
+     * @param contentType the request {@code Content-Type} header
      * @return JSON summary of the run
      */
     @POST
     @Path("/trigger")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response trigger(@QueryParam("type") String type, @QueryParam("date") String date) throws Exception
+    public Response trigger(@QueryParam("type") String type, @QueryParam("date") String date,
+        @HeaderParam("Content-Type") String contentType) throws Exception
     {
         requireAdmin();
+        // 与 Excel 端点同一道 CSRF 防线：不带 Content-Type 的跨站 POST 不会触发 token 校验，
+        // 而 JAX-RS 把"无 Content-Type"当 octet-stream 仍会路由到这里，故显式要求该头存在
+        Response missingContentType = rejectMissingContentType(contentType);
+        if (missingContentType != null) {
+            return missingContentType;
+        }
         XWikiContext context = getXWikiContext();
         try {
             LocalDate manualDate = null;
@@ -166,13 +175,9 @@ public class OASyncRESTResource extends XWikiResource implements XWikiRestCompon
     {
         requireAdmin();
 
-        // CSRF 防线：XWiki 的 REST 前置过滤器只在 Content-Type 属于"浏览器简单请求类型"
-        // （urlencoded / multipart / text/plain）时才校验 token，且要求 mediaType != null 才去查；
-        // 而 JAX-RS 规定"无 Content-Type"按 application/octet-stream 处理、仍会路由到这里，
-        // 于是省略该头即可绕过那道检查。这里显式要求该头存在，把这条路堵死。
-        if (contentType == null || contentType.isBlank()) {
-            return Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE)
-                .entity("缺少 Content-Type 头").type(MediaType.TEXT_PLAIN).build();
+        Response missingContentType = rejectMissingContentType(contentType);
+        if (missingContentType != null) {
+            return missingContentType;
         }
 
         XWikiContext context = getXWikiContext();
@@ -226,6 +231,25 @@ public class OASyncRESTResource extends XWikiResource implements XWikiRestCompon
         } catch (AccessDeniedException e) {
             throw new WebApplicationException(e, forbiddenResponse());
         }
+    }
+
+    /**
+     * CSRF 防线：要求请求带 Content-Type。
+     * <p>
+     * XWiki 的 REST 前置过滤器只在 Content-Type 属于"浏览器简单请求类型"时才校验 token，
+     * 且要求 mediaType != null 才去查；而 JAX-RS 规定"无 Content-Type"按 application/octet-stream
+     * 处理、仍会路由到这里 —— 于是省略该头即可绕过那道检查。
+     *
+     * @param contentType the raw Content-Type header value
+     * @return a 415 response when the header is missing, otherwise {@code null}
+     */
+    private Response rejectMissingContentType(String contentType)
+    {
+        if (contentType == null || contentType.isBlank()) {
+            return Response.status(Response.Status.UNSUPPORTED_MEDIA_TYPE)
+                .entity("缺少 Content-Type 头").type(MediaType.TEXT_PLAIN).build();
+        }
+        return null;
     }
 
     private Response forbiddenResponse()
