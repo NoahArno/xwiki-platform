@@ -256,19 +256,30 @@ fetch('$request.contextPath/rest/oa-sync/outsourcing-excel', {
 
 ### 6.3 安全加固（实施评审中确认，**均为必须保持的性质**）
 
-#### 6.3.1 CSRF：端点必须显式要求 `Content-Type`
+#### 6.3.1 CSRF：**两个端点都必须**显式要求 `Content-Type`
 
 XWiki 的 REST 前置过滤器只在 `Content-Type` 属于**浏览器简单请求类型**
 （`application/x-www-form-urlencoded` / `multipart/form-data` / `text/plain`）时才校验 CSRF token，
 **而且它要求 `getMediaType() != null` 才会去查**（`PreMatchingRequestFilter.java:233`）。
 而 JAX-RS 规范规定"请求没有 `Content-Type` 时按 `application/octet-stream` 处理"，
-**仍然会路由到本端点**。
+**仍然会路由到端点方法**。
 
-于是跨站 `fetch(url, {method:'POST', body: new Blob([bytes])})`（Blob 无 type ⇒ 浏览器不发该头）
-就是 CORS 简单请求、不触发预检 ⇒ 可诱导管理员触发建号。
+于是跨站 `fetch(url, {method:'POST', credentials:'include'})`（**不带 body 就不发该头**）
+就是 CORS 简单请求、不触发预检 ⇒ 可诱导管理员触发建号或全量同步。
 
-**因此端点必须显式要求该头存在**：`@HeaderParam("Content-Type") String contentType`，
-为 `null`/blank 直接返回 **415**（放在权限校验**之后**，不落失败记录）。
+**因此两个端点都必须显式要求该头存在**（共用一个 `rejectMissingContentType()`）：
+`@HeaderParam("Content-Type") String contentType`，为 `null`/blank 直接返回 **415**，
+放在权限校验**之后**、`getXWikiContext()` **之前**。
+
+| 端点 | 说明 |
+|---|---|
+| `POST /rest/oa-sync/outsourcing-excel` | 建号 + 入组 |
+| `POST /rest/oa-sync/trigger` | 全量行员/外包同步 |
+
+> ⚠️ 这两处**必须同时存在**。当初只给新端点加了这道防线、`trigger` 漏了，
+> 结果是"同一个类里刚修好的洞在隔壁又开了一个"——终审（跨任务视角）才发现，
+> 逐任务审查在结构上看不到这一点。**改一处必须改两处。**
+
 不能只依赖"媒体类型豁免"这整类推理。
 
 > 更强的做法是显式校验 `XWiki-Form-Token`（不再依赖媒体类型推理，也不依赖 `@HeaderParam` 绑定），
@@ -302,10 +313,39 @@ body 为合法 JSON 且保留 `AccessDeniedException` 作为 cause。
 
 #### 6.3.4 前端渲染：`Notification` 不转义
 
-`XWiki.widgets.Notification` 内部是 innerHTML（不转义）。当前 UI 只渲染**数字统计**与
-`data.message`，而**含原始工号的 `data.errors` 响应里有、页面没有渲染** ⇒ "工号 → innerHTML" 这条链
-今天不可达。**必须保持这个性质**：若以后要把 `errors` 显示到 Notification，**必须先转义**。
+`XWiki.widgets.Notification` 内部是 innerHTML（不转义）。当前 UI 只把**数字统计**与
+`data.message` 交给它渲染，**含原始工号的 `data.errors` 不经过 Notification**。
+**必须保持这个性质**：若以后要把 `errors` 显示到 Notification，**必须先转义**。
 状态文本写回一律用 `textContent`。
+
+**失败明细的展示方式**：上传区块用一个 `#oa-excel-errors` 容器 + `renderErrors()`，
+**全程用 DOM API 与 `textContent`**（客户端 DOM 操作不经过 HTML/wiki 解析，因此天然安全）。
+**绝对不要用 innerHTML 拼字符串**——`errors` 里是 Excel 的原始单元格文本。
+
+> 为什么要展示明细：否则 `PARTIAL_FAILURE` 在页面上**没有任何可读原因**
+> （`errors` 里的行级解析错误与"入组整体失败"都不进 `failCount`），
+> 典型组合会变成 `状态=PARTIAL_FAILURE / 总数=N / 失败=0` 加一条会自动消失的通知，
+> 管理员无从判断发生了什么。而"最近同步记录"表是页面加载时渲染的、**导入后不刷新**，
+> 所以必须当场展示。
+
+#### 6.3.5 同步记录里的 `errorLog` 必须先中和花括号（**易漏的注入点**）
+
+`OASync/WebHome.xml` 的「最近同步记录」表把 `errorLog` 放进 `{{code}}...{{/code}}`。
+而 **`{{velocity}}` 的输出会被重新解析为 wiki 语法**（这一页正是靠它把 `#foreach` 里的 `|...|`
+渲染成表格）。
+
+而解析器在"工号含非法字符"时会把**原始单元格文本原样回显**，非法字符集里**恰好包含 `/`**
+⇒ 攻击者可以构造工号为 `{{/code}}{{html}}<script>…</script>{{/html}}` 的 Excel
+（含 `/` ⇒ 必然校验失败 ⇒ 必然被回显）⇒ **闭合 `{{code}}` 并把未转义内容注入这张
+所有登录用户都能看的表**。
+
+**因此输出前必须中和花括号**：`$rawErrorLog.replace('{', '&#123;').replace('}', '&#125;')`
+（用 `String.replace(CharSequence, CharSequence)`，避免正则/替换串语义问题）。
+
+> 取舍：含非法字符的极少数工号在 `{{code}}` 里可能显示成字面量 `&#123;` 而不是 `{`。**安全优先**。
+>
+> 这个点容易漏，是因为 §6.3.4 只钉了 Notification 那一条渲染链，而**同一个页面上还有第二条**
+> （wiki 语法二次解析）。**任何把用户可控输入写进 wiki 页面的地方都要单独评估。**
 
 ### 6.4 已知约束（记录，非缺陷）
 
