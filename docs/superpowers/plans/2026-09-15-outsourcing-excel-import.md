@@ -2602,7 +2602,6 @@ import java.io.InputStream;
 
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response.Status;
 
 import org.xwiki.oa.sync.internal.excel.ExcelImportResult;
 import org.xwiki.oa.sync.internal.excel.OutsourcingExcelImportService;
@@ -2681,6 +2680,28 @@ import org.xwiki.security.authorization.Right;
 
 ```java
 import jakarta.ws.rs.WebApplicationException;
+```
+
+- [ ] **Step 3.5: 补 test-scope 的 `jersey-common` 依赖（**必须有，否则 Step 4 永远红**）**
+
+`jakarta.ws.rs-api` 只有规范没有实现，而 `new WebApplicationException(msg, Response.Status.FORBIDDEN)`
+内部走 `Response.status(...)`，需要运行期的 `RuntimeDelegate` 提供者。没有它，测试会报：
+
+```
+java.lang.ClassNotFoundException: Provider for jakarta.ws.rs.ext.RuntimeDelegate cannot be found
+	at jakarta.ws.rs.WebApplicationException.<init>(WebApplicationException.java:119)
+```
+
+这是仓库既有惯例（`xwiki-platform-netflux-rest`、`xwiki-platform-livedata-rest`、
+`xwiki-platform-notifications-rest` 都加了同一个 test-scope 依赖）。在 `oa-sync-default/pom.xml`
+的测试依赖区加（版本由根 pom 的 `dependencyManagement` 管理，**不写版本**）：
+
+```xml
+    <dependency>
+      <groupId>org.glassfish.jersey.core</groupId>
+      <artifactId>jersey-common</artifactId>
+      <scope>test</scope>
+    </dependency>
 ```
 
 - [ ] **Step 4: 运行测试确认通过**
@@ -2775,9 +2796,16 @@ Expected: `Tests run: 1, Failures: 0, Errors: 0`
 
 ```bash
 git add xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/java/org/xwiki/oa/sync/internal/rest/OASyncRESTResource.java \
-  xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/test/java/org/xwiki/oa/sync/internal/rest/OASyncRESTResourceTest.java
+  xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/test/java/org/xwiki/oa/sync/internal/rest/OASyncRESTResourceTest.java \
+  xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/java/org/xwiki/oa/sync/internal/excel/OutsourcingExcelImportService.java \
+  xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/java/org/xwiki/oa/sync/internal/excel/ExcelImportResult.java \
+  xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/pom.xml
 git commit -m "外包Excel导入：新增 REST 上传端点（管理员权限校验+原始字节流+体积上限）"
 ```
+
+> Step 7 的清单必须包含 Step 5(a) 改的 `OutsourcingExcelImportService.java`、Step 6 改的
+> `ExcelImportResult.java`、以及下面 Step 4.5 加的 `pom.xml`——漏了任何一个，
+> 提交出来的版本都会编译不过或测试跑不起来。
 
 ---
 
