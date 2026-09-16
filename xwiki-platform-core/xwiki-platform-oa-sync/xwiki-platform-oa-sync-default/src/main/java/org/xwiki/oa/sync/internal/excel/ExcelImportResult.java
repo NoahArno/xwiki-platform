@@ -166,7 +166,9 @@ public class ExcelImportResult
      * 若按 {@code failed == 0} 判成功，就会出现"一个成员都没加进组，却报 SUCCESS"的静默丢权限，
      * 以及"整表所有行都解析失败，却报 SUCCESS(0)"。
      *
-     * @return the overall import status
+     * @return {@code PARTIAL_FAILURE} if any error was recorded, otherwise {@code SUCCESS}；
+     *         该方法**永不返回 {@code FAILURE}** —— 文件级失败（解析不出、建号阶段整体失败）
+     *         由调用方另写一条 {@code FAILURE} 记录，不经过这里
      */
     public OASyncResult.Status getStatus()
     {

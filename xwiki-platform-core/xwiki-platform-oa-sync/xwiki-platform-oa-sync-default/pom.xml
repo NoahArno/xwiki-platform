@@ -188,5 +188,14 @@
       <type>pom</type>
       <scope>test</scope>
     </dependency>
+    <!-- jakarta.ws.rs-api 只有规范、没有实现；OASyncRESTResourceTest 构造 WebApplicationException 时
+         jakarta.ws.rs.core.Response.status(...) 需要运行期 RuntimeDelegate 提供者，否则抛
+         "Provider for jakarta.ws.rs.ext.RuntimeDelegate cannot be found"。
+         与 netflux-rest / livedata-rest 等 REST 模块的测试配置保持一致。 -->
+    <dependency>
+      <groupId>org.glassfish.jersey.core</groupId>
+      <artifactId>jersey-common</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

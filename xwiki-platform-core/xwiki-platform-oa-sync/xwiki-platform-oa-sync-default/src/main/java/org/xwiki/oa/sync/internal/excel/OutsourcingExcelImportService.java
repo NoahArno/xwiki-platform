@@ -161,6 +161,17 @@ public class OutsourcingExcelImportService
         return result;
     }
 
+    /**
+     * 记录一次文件级失败：供 REST 层在"上传超限"等尚未进入 {@link #importFrom} 的场景使用。
+     *
+     * @param message the failure description
+     * @param context the XWiki context
+     */
+    public void recordFileFailure(String message, XWikiContext context)
+    {
+        saveFailureRecord(0, message, context);
+    }
+
     private UserOutcome ensureUser(String username)
     {
         XWikiContext context = this.contextProvider.get();
