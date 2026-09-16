@@ -2459,6 +2459,35 @@ git add xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-defaul
 git commit -m "外包Excel导入：新增导入统计与编排服务（并发建号+串行入组+同步记录）"
 ```
 
+### Task 5 复审后的修订（代码为准，见提交 `9f2307f160c` + `a6b5f66b574`）
+
+**上面 Task 5 的代码块有一个 Critical**，实际代码已按下面修订（**以仓库代码为准**）：
+
+| # | 问题 | 修订 |
+|---|---|---|
+| **Critical** | **入组失败被判成 SUCCESS**：catch 入组异常时只往 `errors` 加一条、**不改 `failed`**，而状态只看 `failed == 0`。实测 `failed=0 status=SUCCESS errors=[批量加入…失败]` ⇒ **组里一个成员都没加进去，管理员却收到绿色的"导入完成"，同步记录也是 SUCCESS**（静默丢权限，正是 Task 4 加锁要防的那类事故） | 状态收敛为 `ExcelImportResult.getStatus()`：**有 error 即 `PARTIAL_FAILURE`** |
+| **Important** | 行级解析错误完全不参与状态判定。实测"0 有效行 + 多行错误"→ `SUCCESS total=0`；最坏形态是列传错/表头错位时整表全错却报成功，与合法的"只有表头"不可区分。违反设计 §6.1/§7.2 | 同上（一处修复同时解决两条） |
+| Minor | `outcomes.get(index)` 依赖"长度必然相等"的无校验假设，一旦不成立会"建号 N 个后抛越界且**不写任何记录**" | 改为 `index < outcomes.size() ? outcomes.get(index) : null` |
+| Minor | `runAll` 自身抛异常（线程池已关闭等）会带崩导入且不留记录 | 包 `try/catch(RuntimeException)` → 写 FAILURE 记录后**原样抛出**（不转 `IOException`，这是内部失败，REST 应按 500 处理） |
+| Minor | `TYPE` 为 `public`（无跨包使用者，却让类型字符串事实上成为 API） | 收为包级可见 |
+| Minor | `UserOutcome` 分类用 `else` 兜底，会把未来新增的 `Status` 静默算成"已存在/成功" | 改显式 `CREATED` / `else if (EXISTED)` / `else` 按失败处理 |
+| Minor | `failCount` 只看逐用户失败 ⇒ 会出现 `PARTIAL_FAILURE` 却 `failCount=0` 的自相矛盾记录 | `failCount = result.getErrors().size()`；`errorLog` 加 `[错误]`/`[警告]` 前缀 |
+| Minor | `saveFailureRecord` 把 `"Excel 解析失败"` 前缀写死，但建号阶段整体失败也复用它，记录成 `[错误] Excel 解析失败: 建号阶段整体失败: …` | 该方法只加 `[错误] ` 前缀，具体阶段由调用方写进 message |
+
+用例 6 → 9，全模块 106 → 109。
+
+**关键设计收敛**：**状态判定只有一处真相** —— `ExcelImportResult.getStatus()`。
+Task 6 的 REST 响应**必须**复用它（计划里那行已同步改为 `response.put("status", result.getStatus().name())`），
+**不要**再写 `result.getFailed() == 0 ? …`，否则两处映射会再次漂移，重演这次"组没加成却报绿色成功"。
+
+**`failCount` 的口径取舍**（需知悉）：`failCount` 现在 = error 条目数，把行级解析错误与入组整体失败也计入，
+好处是 `PARTIAL_FAILURE` 不再配 `failCount=0`；代价是 `successCount + failCount` **可能不等于** `total`
+（行级解析错误对应的行不在 `total` 里）。这是刻意的：状态的权威来源是 `errors` 是否为空，不是计数关系。
+
+**反证时的一个坑**（实施者踩到过，值得记）：断言 `result.getStatus()` 的用例
+**不会因为改 `saveRecord` 而失败**——两者无因果关系。要钉住状态修复，需要分别反证
+"改 `saveRecord` 的状态来源"和"改 `ExcelImportResult.getStatus()`"两处。
+
 ---
 
 ## Task 6: REST 端点与权限校验
@@ -2621,8 +2650,7 @@ import org.xwiki.security.authorization.Right;
         try {
             ExcelImportResult result = this.excelImportService.importFrom(body, context);
             Map<String, Object> response = new LinkedHashMap<>();
-            response.put("status", result.getFailed() == 0
-                ? OASyncResult.Status.SUCCESS.name() : OASyncResult.Status.PARTIAL_FAILURE.name());
+            response.put("status", result.getStatus().name());
             response.put("total", result.getTotal());
             response.put("created", result.getCreated());
             response.put("existed", result.getExisted());
