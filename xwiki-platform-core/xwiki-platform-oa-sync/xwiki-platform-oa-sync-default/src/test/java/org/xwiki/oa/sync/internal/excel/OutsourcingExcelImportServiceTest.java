@@ -219,10 +219,72 @@ class OutsourcingExcelImportServiceTest
         assertEquals(OASyncResult.Status.PARTIAL_FAILURE, captor.getValue().getStatus());
     }
 
+    @Test
+    void treatsGroupWriteFailureAsPartialFailure() throws Exception
+    {
+        // 回归：入组整体失败原先只往 errors 加一条、不改 failed，于是被判成 SUCCESS ——
+        // 组里一个成员都没加进去，管理员却收到绿色的"导入完成"
+        parseReturns("T001");
+        when(this.synchronizer.ensureUser(eq("T001"), any()))
+            .thenReturn(new DoapUserSynchronizer.EnsuredUser("XWiki.T001", true));
+        when(this.synchronizer.addMembersToOutsourcingGroup(anyCollection(), any()))
+            .thenThrow(new RuntimeException("组保存失败"));
+
+        ExcelImportResult result = this.service.importFrom(stream(), this.context);
+
+        assertEquals(0, result.getFailed());
+        assertEquals(OASyncResult.Status.PARTIAL_FAILURE, result.getStatus());
+        assertEquals(1, result.getErrors().size());
+
+        org.mockito.ArgumentCaptor<OASyncResult> captor =
+            org.mockito.ArgumentCaptor.forClass(OASyncResult.class);
+        verify(this.recordStore).save(captor.capture(), eq(this.context));
+        assertEquals(OASyncResult.Status.PARTIAL_FAILURE, captor.getValue().getStatus());
+    }
+
+    @Test
+    void treatsRowLevelParseErrorsAsPartialFailure() throws Exception
+    {
+        parseReturnsWithErrors(List.of("第 2 行 staff_id 为空"), "T001");
+        when(this.synchronizer.ensureUser(eq("T001"), any()))
+            .thenReturn(new DoapUserSynchronizer.EnsuredUser("XWiki.T001", true));
+        when(this.synchronizer.addMembersToOutsourcingGroup(anyCollection(), any())).thenReturn(1);
+
+        ExcelImportResult result = this.service.importFrom(stream(), this.context);
+
+        assertEquals(OASyncResult.Status.PARTIAL_FAILURE, result.getStatus());
+    }
+
+    @Test
+    void writesParseErrorsAndWarningsIntoTheRecord() throws Exception
+    {
+        parseReturnsWithErrors(List.of("第 2 行 staff_id 为空"), "T001");
+        when(this.synchronizer.ensureUser(eq("T001"), any()))
+            .thenReturn(new DoapUserSynchronizer.EnsuredUser("XWiki.T001", true));
+        when(this.synchronizer.addMembersToOutsourcingGroup(anyCollection(), any())).thenReturn(1);
+
+        this.service.importFrom(stream(), this.context);
+
+        org.mockito.ArgumentCaptor<OASyncResult> captor =
+            org.mockito.ArgumentCaptor.forClass(OASyncResult.class);
+        verify(this.recordStore).save(captor.capture(), eq(this.context));
+        String errorLog = String.join("\n", captor.getValue().getErrorLog());
+        assertTrue(errorLog.contains("第 2 行 staff_id 为空"), errorLog);
+        assertTrue(errorLog.contains("[错误] "), errorLog);
+    }
+
     private void parseReturns(String... usernames) throws IOException
     {
         OutsourcingExcelParseResult parsed = new OutsourcingExcelParseResult();
         parsed.getUsernames().addAll(List.of(usernames));
+        when(this.parser.parse(any(InputStream.class))).thenAnswer(invocation -> parsed);
+    }
+
+    private void parseReturnsWithErrors(List<String> errors, String... usernames) throws IOException
+    {
+        OutsourcingExcelParseResult parsed = new OutsourcingExcelParseResult();
+        parsed.getUsernames().addAll(List.of(usernames));
+        parsed.getErrors().addAll(errors);
         when(this.parser.parse(any(InputStream.class))).thenAnswer(invocation -> parsed);
     }
 

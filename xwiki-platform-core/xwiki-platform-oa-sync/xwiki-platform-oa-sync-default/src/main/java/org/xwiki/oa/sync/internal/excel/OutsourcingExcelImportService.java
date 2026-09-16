@@ -55,7 +55,7 @@ public class OutsourcingExcelImportService
     /**
      * 同步记录类型。
      */
-    public static final String TYPE = "outsourcing-excel";
+    static final String TYPE = "outsourcing-excel";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OutsourcingExcelImportService.class);
 
@@ -107,11 +107,19 @@ public class OutsourcingExcelImportService
         for (String username : usernames) {
             tasks.add(() -> ensureUser(username));
         }
-        List<UserOutcome> outcomes = this.executor.runAll(tasks);
+        List<UserOutcome> outcomes;
+        try {
+            outcomes = this.executor.runAll(tasks);
+        } catch (RuntimeException e) {
+            // 执行器整体失败时也要留 FAILURE 记录，避免"已经建了一些号却无迹可查"
+            LOGGER.error("外包 Excel 导入: 建号阶段整体失败", e);
+            saveFailureRecord("建号阶段整体失败: " + e.getMessage(), context);
+            throw e;
+        }
 
         List<String> memberFullNames = new ArrayList<>(usernames.size());
         for (int index = 0; index < usernames.size(); index++) {
-            UserOutcome outcome = outcomes.get(index);
+            UserOutcome outcome = index < outcomes.size() ? outcomes.get(index) : null;
             if (outcome == null || outcome.getStatus() == UserOutcome.Status.FAILED) {
                 result.incrementFailed();
                 result.getErrors().add("用户 [" + usernames.get(index) + "] 建号失败: "
@@ -120,8 +128,14 @@ public class OutsourcingExcelImportService
             }
             if (outcome.getStatus() == UserOutcome.Status.CREATED) {
                 result.incrementCreated();
-            } else {
+            } else if (outcome.getStatus() == UserOutcome.Status.EXISTED) {
                 result.incrementExisted();
+            } else {
+                // 未来新增的状态一律按失败处理，绝不静默算成功
+                result.incrementFailed();
+                result.getErrors().add("用户 [" + usernames.get(index) + "] 建号结果未知: "
+                    + outcome.getStatus());
+                continue;
             }
             memberFullNames.add(outcome.getFullName());
         }
@@ -163,11 +177,17 @@ public class OutsourcingExcelImportService
             LocalDateTime.now());
         record.setTotalCount(result.getTotal());
         record.setSuccessCount(result.getCreated() + result.getExisted());
-        record.setFailCount(result.getFailed());
-        record.setStatus(result.getFailed() == 0
-            ? OASyncResult.Status.SUCCESS : OASyncResult.Status.PARTIAL_FAILURE);
-        record.getErrorLog().addAll(result.getErrors());
-        record.getErrorLog().addAll(result.getWarnings());
+        // 失败数以 error 条目数为准：除了逐用户失败，还包含行级解析错误与入组整体失败，
+        // 否则会出现 PARTIAL_FAILURE 却 failCount=0 的自相矛盾记录
+        record.setFailCount(result.getErrors().size());
+        record.setStatus(result.getStatus());
+        // 前缀区分错误与警告，否则管理员在记录里分不清哪些是失败、哪些只是提示
+        for (String error : result.getErrors()) {
+            record.getErrorLog().add("[错误] " + error);
+        }
+        for (String warning : result.getWarnings()) {
+            record.getErrorLog().add("[警告] " + warning);
+        }
         record.setEndTime(LocalDateTime.now());
         try {
             this.recordStore.save(record, context);
@@ -182,7 +202,7 @@ public class OutsourcingExcelImportService
         OASyncResult record = new OASyncResult(TYPE, LocalDate.now(), OASyncTriggerType.MANUAL,
             LocalDateTime.now());
         record.setStatus(OASyncResult.Status.FAILURE);
-        record.getErrorLog().add("Excel 解析失败: " + message);
+        record.getErrorLog().add("[错误] Excel 解析失败: " + message);
         record.setEndTime(LocalDateTime.now());
         try {
             this.recordStore.save(record, context);

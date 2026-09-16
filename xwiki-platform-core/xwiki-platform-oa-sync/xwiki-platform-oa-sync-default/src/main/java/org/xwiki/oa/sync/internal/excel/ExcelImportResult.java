@@ -22,6 +22,8 @@ package org.xwiki.oa.sync.internal.excel;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.xwiki.oa.sync.model.OASyncResult;
+
 /**
  * 一次外包 Excel 导入的统计结果。
  *
@@ -155,5 +157,19 @@ public class ExcelImportResult
     public List<String> getWarnings()
     {
         return this.warnings;
+    }
+
+    /**
+     * 导入状态：只要有 error（行级解析错误、逐用户失败、或批量入组整体失败）就是 {@code PARTIAL_FAILURE}。
+     * <p>
+     * 刻意**不能**只看 {@link #getFailed()}：行级解析错误与"批量入组整体失败"都不会增加 {@code failed}，
+     * 若按 {@code failed == 0} 判成功，就会出现"一个成员都没加进组，却报 SUCCESS"的静默丢权限，
+     * 以及"整表所有行都解析失败，却报 SUCCESS(0)"。
+     *
+     * @return the overall import status
+     */
+    public OASyncResult.Status getStatus()
+    {
+        return this.errors.isEmpty() ? OASyncResult.Status.SUCCESS : OASyncResult.Status.PARTIAL_FAILURE;
     }
 }
