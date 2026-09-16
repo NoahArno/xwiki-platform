@@ -43,6 +43,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -240,6 +241,9 @@ class OutsourcingExcelImportServiceTest
             org.mockito.ArgumentCaptor.forClass(OASyncResult.class);
         verify(this.recordStore).save(captor.capture(), eq(this.context));
         assertEquals(OASyncResult.Status.PARTIAL_FAILURE, captor.getValue().getStatus());
+        // failCount 是"失败用户数"（api 契约 + 与 FTP 链路一致），不是 error 条目数：
+        // 入组整体失败时 failed == 0，但状态仍是 PARTIAL_FAILURE（运行级）
+        assertEquals(0, captor.getValue().getFailCount());
     }
 
     @Test
@@ -258,7 +262,8 @@ class OutsourcingExcelImportServiceTest
     @Test
     void writesParseErrorsAndWarningsIntoTheRecord() throws Exception
     {
-        parseReturnsWithErrors(List.of("第 2 行 staff_id 为空"), "T001");
+        parseReturnsWithErrorsAndWarnings(List.of("第 2 行 staff_id 为空"),
+            List.of("第 3 行 staff_id 重复，已跳过: T001"), "T001");
         when(this.synchronizer.ensureUser(eq("T001"), any()))
             .thenReturn(new DoapUserSynchronizer.EnsuredUser("XWiki.T001", true));
         when(this.synchronizer.addMembersToOutsourcingGroup(anyCollection(), any())).thenReturn(1);
@@ -269,8 +274,60 @@ class OutsourcingExcelImportServiceTest
             org.mockito.ArgumentCaptor.forClass(OASyncResult.class);
         verify(this.recordStore).save(captor.capture(), eq(this.context));
         String errorLog = String.join("\n", captor.getValue().getErrorLog());
-        assertTrue(errorLog.contains("第 2 行 staff_id 为空"), errorLog);
-        assertTrue(errorLog.contains("[错误] "), errorLog);
+        assertTrue(errorLog.contains("[错误] 第 2 行 staff_id 为空"), errorLog);
+        assertTrue(errorLog.contains("[警告] 第 3 行 staff_id 重复，已跳过: T001"), errorLog);
+        // 警告不翻转状态，但错误会
+        assertEquals(OASyncResult.Status.PARTIAL_FAILURE, captor.getValue().getStatus());
+    }
+
+    @Test
+    void writesExactlyOneFailureRecordWhenTheExecutorBlowsUp() throws Exception
+    {
+        parseReturns("T001", "T002");
+        when(this.executor.runAll(anyList()))
+            .thenThrow(new java.util.concurrent.RejectedExecutionException("线程池已关闭"));
+
+        try {
+            this.service.importFrom(stream(), this.context);
+            org.junit.jupiter.api.Assertions.fail("应当向上抛出");
+        } catch (RuntimeException expected) {
+            assertTrue(expected instanceof java.util.concurrent.RejectedExecutionException,
+                expected.toString());
+        }
+
+        // 恰好一条记录，不能重复写
+        org.mockito.ArgumentCaptor<OASyncResult> captor =
+            org.mockito.ArgumentCaptor.forClass(OASyncResult.class);
+        verify(this.recordStore, times(1)).save(captor.capture(), eq(this.context));
+        assertEquals(OASyncResult.Status.FAILURE, captor.getValue().getStatus());
+        assertEquals(2, captor.getValue().getTotalCount());
+        verify(this.synchronizer, never()).ensureUser(any(), any());
+    }
+
+    @Test
+    void treatsMissingOutcomeSlotsAsFailuresWithoutBlowingUp() throws Exception
+    {
+        parseReturns("T001", "T002");
+        when(this.synchronizer.ensureUser(eq("T001"), any()))
+            .thenReturn(new DoapUserSynchronizer.EnsuredUser("XWiki.T001", true));
+        when(this.synchronizer.addMembersToOutsourcingGroup(anyCollection(), any())).thenReturn(1);
+
+        // 让 runAll 少返回一个槽位，模拟长度耦合被打破
+        doAnswer(invocation -> {
+            List<Callable<?>> tasks = invocation.getArgument(0);
+            List<Object> results = new ArrayList<>();
+            results.add(tasks.get(0).call());
+            return results;
+        }).when(this.executor).runAll(anyList());
+
+        ExcelImportResult result = this.service.importFrom(stream(), this.context);
+
+        assertEquals(2, result.getTotal());
+        assertEquals(1, result.getCreated());
+        assertEquals(1, result.getFailed());
+        assertEquals(OASyncResult.Status.PARTIAL_FAILURE, result.getStatus());
+        // 缺失槽位不得进组
+        verify(this.synchronizer).addMembersToOutsourcingGroup(eq(List.of("XWiki.T001")), eq(this.context));
     }
 
     private void parseReturns(String... usernames) throws IOException
@@ -285,6 +342,16 @@ class OutsourcingExcelImportServiceTest
         OutsourcingExcelParseResult parsed = new OutsourcingExcelParseResult();
         parsed.getUsernames().addAll(List.of(usernames));
         parsed.getErrors().addAll(errors);
+        when(this.parser.parse(any(InputStream.class))).thenAnswer(invocation -> parsed);
+    }
+
+    private void parseReturnsWithErrorsAndWarnings(List<String> errors, List<String> warnings,
+        String... usernames) throws IOException
+    {
+        OutsourcingExcelParseResult parsed = new OutsourcingExcelParseResult();
+        parsed.getUsernames().addAll(List.of(usernames));
+        parsed.getErrors().addAll(errors);
+        parsed.getWarnings().addAll(warnings);
         when(this.parser.parse(any(InputStream.class))).thenAnswer(invocation -> parsed);
     }
 

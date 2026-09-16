@@ -89,7 +89,7 @@ public class OutsourcingExcelImportService
             parsed = this.parser.parse(excel);
         } catch (IOException e) {
             LOGGER.error("外包 Excel 导入: 解析失败", e);
-            saveFailureRecord("Excel 解析失败: " + e.getMessage(), context);
+            saveFailureRecord(0, "Excel 解析失败: " + e.getMessage(), context);
             throw e;
         }
 
@@ -111,9 +111,11 @@ public class OutsourcingExcelImportService
         try {
             outcomes = this.executor.runAll(tasks);
         } catch (RuntimeException e) {
-            // 执行器整体失败时也要留 FAILURE 记录，避免"已经建了一些号却无迹可查"
+            // 执行器整体失败时也要留 FAILURE 记录：此刻可能已经建了一部分号，
+            // 但成功了多少无从得知，因此只记总数并提示重跑（建号幂等）
             LOGGER.error("外包 Excel 导入: 建号阶段整体失败", e);
-            saveFailureRecord("建号阶段整体失败: " + e.getMessage(), context);
+            saveFailureRecord(usernames.size(),
+                "建号阶段整体失败，已建号数量未知，重跑即可（幂等）: " + e.getMessage(), context);
             throw e;
         }
 
@@ -151,9 +153,11 @@ public class OutsourcingExcelImportService
         }
 
         saveRecord(result, context);
-        LOGGER.info("外包 Excel 导入完成: 总数=[{}] 新建=[{}] 已存在=[{}] 入组=[{}] 已在组=[{}] 失败=[{}]",
-            result.getTotal(), result.getCreated(), result.getExisted(), result.getJoinedGroup(),
-            result.getAlreadyMember(), result.getFailed());
+        LOGGER.info("外包 Excel 导入完成: 状态=[{}] 总数=[{}] 新建=[{}] 已存在=[{}] 入组=[{}] 已在组=[{}] "
+                + "失败=[{}] 错误=[{}] 警告=[{}]",
+            result.getStatus(), result.getTotal(), result.getCreated(), result.getExisted(),
+            result.getJoinedGroup(), result.getAlreadyMember(), result.getFailed(),
+            result.getErrors().size(), result.getWarnings().size());
         return result;
     }
 
@@ -177,9 +181,9 @@ public class OutsourcingExcelImportService
             LocalDateTime.now());
         record.setTotalCount(result.getTotal());
         record.setSuccessCount(result.getCreated() + result.getExisted());
-        // 失败数以 error 条目数为准：除了逐用户失败，还包含行级解析错误与入组整体失败，
-        // 否则会出现 PARTIAL_FAILURE 却 failCount=0 的自相矛盾记录
-        record.setFailCount(result.getErrors().size());
+        // failCount 是"失败用户数"（api 契约与 FTP 链路一致），不是 error 条目数：
+        // 行级解析错误与入组整体失败属于运行级问题，由 status 反映，不增加失败用户数
+        record.setFailCount(result.getFailed());
         record.setStatus(result.getStatus());
         // 前缀区分错误与警告，否则管理员在记录里分不清哪些是失败、哪些只是提示
         for (String error : result.getErrors()) {
@@ -197,10 +201,11 @@ public class OutsourcingExcelImportService
         }
     }
 
-    private void saveFailureRecord(String message, XWikiContext context)
+    private void saveFailureRecord(int total, String message, XWikiContext context)
     {
         OASyncResult record = new OASyncResult(TYPE, LocalDate.now(), OASyncTriggerType.MANUAL,
             LocalDateTime.now());
+        record.setTotalCount(total);
         record.setStatus(OASyncResult.Status.FAILURE);
         record.getErrorLog().add("[错误] " + message);
         record.setEndTime(LocalDateTime.now());
