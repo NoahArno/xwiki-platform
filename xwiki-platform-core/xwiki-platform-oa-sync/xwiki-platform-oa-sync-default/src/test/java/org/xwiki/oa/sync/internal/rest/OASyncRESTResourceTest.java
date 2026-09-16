@@ -20,6 +20,7 @@
 package org.xwiki.oa.sync.internal.rest;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
@@ -45,6 +46,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -94,11 +96,13 @@ class OASyncRESTResourceTest
             new DocumentReference("xwiki", "XWiki", "WebHome")))
             .when(this.authorizationManager).checkAccess(Right.ADMIN);
 
+        InputStream body = mock(InputStream.class);
         WebApplicationException exception = assertThrows(WebApplicationException.class,
-            () -> this.resource.importOutsourcingExcel(new ByteArrayInputStream(new byte[0]),
-                MediaType.APPLICATION_OCTET_STREAM));
+            () -> this.resource.importOutsourcingExcel(body, MediaType.APPLICATION_OCTET_STREAM));
 
         assertEquals(Response.Status.FORBIDDEN.getStatusCode(), exception.getResponse().getStatus());
+        // 权限闸门必须早于读 body：非管理员被拒时不得消费任何上传内容
+        verifyNoInteractions(body);
         verify(this.importService, never()).importFrom(any(), any());
     }
 
