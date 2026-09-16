@@ -21,6 +21,7 @@ package org.xwiki.oa.sync.internal.rest;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.List;
 
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
@@ -34,12 +35,15 @@ import org.xwiki.security.authorization.AccessDeniedException;
 import org.xwiki.security.authorization.ContextualAuthorizationManager;
 import org.xwiki.security.authorization.Right;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xpn.xwiki.XWiki;
 import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.store.XWikiStoreInterface;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
@@ -101,6 +105,8 @@ class OASyncRESTResourceTest
             () -> this.resource.importOutsourcingExcel(body, MediaType.APPLICATION_OCTET_STREAM));
 
         assertEquals(Response.Status.FORBIDDEN.getStatusCode(), exception.getResponse().getStatus());
+        assertEquals("需要管理员权限", new ObjectMapper()
+            .readTree((String) exception.getResponse().getEntity()).get("message").asText());
         // 权限闸门必须早于读 body：非管理员被拒时不得消费任何上传内容
         verifyNoInteractions(body);
         verify(this.importService, never()).importFrom(any(), any());
@@ -161,5 +167,30 @@ class OASyncRESTResourceTest
             () -> this.resource.trigger(null, null));
 
         assertEquals(Response.Status.FORBIDDEN.getStatusCode(), exception.getResponse().getStatus());
+    }
+
+    @Test
+    void successResponseCarriesTheJsonContractThePageDependsOn() throws Exception
+    {
+        OASyncRESTResource resource = newResourceWithContext();
+        ExcelImportResult result = new ExcelImportResult();
+        result.setTotal(3);
+        result.incrementCreated();
+        result.incrementExisted();
+        result.setJoinedGroup(1);
+        result.setAlreadyMember(1);
+        when(this.importService.importFrom(any(), any())).thenReturn(result);
+
+        Response response = resource.importOutsourcingExcel(
+            new ByteArrayInputStream(new byte[] { 1 }), MediaType.APPLICATION_OCTET_STREAM);
+
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        JsonNode node = new ObjectMapper().readTree((String) response.getEntity());
+        // WebHome.xml 的脚本直接读这些 key，改名会让页面静默显示 undefined
+        for (String key : List.of("status", "total", "created", "existed", "joinedGroup",
+            "alreadyMember", "failed", "errors")) {
+            assertTrue(node.has(key), key + " 不在响应里: " + node);
+        }
+        assertEquals("SUCCESS", node.get("status").asText());
     }
 }

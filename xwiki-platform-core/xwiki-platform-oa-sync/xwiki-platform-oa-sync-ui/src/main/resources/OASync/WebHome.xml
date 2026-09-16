@@ -24,7 +24,9 @@
 * **记录**：每种来源保留最近 10 条
 * **状态说明**：SUCCESS=全部成功；PARTIAL_FAILURE=部分失败；FAILURE=整体失败（详见 errorLog）
 
-#if ($xwiki.hasAdminRights())
+## 必须与 REST 端点的 checkAccess(Right.ADMIN) 口径一致（wiki 级）：
+## hasAdminRights() 还包含 space 管理员，用它会让 space 管理员看到按钮却永远 403
+#if ($xwiki.hasWikiAdminRights())
 
 == 手动触发 ==
 
@@ -91,21 +93,27 @@
       body: fileInput.files[0]
     }).then(function (resp) {
       return resp.json().catch(function () { return {}; }).then(function (data) {
-        if (resp.ok) {
+        if (resp.ok &amp;&amp; typeof data.status === &#x27;string&#x27;) {
           var level = data.status === &#x27;SUCCESS&#x27; ? &#x27;done&#x27; : &#x27;warning&#x27;;
-          new XWiki.widgets.Notification(
-            &#x27;导入完成：总数=&#x27; + data.total + &#x27; 新建=&#x27; + data.created
+          var summary = &#x27;导入完成：总数=&#x27; + data.total + &#x27; 新建=&#x27; + data.created
             + &#x27; 已存在=&#x27; + data.existed + &#x27; 入组=&#x27; + data.joinedGroup
-            + &#x27; 已在组=&#x27; + data.alreadyMember + &#x27; 失败=&#x27; + data.failed, level);
+            + &#x27; 已在组=&#x27; + data.alreadyMember + &#x27; 失败=&#x27; + data.failed;
+          new XWiki.widgets.Notification(summary, level);
+          // 同时留在页面上：Notification 会在 2~5 秒后自动消失，
+          // 而一次导入可能持续数分钟，管理员需要能事后回看摘要
+          status.textContent = summary;
         } else {
-          new XWiki.widgets.Notification(&#x27;导入失败：&#x27; + (data.message || resp.status), &#x27;error&#x27;);
+          var failure = &#x27;导入失败：&#x27; + (data.message || resp.status);
+          new XWiki.widgets.Notification(failure, &#x27;error&#x27;);
+          status.textContent = failure;
         }
       });
     }).catch(function (err) {
-      new XWiki.widgets.Notification(&#x27;导入请求失败：&#x27; + err, &#x27;error&#x27;);
+      var failure = &#x27;导入请求失败：&#x27; + err;
+      new XWiki.widgets.Notification(failure, &#x27;error&#x27;);
+      status.textContent = failure;
     }).finally(function () {
       button.disabled = false;
-      status.textContent = &#x27;&#x27;;
     });
   });
 })();
