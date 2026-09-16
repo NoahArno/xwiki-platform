@@ -149,6 +149,7 @@ mv .mvn/extensions.xml.bak .mvn/extensions.xml   # 构建后务必还原
 | `xwiki-platform-oa-sync-api/.../OASyncConfiguration.java` | 新增 `getExcelImportThreads()` |
 | `.../internal/configuration/DefaultOASyncConfiguration.java` | 实现 `getExcelImportThreads()`（默认 4，钳制到 1..8） |
 | `.../test/.../internal/configuration/DefaultOASyncConfigurationTest.java` | 补线程数配置用例 |
+| `.../test/resources/logback-test.xml` | 屏蔽 POI 在 HSSF 上的 WARN（否则 `CaptureConsoleExtension` 断言失败，见 Task 2 Step 5 注） |
 | `xwiki-platform-tools/xwiki-platform-tool-configuration-resources/src/main/resources/xwiki.cfg.vm` | 增加 `xwiki.oa-sync.excel.threads` 注释项 |
 | `xwiki-platform-oa-sync-ui/src/main/resources/OASync/WebHome.xml` | 增加「上传 Excel 导入」一节 |
 
@@ -796,6 +797,19 @@ Expected: `Tests run: 11, Failures: 0, Errors: 0`
 > 若 `readsNumericCellWithoutScientificNotation` 失败：说明 `DataFormatter` 返回了带小数点的值。
 > 此时把该断言改为 `assertEquals(List.of("10086"), ...)` 之外的处理方式前，
 > **必须先跟需求方确认**——真实 Excel 的 `staff_id` 列若为数字格式，取值方式会影响正确性。
+> （实测该断言通过：`DataFormatter` 无参构造对数字型单元格返回的就是 `"10086"`。）
+
+> **前置改动（Task 2 实测发现）**：`parsesLegacyXlsFormat` 用到了老式 `.xls`（HSSF），
+> POI 读写 HSSF 时会向控制台输出两条 WARN（`SummaryInformation property set came back as null`），
+> 撞上 XWiki 测试基类的 `CaptureConsoleExtension`「测试不得向控制台输出」断言而使构建失败。
+> 需在 `xwiki-platform-oa-sync-default/src/test/resources/logback-test.xml` 追加
+> （沿用该文件既有的 `org.xwiki.oa.sync` off 的同类写法）：
+>
+> ```xml
+>   <!-- POI 在读写老式 .xls（HSSF）时会 WARN "SummaryInformation property set came back as null"，
+>        会触发 CaptureConsoleExtension 的"测试不得向控制台输出"断言 -->
+>   <logger name="org.apache.poi" level="error"/>
+> ```
 
 - [ ] **Step 6: 提交**
 
