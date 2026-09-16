@@ -38,7 +38,28 @@ import static org.mockito.Mockito.when;
  */
 class DefaultDoapMqConfigurationTest
 {
-    private final ConfigurationSource source = mock(ConfigurationSource.class);
+    /**
+     * 模拟真实配置源的"转换器自带默认值"行为。
+     * <p>
+     * XWiki 配置源底层是 commons-beanutils 的 {@code ConvertUtils}：缺失的键读成 {@code Integer} 会得到
+     * <b>0</b>、读成 {@code Boolean} 会得到 <b>false</b>（而不是 {@code null}）。
+     * 若这里用普通的 {@code mock(...)}（未 stub 的调用返回 null），
+     * "缺失键导致默认值失效"这个真实缺陷在单测里就**无法复现**。
+     */
+    private final ConfigurationSource source = mock(ConfigurationSource.class, invocation -> {
+        if ("getProperty".equals(invocation.getMethod().getName())
+            && invocation.getArguments().length == 2
+            && invocation.getArgument(1) instanceof Class) {
+            Class<?> type = invocation.getArgument(1);
+            if (type == Integer.class) {
+                return 0;
+            }
+            if (type == Boolean.class) {
+                return false;
+            }
+        }
+        return null;
+    });
 
     private final DefaultDoapMqConfiguration config = new DefaultDoapMqConfiguration();
 
@@ -46,15 +67,15 @@ class DefaultDoapMqConfigurationTest
     void readsMqConfig()
     {
         this.config.configuration = this.source;
-        when(this.source.getProperty("xwiki.doap-mq.enabled", Boolean.class)).thenReturn(true);
+        when(this.source.getProperty("xwiki.doap-mq.enabled", String.class)).thenReturn("true");
         when(this.source.getProperty("xwiki.doap-mq.name-server", String.class))
             .thenReturn("10.0.0.1:9876;10.0.0.2:9876");
         when(this.source.getProperty("xwiki.doap-mq.consumer-group", String.class)).thenReturn("GID_XWIKI_DOAP");
         when(this.source.getProperty("xwiki.doap-mq.topic", String.class)).thenReturn("TOPIC_DOAP_USER");
         when(this.source.getProperty("xwiki.doap-mq.tags", String.class))
             .thenReturn("TAG_USER_CREATE,TAG_USER_UPDATE");
-        when(this.source.getProperty("xwiki.doap-mq.consume-thread-min", Integer.class)).thenReturn(2);
-        when(this.source.getProperty("xwiki.doap-mq.consume-thread-max", Integer.class)).thenReturn(16);
+        when(this.source.getProperty("xwiki.doap-mq.consume-thread-min", String.class)).thenReturn("2");
+        when(this.source.getProperty("xwiki.doap-mq.consume-thread-max", String.class)).thenReturn("16");
 
         assertTrue(this.config.isEnabled());
         assertEquals("10.0.0.1:9876;10.0.0.2:9876", this.config.getNameServer());
@@ -75,6 +96,17 @@ class DefaultDoapMqConfigurationTest
         assertEquals(DefaultDoapMqConfiguration.DEFAULT_TAGS, this.config.getTags());
         assertEquals(1, this.config.getConsumeThreadMin());
         assertEquals(8, this.config.getConsumeThreadMax());
+    }
+
+    @Test
+    void threadPoolDefaultsActuallyApplyWhenUnset()
+    {
+        this.config.configuration = this.source;
+
+        // 回归：缺失时曾被 beanutils 转成 0，传给 setConsumeThreadMin/Max(0) 会破坏消费者
+        assertEquals(1, this.config.getConsumeThreadMin());
+        assertEquals(8, this.config.getConsumeThreadMax());
+        assertFalse(this.config.isEnabled());
     }
 
     @Test

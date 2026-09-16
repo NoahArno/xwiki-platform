@@ -35,7 +35,28 @@ import static org.mockito.Mockito.when;
  */
 class DefaultOASyncConfigurationTest
 {
-    private final ConfigurationSource source = mock(ConfigurationSource.class);
+    /**
+     * 模拟真实配置源的"转换器自带默认值"行为。
+     * <p>
+     * XWiki 配置源底层是 commons-beanutils 的 {@code ConvertUtils}：缺失的键读成 {@code Integer} 会得到
+     * <b>0</b>、读成 {@code Boolean} 会得到 <b>false</b>（而不是 {@code null}）。
+     * 若这里用普通的 {@code mock(...)}（未 stub 的调用返回 null），
+     * "缺失键导致默认值失效"这个真实缺陷在单测里就**无法复现**——第一版的回归测试就因此是假的。
+     */
+    private final ConfigurationSource source = mock(ConfigurationSource.class, invocation -> {
+        if ("getProperty".equals(invocation.getMethod().getName())
+            && invocation.getArguments().length == 2
+            && invocation.getArgument(1) instanceof Class) {
+            Class<?> type = invocation.getArgument(1);
+            if (type == Integer.class) {
+                return 0;
+            }
+            if (type == Boolean.class) {
+                return false;
+            }
+        }
+        return null;
+    });
 
     private final DefaultOASyncConfiguration config = new DefaultOASyncConfiguration();
 
