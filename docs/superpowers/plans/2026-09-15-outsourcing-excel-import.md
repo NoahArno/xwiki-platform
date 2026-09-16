@@ -2865,6 +2865,7 @@ git commit -m "外包Excel导入：新增 REST 上传端点（管理员权限校
 **Files:**
 - Modify: `xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/resources/META-INF/components.txt`
 - Modify: `xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-ui/src/main/resources/OASync/WebHome.xml`
+- Modify: `xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/test/java/org/xwiki/oa/sync/internal/rest/OASyncRESTResourceTest.java`（仅补一条断言，见 Step 1.5）
 
 - [ ] **Step 1: 核对组件注册齐全**
 
@@ -2952,7 +2953,34 @@ xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
 ```
 Expected: `Tests run: 1, Failures: 0, Errors: 0`（此时 Task 3/5 已注册全部三行）
 
+- [ ] **Step 1.5: 补一条断言（Task 6 复审的遗留项）**
+
+`OASyncRESTResourceTest.rejectsRequestWithoutContentType` 目前只断言了 415 与
+`never()).importFrom(...)`，但计划承诺的是"415 **不走 `badRequest`、不落记录**"。
+补上这条断言，让承诺有测试兜住：
+
+```java
+        verify(this.importService, never()).recordFileFailure(any(), any());
+```
+
 - [ ] **Step 2: 页面增加上传区块**
+
+> **必须先加管理员判断**（Task 6 复审发现）：`OASync/WebHome.xml` 只有 `<hidden>true</hidden>`，
+> **没有任何 `hasAdminRights` 判断**，非管理员打开该 URL 能看到按钮；点击后收到 403，
+> 页面的 `resp.json()` 会把 `{"status":"FAILURE","message":"需要管理员权限"}` 解析出来，
+> 渲染成 `[undefined] FAILURE 成功=undefined 失败=undefined`——不崩溃但完全看不懂。
+> Task 6 之后 `trigger` 与 Excel 导入**两个端点都要求管理员**，所以整块控件都该被包起来：
+>
+> ```velocity
+> #if ($xwiki.hasAdminRights())
+> ...（手动触发区块 + Excel 导入区块）...
+> #else
+> {{warning}}本页操作需要管理员权限。{{/warning}}
+> #end
+> ```
+>
+> 注意 `#if` 要包住 `{{html}}...{{/html}}` 整块（Velocity 在 XWiki 语法里执行），
+> 而不是只包住按钮标签。
 
 `OASync/WebHome.xml` 是 XAR 页面 XML，`<content>` 内的 HTML 必须做 XML 转义。
 在 `{{/html}}`（第 62 行，手动触发区块的结尾）之后、`== 最近同步记录 ==` 之前插入：
@@ -3130,12 +3158,42 @@ curl -sS -o /dev/null -w '%{http_code}\n' -u "Admin:admin" -X POST \
 
 Expected: `400`
 
+- [ ] **Step 8.5: 验证上传的"正向路径"（Task 6 复审特别要求，**不可省略**）**
+
+**为什么必须单独验这一步**：单测里 `contentType` 是手工传进去的，
+**测不到 `@HeaderParam("Content-Type")` 的绑定在真实容器里是否成立**。
+这是本次唯一无法用单测覆盖的运行时假设。失败模式是 fail-closed（所有上传都 415），
+不会变成安全漏洞，但必须被这里钉住。
+
+用**两种** Content-Type 各上传一次，都必须**成功（不是 415）**：
+
+```bash
+# (a) 显式 octet-stream（Task 7 的页面走这条）
+curl -sS -w '\nHTTP %{http_code}\n' -u "Admin:admin" -X POST \
+  -H "Content-Type: application/octet-stream" \
+  --data-binary @/tmp/outsourcing.xlsx \
+  http://localhost:8080/xwiki/rest/oa-sync/outsourcing-excel
+
+# (b) .xlsx 的标准 MIME（客户端直接 fetch(body:file) 会走这条）
+curl -sS -w '\nHTTP %{http_code}\n' -u "Admin:admin" -X POST \
+  -H "Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" \
+  --data-binary @/tmp/outsourcing.xlsx \
+  http://localhost:8080/xwiki/rest/oa-sync/outsourcing-excel
+```
+
+Expected: 两次都是 **HTTP 200** 且返回合法 JSON（第二次因为幂等，`created` 应为 0）。
+
+若返回 415，说明 `@HeaderParam("Content-Type")` 的绑定在该容器/版本下不成立，
+需要回退成"显式校验 `XWiki-Form-Token`"的方案（见 Task 6 复审的可选加固）。
+
 - [ ] **Step 9: 页面验证**
 
 访问 `http://localhost:8080/xwiki/bin/view/OASync/WebHome`：
 
 - 「Excel 全量导入：科技外包」区块存在，文件选择 + 按钮可用
 - 上传后出现完成提示，且 `最近同步记录` 表格出现一条 `outsourcing-excel` 记录
+- **用非管理员账号**访问同一 URL：应当看不到控件（或被明确告知需要管理员权限），
+  而不是看到一个点了就报 `[undefined] FAILURE` 的按钮
 
 - [ ] **Step 10: 记录实测结果**
 
