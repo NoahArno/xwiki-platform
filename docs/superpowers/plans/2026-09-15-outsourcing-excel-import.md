@@ -2499,12 +2499,49 @@ import jakarta.ws.rs.WebApplicationException;
 Run: 同 Step 2
 Expected: `Tests run: 1, Failures: 0, Errors: 0`
 
-- [ ] **Step 5: 提交**
+- [ ] **Step 5: 加上传体积上限（显式验收项，不允许省略）**
+
+**为什么必须有**：`WorkbookFactory.create(InputStream)` 是 DOM 式加载，整个文件进内存，
+内存占用随**文件大小**而非行数增长，超大文件可以把堆打爆。
+800 行不是问题，但端点是管理员可反复调用的入口，必须有闸门。
+
+实现要点（与现有 `catch (IOException)` 分支复用同一套"文件级失败"处理：
+
+```java
+    /**
+     * 上传体积上限：10 MiB。800 行的 xlsx 通常远小于此，超限只可能是传错文件或恶意构造。
+     */
+    private static final long MAX_UPLOAD_BYTES = 10L * 1024 * 1024;
+```
+
+在读取 body 前先限制输入流，超限时按 §7.2 记 `FAILURE` 并返回 400（不要抛 500）。
+用 `jakarta.ws.rs.core.StreamingOutput` 之外的最简做法：包一层计数输入流，
+或在写文件前用 `body.readNBytes((int) MAX_UPLOAD_BYTES + 1)` 判断长度：
+
+```java
+        byte[] content = body.readNBytes((int) MAX_UPLOAD_BYTES + 1);
+        if (content.length > MAX_UPLOAD_BYTES) {
+            this.excelImportService.recordFailure("上传文件超过 " + (MAX_UPLOAD_BYTES / 1024 / 1024) + " MiB 上限", context);
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity("{\"status\":\"FAILURE\",\"message\":\"上传文件超过体积上限\"}")
+                .type(MediaType.APPLICATION_JSON).build();
+        }
+        ExcelImportResult result = this.excelImportService.importFrom(new ByteArrayInputStream(content), context);
+```
+
+> 若 `OutsourcingExcelImportService` 届时没有公开的"只记失败"入口，
+> 就给 `saveFailureRecord(String, XWikiContext)` 开一个包可见的 `recordFailure(...)` 方法仅供本端点使用，
+> 不要为此新增公开 API 到 api 模块。
+
+**验收**：构造一个大于 10 MiB 的文件上传，必须返回 **400**（不是 500），
+且 `OASync.WebHome` 的最近同步记录里出现一条 `FAILURE` 记录。
+
+- [ ] **Step 6: 提交**
 
 ```bash
 git add xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/java/org/xwiki/oa/sync/internal/rest/OASyncRESTResource.java \
   xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/test/java/org/xwiki/oa/sync/internal/rest/OASyncRESTResourceTest.java
-git commit -m "外包Excel导入：新增 REST 上传端点（管理员权限校验+原始字节流）"
+git commit -m "外包Excel导入：新增 REST 上传端点（管理员权限校验+原始字节流+体积上限）"
 ```
 
 ---
