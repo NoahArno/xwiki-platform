@@ -122,6 +122,7 @@ public class DefaultOASyncConfiguration implements OASyncConfiguration
         return "";
     }
 
+    // String 的转换器对缺失键返回 null，语义正常，因此这里不需要改。
     private String get(String key, String defaultValue)
     {
         String value = this.configuration.getProperty(key, String.class);
@@ -137,13 +138,36 @@ public class DefaultOASyncConfiguration implements OASyncConfiguration
 
     private int getInt(String key, int defaultValue)
     {
-        Integer value = this.configuration.getProperty(key, Integer.class);
-        return value == null ? defaultValue : value;
+        // 刻意用 String.class 读取：XWiki 配置源底层是 commons-beanutils 的 ConvertUtils，
+        // 其 IntegerConverter 对缺失/非法输入返回 0（**不是 null**），
+        // 因此"value == null ? default : value"这种写法下默认值永远不会生效，
+        // 缺失的整型配置会静默变成 0（真实实例上 xwiki.oa-sync.excel.threads 就是这样变成 1 的）。
+        String value = this.configuration.getProperty(key, String.class);
+        if (value == null || value.isBlank()) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            // 配错值时回落到默认值，而不是静默变成 0
+            return defaultValue;
+        }
     }
 
     private boolean getBoolean(String key, boolean defaultValue)
     {
-        Boolean value = this.configuration.getProperty(key, Boolean.class);
-        return value == null ? defaultValue : value;
+        // 同理：BooleanConverter 对缺失/非法输入返回 false，不能靠 null 判断
+        String value = this.configuration.getProperty(key, String.class);
+        if (value == null || value.isBlank()) {
+            return defaultValue;
+        }
+        String trimmed = value.trim();
+        if ("true".equalsIgnoreCase(trimmed)) {
+            return true;
+        }
+        if ("false".equalsIgnoreCase(trimmed)) {
+            return false;
+        }
+        return defaultValue;
     }
 }

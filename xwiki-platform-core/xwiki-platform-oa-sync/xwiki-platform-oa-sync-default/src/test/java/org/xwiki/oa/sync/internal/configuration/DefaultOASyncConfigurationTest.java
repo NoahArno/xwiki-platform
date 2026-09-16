@@ -44,10 +44,10 @@ class DefaultOASyncConfigurationTest
     {
         this.config.configuration = this.source;
         when(this.source.getProperty("xwiki.oa-sync.ftp.host", String.class)).thenReturn("ftp.example.com");
-        when(this.source.getProperty("xwiki.oa-sync.ftp.port", Integer.class)).thenReturn(2121);
+        when(this.source.getProperty("xwiki.oa-sync.ftp.port", String.class)).thenReturn("2121");
         when(this.source.getProperty("xwiki.oa-sync.ftp.username", String.class)).thenReturn("u");
         when(this.source.getProperty("xwiki.oa-sync.ftp.password", String.class)).thenReturn("p");
-        when(this.source.getProperty("xwiki.oa-sync.ftp.timeout-ms", Integer.class)).thenReturn(60000);
+        when(this.source.getProperty("xwiki.oa-sync.ftp.timeout-ms", String.class)).thenReturn("60000");
 
         assertEquals("ftp.example.com", this.config.getFtpHost());
         assertEquals(2121, this.config.getFtpPort());
@@ -83,7 +83,7 @@ class DefaultOASyncConfigurationTest
     void explicitOutsourcingConfigOverridesDefaults()
     {
         this.config.configuration = this.source;
-        when(this.source.getProperty("xwiki.oa-sync.source.outsourcing.enabled", Boolean.class)).thenReturn(true);
+        when(this.source.getProperty("xwiki.oa-sync.source.outsourcing.enabled", String.class)).thenReturn("true");
         when(this.source.getProperty("xwiki.oa-sync.source.outsourcing.base-path", String.class))
             .thenReturn("/custom/%s");
         when(this.source.getProperty("xwiki.oa-sync.source.outsourcing.file-pattern", String.class))
@@ -98,7 +98,7 @@ class DefaultOASyncConfigurationTest
     void readsPerSourceConfigWithDefaults()
     {
         this.config.configuration = this.source;
-        when(this.source.getProperty("xwiki.oa-sync.source.employee.enabled", Boolean.class)).thenReturn(true);
+        when(this.source.getProperty("xwiki.oa-sync.source.employee.enabled", String.class)).thenReturn("true");
         when(this.source.getProperty("xwiki.oa-sync.source.employee.base-path", String.class))
             .thenReturn("/comm/bdpp/oa/%s");
         when(this.source.getProperty("xwiki.oa-sync.source.employee.file-pattern", String.class))
@@ -125,13 +125,55 @@ class DefaultOASyncConfigurationTest
     {
         this.config.configuration = this.source;
 
-        when(this.source.getProperty("xwiki.oa-sync.excel.threads", Integer.class)).thenReturn(0);
+        when(this.source.getProperty("xwiki.oa-sync.excel.threads", String.class)).thenReturn("0");
         assertEquals(1, this.config.getExcelImportThreads());
 
-        when(this.source.getProperty("xwiki.oa-sync.excel.threads", Integer.class)).thenReturn(99);
+        when(this.source.getProperty("xwiki.oa-sync.excel.threads", String.class)).thenReturn("99");
         assertEquals(8, this.config.getExcelImportThreads());
 
-        when(this.source.getProperty("xwiki.oa-sync.excel.threads", Integer.class)).thenReturn(6);
+        when(this.source.getProperty("xwiki.oa-sync.excel.threads", String.class)).thenReturn("6");
         assertEquals(6, this.config.getExcelImportThreads());
+    }
+
+    @Test
+    void intAndBooleanDefaultsActuallyApplyWhenTheKeyIsUnset()
+    {
+        this.config.configuration = this.source;
+
+        // 回归：这些默认值在真实实例上曾经全部失效（缺失的整型配置被 beanutils 转成 0）
+        assertEquals(21, this.config.getFtpPort());
+        assertEquals(30000, this.config.getFtpTimeoutMs());
+        assertEquals(1, this.config.getSourceDateOffsetDays("outsourcing"));
+        assertEquals(4, this.config.getExcelImportThreads());
+        assertFalse(this.config.isSourceEnabled("outsourcing"));
+    }
+
+    @Test
+    void intConfigFallsBackToDefaultWhenBlankOrNotANumber()
+    {
+        this.config.configuration = this.source;
+
+        when(this.source.getProperty("xwiki.oa-sync.excel.threads", String.class)).thenReturn("   ");
+        assertEquals(4, this.config.getExcelImportThreads(), "空白应回落默认值 4");
+
+        when(this.source.getProperty("xwiki.oa-sync.excel.threads", String.class)).thenReturn("not-a-number");
+        assertEquals(4, this.config.getExcelImportThreads(), "非数字应回落默认值 4，而不是静默变 0");
+
+        when(this.source.getProperty("xwiki.oa-sync.excel.threads", String.class)).thenReturn("6");
+        assertEquals(6, this.config.getExcelImportThreads(), "显式配置 6 应生效");
+    }
+
+    @Test
+    void booleanConfigFallsBackToDefaultWhenBlankOrNotABoolean()
+    {
+        this.config.configuration = this.source;
+
+        when(this.source.getProperty("xwiki.oa-sync.source.outsourcing.enabled", String.class))
+            .thenReturn("not-a-boolean");
+        assertFalse(this.config.isSourceEnabled("outsourcing"), "非法布尔值应回落默认 false");
+
+        when(this.source.getProperty("xwiki.oa-sync.source.outsourcing.enabled", String.class))
+            .thenReturn("TRUE");
+        assertTrue(this.config.isSourceEnabled("outsourcing"), "TRUE 应被识别为 true");
     }
 }
