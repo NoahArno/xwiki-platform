@@ -214,10 +214,19 @@ fetch('$request.contextPath/rest/oa-sync/outsourcing-excel', {
 
 **部分成功的语义**：建号成功但入组失败时，用户存在但不在组内。由于重跑幂等，再次导入即可修复，不需要事务回滚。
 
-**零数据行不算文件级失败**：只有表头、没有任何数据行是一个合法文件形态（不是错误文件），
-因此解析层返回空工号列表、不产生 error，导入结果为 `SUCCESS` 且 `total=0`。
-操作者在页面提示里能直接看到"总数=0"，足以识别"传错文件/传错月份"。
-把它当 400 会破坏"只导表头"这类合法场景，故不采纳。
+**零数据行不算文件级失败**：解析层对以下两种形态都返回空工号列表、不产生 error，
+导入结果为 `SUCCESS` 且 `total=0`：
+
+| 形态 | 结果 |
+|---|---|
+| (a) 只有表头、没有任何数据行 | `SUCCESS`，`total=0` |
+| (b) 工作表本身零行（连表头都没有） | `SUCCESS`，`total=0` |
+
+理由：这属于"合法但没数据"的文件形态，不是错误文件；把它当 400 会破坏合法的"只导表头"场景。
+操作者在页面提示里能直接看到"总数=0"，足以识别"传错文件 / 传错月份"。
+
+> 已知取舍：`total=0` 是唯一的信号，没有额外的 warning。若日后运维反馈"0 行导入不易察觉"，
+> 可在解析层补一条 warning（会进同步记录的 errorLog），属低成本后续项。
 
 ### 7.3 解析细节
 
@@ -231,12 +240,28 @@ fetch('$request.contextPath/rest/oa-sync/outsourcing-excel', {
   因此取值规则为：`FORMULA` → 记错误；`DateUtil.isCellDateFormatted` 为真 → 记错误；
   `NUMERIC` → 用 `NumberToTextConverter.toText(double)` 取与显示格式无关的原始数值文本；
   其余类型才交给 `DataFormatter`。
+
+  > **数值型必须做精度回读校验**：`NumberToTextConverter` 刻意模仿 Excel，其 javadoc 明确
+  > `No more than 15 significant figures are output (java does 18)`。实测
+  > `1234567890123456` → `"1234567890123460"`（**错了 4**），16 位有效数字就会丢精度，
+  > 而不是 2^53。若不校验，会静默取到被四舍五入的**错误工号**并建号成功。
+  > 因此取文本后用 `Double.parseDouble(text) != value` 回读比对，不等即记错误并提示把该列设为文本格式。
 - 工号两侧用 `strip()` 清理（`trim()` 只去 ASCII ≤U+0020，去不掉全角空格 U+3000）；
   非法字符集并入 `\p{Zs}`，拦住 `strip()` 去不掉的不换行空格 U+00A0 等
 - `WorkbookFactory.create` 对用户可上传的坏文件抛的是 **unchecked** 异常
   （空文件 → `EmptyFileException`，非 Office 文件 → `NotOfficeXmlFileException`），
   必须统一转成 `IOException`，否则上游的"文件级失败"分支抓不到，只会变成 HTTP 500 且不落失败记录
 - 表头行仅跳过，不校验列名（B 列位置固定）
+
+  > **已知后果（有意取舍）**：第 1 行被**无条件**当作表头丢弃。因此如果上传的文件没有表头
+  > （或表头被删掉），**第一个人的工号会被当作表头静默丢掉**，且不会有任何报错或告警。
+  > 这是"位置固定、不校验列名"的必然代价，且列错位同样不可察。
+  > 之所以不加校验：真实 Excel 的 B1 表头文字**尚未由需求方确认**，
+  > 用 `B1 != "staff_id"` 之类硬编码判断会在表头文字不同的情况下每次导入都误报。
+  > 待拿到 B1 的确切文字后，可补一条"表头不匹配则记 warning"的低成本校验。
+  > 在此之前，**每次初次全量导入后必须核对组内成员数是否等于 Excel 去重行数**
+  > （见测试计划的手工验证项），这是当前唯一的兜底手段。
+
 - 文件内出现重复 staff_id 时**去重并记一条 warning**（不作为错误）
 - 空行静默跳过；行内有内容但 B 列为空 → 记错误
 - 读取结束后按行号排序输出 `errors`，便于人工核对
@@ -292,10 +317,11 @@ fetch('$request.contextPath/rest/oa-sync/outsourcing-excel', {
 
 | # | 风险 | 处置 |
 |---|---|---|
-| 1 | `poi-ooxml` 依赖 scope 与发行包 `duplicate-finder` 冲突（`poi` 已由 `xwiki-platform-oldcore` 打包；`poi-ooxml` 已在部署的 `WEB-INF/lib` 中但源码内无显式声明） | 实现阶段先按 `provided` 试；若运行期 `ClassNotFoundException` 则改 `compile` 并在 WAR assembly 的 `duplicate-finder` 忽略（仓库已有同类先例） |
+| 1 | ~~`poi-ooxml` 依赖 scope 冲突~~ **已解决**：确认 `poi-ooxml` 在源码内无任何提供方（oldcore 只打包 `poi`），`provided` 会运行期 `ClassNotFoundException`，故用 `compile`；`dependency:tree` 已验证 poi/poi-ooxml 同为 5.5.1、无 upper-bound 冲突 | 已按 `compile` 落地 |
 | 2 | 4 线程并发建号在 `xwikidoc`/`xwikiobjects` 上的锁竞争，实测可能不如预期 | 保守默认 4；实测后可调，上限 8 |
 | 3 | 800 次 `createUser` 含文档保存 + 事件通知，同步等待可能仍达分钟级 | 已确认接受同步执行；前端给明确"导入中"提示。若实测超 10 分钟（整体超时）再评估改异步 Job |
 | 4 | 子上下文作者为自己导致用户历史不含导入人 | 已确认接受（与 MQ 一致），操作人记日志 |
+| 5 | **上传体积无上限**：`WorkbookFactory.create(InputStream)` 是 DOM 式加载，整个文件进内存，内存占用随文件大小而非行数增长；超大文件可被用来打爆堆 | **后续项**：体积上限必须落在 **Task 4 的 REST 入口**（解析器侧不该有、也无法知道上传大小），超限应按 §7.2 记 `FAILURE` 并返回 400。当前 800 行规模无影响，故不在本期实现 |
 
 ## 12. 非目标（YAGNI）
 
