@@ -2565,6 +2565,79 @@ grep -n "internal.excel" \
 
 Expected: 恰好 3 行，分别对应解析器、执行器、编排服务。缺哪条就补哪条。
 
+**仅靠 grep 不够**：现有单测都是用 `new` 构造组件（Task 3/5 的测试还 mock 掉了依赖），
+所以 `components.txt` 里的**类名写错**或类不存在，要到运行期才会暴露。
+补一个构建期就能失败的测试，放在
+`xwiki-platform-oa-sync-default/src/test/java/org/xwiki/oa/sync/internal/excel/ExcelComponentsRegistrationTest.java`：
+
+```java
+package org.xwiki.oa.sync.internal.excel;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+/**
+ * 校验 components.txt 里登记的 Excel 导入组件类真实存在且可加载。
+ * 单测都是 new/mock 出来的，漏注册或类名写错只会在运行期暴露，这里用构建期断言兜住。
+ */
+class ExcelComponentsRegistrationTest
+{
+    private static final String PREFIX = "org.xwiki.oa.sync.internal.excel.";
+
+    @Test
+    void everyExcelComponentIsListedAndLoadable() throws Exception
+    {
+        List<String> declared = readComponents();
+        List<String> expected = List.of(
+            PREFIX + "OutsourcingExcelParser",
+            PREFIX + "ExcelImportExecutor",
+            PREFIX + "OutsourcingExcelImportService");
+        for (String className : expected) {
+            assertTrue(declared.contains(className), className + " 未登记进 components.txt");
+            Class.forName(className);
+        }
+    }
+
+    private List<String> readComponents() throws Exception
+    {
+        List<String> lines = new ArrayList<>();
+        try (InputStream input = getClass().getClassLoader()
+            .getResourceAsStream("META-INF/components.txt")) {
+            assertTrue(input != null, "classpath 上找不到 META-INF/components.txt");
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String trimmed = line.trim();
+                    if (!trimmed.isEmpty() && !trimmed.startsWith("#")) {
+                        lines.add(trimmed);
+                    }
+                }
+            }
+        }
+        return lines;
+    }
+}
+```
+
+Run:
+```bash
+mvn -s ~/.m2/settings-xwiki.xml -f pom.xml \
+  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-api,\
+xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
+  -Dtest=ExcelComponentsRegistrationTest -DfailIfNoTests=false \
+  -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true \
+  -o -Dmaven.repo.local=/tmp/dsh-m2repo -Duser.home=/tmp/dsh-home test
+```
+Expected: `Tests run: 1, Failures: 0, Errors: 0`（此时 Task 3/5 已注册全部三行）
+
 - [ ] **Step 2: 页面增加上传区块**
 
 `OASync/WebHome.xml` 是 XAR 页面 XML，`<content>` 内的 HTML 必须做 XML 转义。
