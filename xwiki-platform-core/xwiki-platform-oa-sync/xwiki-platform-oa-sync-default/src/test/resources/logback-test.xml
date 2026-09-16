@@ -17,6 +17,10 @@
   <!-- Disable OA sync logs in tests -->
   <logger name="org.xwiki.oa.sync" level="off"/>
 
+  <!-- POI 在读写老式 .xls（HSSF）时会 WARN "SummaryInformation property set came back as null"，
+       会触发 CaptureConsoleExtension 的"测试不得向控制台输出"断言 -->
+  <logger name="org.apache.poi" level="error"/>
+
   <root level="warn">
     <appender-ref ref="STDOUT"/>
   </root>
