@@ -254,6 +254,74 @@ fetch('$request.contextPath/rest/oa-sync/outsourcing-excel', {
 - 完成后用 `XWiki.widgets.Notification` 展示 `created / existed / alreadyMember / failed`，失败明细折叠展示
 - 该页面已设置 `<hidden>true</hidden>`，仅管理员通过直链访问
 
+### 6.3 安全加固（实施评审中确认，**均为必须保持的性质**）
+
+#### 6.3.1 CSRF：端点必须显式要求 `Content-Type`
+
+XWiki 的 REST 前置过滤器只在 `Content-Type` 属于**浏览器简单请求类型**
+（`application/x-www-form-urlencoded` / `multipart/form-data` / `text/plain`）时才校验 CSRF token，
+**而且它要求 `getMediaType() != null` 才会去查**（`PreMatchingRequestFilter.java:233`）。
+而 JAX-RS 规范规定"请求没有 `Content-Type` 时按 `application/octet-stream` 处理"，
+**仍然会路由到本端点**。
+
+于是跨站 `fetch(url, {method:'POST', body: new Blob([bytes])})`（Blob 无 type ⇒ 浏览器不发该头）
+就是 CORS 简单请求、不触发预检 ⇒ 可诱导管理员触发建号。
+
+**因此端点必须显式要求该头存在**：`@HeaderParam("Content-Type") String contentType`，
+为 `null`/blank 直接返回 **415**（放在权限校验**之后**，不落失败记录）。
+不能只依赖"媒体类型豁免"这整类推理。
+
+> 更强的做法是显式校验 `XWiki-Form-Token`（不再依赖媒体类型推理，也不依赖 `@HeaderParam` 绑定），
+> 但需要前端取 token，属可选加固。
+
+#### 6.3.2 两个端点都必须要求管理员
+
+`OASyncRESTResource` 里**两个**端点都有真实副作用（建号、改权限组、跑全量同步），
+而 XWiki 的 `createUser` 等服务端 API **自身不做任何权限校验**，所以必须在端点层拦住：
+
+| 端点 | 说明 |
+|---|---|
+| `POST /rest/oa-sync/outsourcing-excel` | 本次新增 |
+| `POST /rest/oa-sync/trigger` | **原先完全没有权限校验**（`DefaultOASyncService` / `DoapUserSynchronizer` 内部也没有），任何已登录用户都能触发全量行员/外包同步。实施评审发现后一并修复 |
+
+统一用共享的 `requireAdmin()`（`ContextualAuthorizationManager.checkAccess(Right.ADMIN)`），
+失败返回 **403**（有意偏离仓库里 `WikiResourceImpl` 的 401："已认证但无权限"语义上应当是 Forbidden），
+body 为合法 JSON 且保留 `AccessDeniedException` 作为 cause。
+
+#### 6.3.3 页面门禁必须与端点口径一致
+
+页面用 `#if ($xwiki.hasWikiAdminRights())` 包住控件（含既有"手动触发"区块），原因：
+
+- 端点的 `checkAccess(Right.ADMIN)` 在 REST 路径下**上下文没有 doc** ⇒ `getCurrentEntity()` 为 null ⇒
+  `SecurityReference` 落到**主 wiki** ⇒ **只认 wiki 级 admin**
+- 而 `$xwiki.hasAdminRights()` 的语义是"**当前 wiki 管理员 或 当前 space 管理员**"
+  （会退回查当前文档所在 space 的 `WebPreferences`）
+- 若用后者，被授予 `OASync` space admin 的人会**看到按钮但永远 403**
+
+**改一处必须改两处。** 另外要清楚：这是**展示层**门禁，不是安全边界——真正的边界在端点的 `requireAdmin()`。
+
+#### 6.3.4 前端渲染：`Notification` 不转义
+
+`XWiki.widgets.Notification` 内部是 innerHTML（不转义）。当前 UI 只渲染**数字统计**与
+`data.message`，而**含原始工号的 `data.errors` 响应里有、页面没有渲染** ⇒ "工号 → innerHTML" 这条链
+今天不可达。**必须保持这个性质**：若以后要把 `errors` 显示到 Notification，**必须先转义**。
+状态文本写回一律用 `textContent`。
+
+### 6.4 已知约束（记录，非缺陷）
+
+- **渲染缓存与本页的用户相关性冲突**：`DefaultRenderingCache` 的缓存 key **不含用户**。
+  默认 `core.renderingcache.enabled=false` 且本仓库未配置 pattern，所以今天无影响；
+  但若将来启用并命中 `OASync.WebHome`，用户相关的 `#if` 会被**跨用户复用**
+  （非管理员可能拿到带按钮的 HTML——只是观感问题，端点仍会 403）。
+  启用渲染缓存前必须知道这一点。
+- **`<hidden>true</hidden>` 只管导航可见性，不设访问权**：下方"最近同步记录"表格
+  （含 `errorLog` 里的工号）对**任何已登录用户**直接开 URL 都可见。
+  若这些数据敏感，需要的是真正的访问权限而不是 `#if`。
+- **超限上传的响应可能被浏览器 reset**：端点读到 `MAX+1` 字节即返回 400，
+  **不排空剩余 body**；Tomcat 默认 `maxSwallowSize=2 MiB`，传几十 MB 时浏览器可能
+  在写完前被 reset，管理员看到的是 `Failed to fetch` 而不是"超过体积上限"。
+  这层单测覆盖不到，必须在真实实例上手工验证（见测试计划）。
+
 ## 7. 幂等与错误处理
 
 ### 7.1 幂等
