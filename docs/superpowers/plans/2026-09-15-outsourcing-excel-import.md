@@ -2807,6 +2807,57 @@ git commit -m "外包Excel导入：新增 REST 上传端点（管理员权限校
 > `ExcelImportResult.java`、以及下面 Step 4.5 加的 `pom.xml`——漏了任何一个，
 > 提交出来的版本都会编译不过或测试跑不起来。
 
+### Task 6 复审后的修订（代码为准，见提交 `7e467ce5798` + `8cff4287921`）
+
+**上面 Task 6 的实现有 2 处安全缺口**，实际代码已按下面修订（**以仓库代码为准**）：
+
+| # | 问题 | 修订 |
+|---|---|---|
+| **I-1 安全** | **省略 `Content-Type` 可绕过 CSRF**：XWiki 的 REST 前置过滤器要 `getMediaType() != null` 才去校验 token（`PreMatchingRequestFilter.java:233`），而 JAX-RS 规定"无 Content-Type"按 `application/octet-stream` 处理、**仍会路由到本方法**。跨站 `fetch(url, {method:'POST', body: new Blob([bytes])})`（Blob 无 type）不发该头 ⇒ CORS 简单请求、无预检 ⇒ 可诱导管理员触发建号 | 方法增加 `@HeaderParam("Content-Type") String contentType`，在权限校验之后、**读 body 之前**判空 → **415**（不走 `badRequest`，不落记录） |
+| **I-2 安全（既有）** | **同一个类里的 `trigger()` 完全没有权限校验**（直接 `getXWikiContext()` → `syncAll`），而 `DefaultOASyncService` / `DoapUserSynchronizer` 内部也都没有 `checkAccess` ⇒ **任何已登录用户都能触发全量行员/外包同步**。Task 6 刚给同类副作用端点定了闸门，绕道旧端点即入 | 抽出共享 `requireAdmin()` + `forbiddenResponse()`，`trigger()` 第一条语句即调用；403 body 改为合法 JSON 并保留 `AccessDeniedException` 作 cause |
+| **I-3 验证缺口** | 体积闸门被写成"显式验收项，不允许省略"，却零自动化覆盖 | 补 4 个用例：超限 → 400 + `recordFileFailure` 被调 + 未进 `importFrom`；**恰好等于上限 → 200 且进入导入**（钉 `>` 与 `==` 边界）；缺 Content-Type → 415；`trigger` 拒非管理员 → 403 |
+| M-7 | 403 用例只验证"没建号/入组"，没验证"没读 body" | 改用 mock `InputStream` + `verifyNoInteractions(body)` |
+| M-2 | `@Consumes` 只收 octet-stream，客户端按 `.xlsx` 真实 MIME 发会 415 | 放宽为同时接受 `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`（该 MIME 同样不在简单请求类型里，不影响 CSRF 判断） |
+| M-4 | 注释把内存模型写成"随文件大小增长"，因果不准 | 改为：DOM 式加载先把上传内容读进内存（故必须在读之前限读取量）；解压后的 XML 峰值由 POI 的 `ZipSecureFile` 比率限制兜底；**本闸门不限带宽** |
+| M-6 | 读失败与解析失败共用"Excel 文件无法解析"文案 | 读失败独立为"上传内容读取失败" |
+
+用例 1 → 5，全模块 112 → 116。
+
+**一个值得记的反证教训**：验证"闸门早于读 body"时，**按字面把 `requireAdmin()` 挪到读 body 之后**得到的
+失败形态是 **NPE**（测试用的资源没有注入 `xcontextProvider`，控制流在 `getXWikiContext()` 就断了），
+**并没有真正证明 `verifyNoInteractions(body)` 有效**。要给该用例注入上下文，让控制流真正走到读 body，
+才能拿到目标证据（`NoInteractionsWanted` 指向 `readNBytes`）。**反证失败 ≠ 反证有效**，
+要确认失败的是**你断言的那一条**。
+
+### checkstyle：本模块从未通过，属项目级决策（Task 6 复审结论）
+
+实测（`mvn verify` **不** skip checkstyle）：
+
+| 范围 | 违规数 |
+|---|---|
+| `oa-sync-default` 在 base（Task 6 之前） | **98 条**（BUILD FAILURE） |
+| `oa-sync-api` 在 base | 11 条 |
+| Task 6 净新增 | **11 条** |
+| 对照 `xwiki-platform-livedata-rest` 同命令 | **0 条**（证明规则解析正常、非误报） |
+
+净新增的构成与结论：
+
+| 规则 | 条数 | 结论 |
+|---|---|---|
+| `ClassFanOutComplexity` | 1 | **不要拆类**。本仓库对这条规则的既有惯例就是类级 `@SuppressWarnings`（30 个文件在用，如 `LiveTableLiveDataConfigurationResolver.java:66`）。拆类只换 1 个指标点，代价是新组件注册（漏进 `components.txt` 就是运行时 404）+ 新测试 + 偏离计划 |
+| `JavadocStyle` | 3 | **绝不能在中文文档里塞英文句号**。根因是 `checkstyle.xml` 的 `endOfSentenceFormat` 不接受 `。`，而本 fork 的 javadoc 全是中文、以 `。` 结尾 ⇒ **会持续复发**。正确修法是让配置接受 `。！？`（一行 regex），但那个文件在上游 `xwiki-commons-tool-verification-resources` JAR 里 ⇒ 要么改上游，要么在本仓库根 pom 用 `configLocation` 覆盖一份本地 config。**属项目级一次性投入** |
+| `VisibilityModifier` ×2 + `DeclarationOrder` ×2 | 4 | 同一根因：**包级可见 `@Inject` 字段**（本模块"new + 直接赋值"的测试约定要求如此，Task 3 已裁定）。要消除只有两条路：把字段改 private（破坏模块测试约定）或把全模块测试迁到 `@InjectMockComponents`/`MockitoOldcore`。**属模块级清理，不该混进 Task 6 的 diff** |
+| `MultipleStringLiterals` | 3 | 无害，可选 |
+
+**决策：0 条必须现在修**。若确要让文件变绿，用类级 `@SuppressWarnings("checkstyle:Xxx")`
+（本仓库已认可的做法）。**建议单独立项**："把 `。` 加入 `JavadocStyle.endOfSentenceFormat`
++ 决定 `oa-sync-default` 是否纳入 checkstyle + oa-sync-default checkstyle 归零（98+11）"。
+不要在每个 Task 里零敲碎打地"修"，那只会把中文文档改成英式标点而不解决任何真实质量问题。
+
+> **一个执行方式上的盲点**：本计划所有 maven 命令都带 `-Dxwiki.checkstyle.skip=true`
+> （沿用 `AGENTS.md` 记录的构建命令），因此**整个执行过程从未验证过 checkstyle**。
+> 这是已知的、有意的取舍，但要清楚：**本地全绿 ≠ CI 全绿**。
+
 ---
 
 ## Task 7: 组件注册与页面 UI
