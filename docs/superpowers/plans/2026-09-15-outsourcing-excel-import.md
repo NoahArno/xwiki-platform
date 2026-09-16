@@ -118,6 +118,21 @@ mv .mvn/extensions.xml.bak .mvn/extensions.xml   # 构建后务必还原
 这个环境下通常需要同时使用「离线 + 重定向本地仓库」，因为改掉扩展文件后，
 `xwiki-commons-pom` 里无版本的 `com.gradle:develocity-maven-extension` 会触发远程版本解析。
 
+### 为什么注入字段不写 `private`
+
+本模块的单测约定是**直接 new 出组件再赋值字段**（见 `DefaultOASyncServiceTest`、
+`DefaultOASyncConfigurationTest`），所以 `@Inject` 字段一律用**包级可见**，
+不写 `private`：
+
+```java
+    @Inject
+    OASyncConfiguration configuration;      // 包级可见，便于同包单测赋值
+```
+
+这不是偷懒，而是本模块既有约定（`DefaultOASyncService`、`DefaultOASyncConfiguration` 都是如此）。
+如果写成 `private`，同包的测试就会报「字段是 private 访问控制」而无法编译。
+Task 3 / Task 5 / Task 6 的实现代码块都已按此口径写好。
+
 ---
 
 ## 文件结构
@@ -1106,13 +1121,13 @@ public class ExcelImportExecutor implements Initializable, Disposable
     private static final AtomicInteger THREAD_COUNTER = new AtomicInteger();
 
     @Inject
-    private OASyncConfiguration configuration;
+    OASyncConfiguration configuration;
 
     @Inject
-    private ComponentManager componentManager;
+    ComponentManager componentManager;
 
     @Inject
-    private Provider<XWikiContext> contextProvider;
+    Provider<XWikiContext> contextProvider;
 
     private ExecutorService executorService;
 
