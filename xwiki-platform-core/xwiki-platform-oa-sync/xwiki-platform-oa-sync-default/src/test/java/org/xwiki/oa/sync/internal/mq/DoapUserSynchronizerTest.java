@@ -19,7 +19,9 @@
  */
 package org.xwiki.oa.sync.internal.mq;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +35,7 @@ import org.xwiki.test.junit5.mockito.MockComponent;
 
 import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.doc.XWikiDocument;
+import com.xpn.xwiki.objects.BaseObject;
 import com.xpn.xwiki.test.MockitoOldcore;
 import com.xpn.xwiki.test.junit5.mockito.InjectMockitoOldcore;
 import com.xpn.xwiki.test.junit5.mockito.OldcoreTest;
@@ -134,6 +137,80 @@ class DoapUserSynchronizerTest
         this.synchronizer.sync(message("outsourcing", "  ", false, "active"), this.context);
 
         assertTrue(userDoc("  ").isNew());
+    }
+
+    @Test
+    void keepsAllMembersWhenAddingSeveralUsers() throws Exception
+    {
+        this.synchronizer.sync(message("outsourcing", "10086", false, "active"), this.context);
+        this.synchronizer.sync(message("outsourcing", "10087", false, "active"), this.context);
+        this.synchronizer.sync(message("outsourcing", "10088", false, "active"), this.context);
+
+        assertEquals(List.of("XWiki.10086", "XWiki.10087", "XWiki.10088"), groupMembers());
+    }
+
+    @Test
+    void batchAddIsIdempotent() throws Exception
+    {
+        int first = this.synchronizer.addMembersToOutsourcingGroup(
+            List.of("XWiki.10086", "XWiki.10087"), this.context);
+        int second = this.synchronizer.addMembersToOutsourcingGroup(
+            List.of("XWiki.10086", "XWiki.10087"), this.context);
+
+        assertEquals(2, first);
+        assertEquals(0, second);
+        assertEquals(List.of("XWiki.10086", "XWiki.10087"), groupMembers());
+    }
+
+    @Test
+    void batchAddSkipsMembersAlreadyPresent() throws Exception
+    {
+        this.synchronizer.sync(message("outsourcing", "10086", false, "active"), this.context);
+
+        int added = this.synchronizer.addMembersToOutsourcingGroup(
+            List.of("XWiki.10086", "XWiki.10087"), this.context);
+
+        assertEquals(1, added);
+        assertEquals(List.of("XWiki.10086", "XWiki.10087"), groupMembers());
+    }
+
+    @Test
+    void batchAddCreatesTheGroupWhenMissing() throws Exception
+    {
+        assertTrue(groupDoc().isNew());
+
+        this.synchronizer.addMembersToOutsourcingGroup(List.of("XWiki.10086"), this.context);
+
+        assertEquals(DoapMqConstants.OUTSOURCING_GROUP_NAME, groupDoc().getTitle());
+        assertEquals(List.of("XWiki.10086"), groupMembers());
+    }
+
+    @Test
+    void ensureUserReportsCreatedThenExisted() throws Exception
+    {
+        DoapUserSynchronizer.EnsuredUser created = this.synchronizer.ensureUser("10086", this.context);
+        DoapUserSynchronizer.EnsuredUser existed = this.synchronizer.ensureUser("10086", this.context);
+
+        assertTrue(created.isCreated());
+        assertEquals("XWiki.10086", created.getFullName());
+        assertFalse(existed.isCreated());
+        assertEquals("XWiki.10086", existed.getFullName());
+    }
+
+    private List<String> groupMembers() throws Exception
+    {
+        List<BaseObject> objects = groupDoc().getXObjects(
+            new DocumentReference(this.context.getWikiId(), "XWiki", "XWikiGroups"));
+        if (objects == null) {
+            return List.of();
+        }
+        List<String> members = new ArrayList<>();
+        for (BaseObject object : objects) {
+            if (object != null) {
+                members.add(object.getStringValue("member"));
+            }
+        }
+        return members;
     }
 
     private XWikiDocument userDoc(String username) throws Exception

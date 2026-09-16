@@ -19,9 +19,13 @@
  */
 package org.xwiki.oa.sync.internal.mq;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.slf4j.Logger;
@@ -31,8 +35,6 @@ import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.EntityReference;
 import org.xwiki.oa.sync.mq.DoapMqConstants;
 import org.xwiki.oa.sync.mq.model.DoapUserMessage;
-import org.xwiki.user.group.GroupException;
-import org.xwiki.user.group.GroupManager;
 
 import com.xpn.xwiki.XWiki;
 import com.xpn.xwiki.XWikiContext;
@@ -49,6 +51,9 @@ import com.xpn.xwiki.user.api.XWikiUser;
  *   <li>所有外包用户加入统一权限组「开发中心科技外包组」；</li>
  *   <li>{@code isDeleted=true} 或 {@code status=dismission} 时禁用用户，否则保持原状态（不重新启用）。</li>
  * </ul>
+ * 「建号」与「入组」抽成 {@link #ensureUser(String, XWikiContext)} 与
+ * {@link #addMembersToOutsourcingGroup(Collection, XWikiContext)}，
+ * 供 MQ 增量与 Excel 全量导入共用，保证两条链路结果状态一致。
  *
  * @version $Id$
  */
@@ -58,8 +63,46 @@ public class DoapUserSynchronizer
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(DoapUserSynchronizer.class);
 
-    @Inject
-    private GroupManager groupManager;
+    /**
+     * 批量入组时单次保存的成员数上限。
+     */
+    private static final int GROUP_CHUNK_SIZE = 200;
+
+    /**
+     * 建号结果。
+     */
+    public static final class EnsuredUser
+    {
+        private final String fullName;
+
+        private final boolean created;
+
+        /**
+         * @param fullName the user document full name, e.g. {@code XWiki.10086}
+         * @param created whether the user was created by this call
+         */
+        public EnsuredUser(String fullName, boolean created)
+        {
+            this.fullName = fullName;
+            this.created = created;
+        }
+
+        /**
+         * @return the user document full name, e.g. {@code XWiki.10086}
+         */
+        public String getFullName()
+        {
+            return this.fullName;
+        }
+
+        /**
+         * @return whether the user was created by this call
+         */
+        public boolean isCreated()
+        {
+            return this.created;
+        }
+    }
 
     /**
      * 处理一条外包用户消息。
@@ -67,9 +110,8 @@ public class DoapUserSynchronizer
      * @param message the parsed MQ message
      * @param context the XWiki context
      * @throws XWikiException if user/group operations fail
-     * @throws GroupException if membership lookup fails
      */
-    public void sync(DoapUserMessage message, XWikiContext context) throws XWikiException, GroupException
+    public void sync(DoapUserMessage message, XWikiContext context) throws XWikiException
     {
         String type = message.getString(DoapMqConstants.FIELD_TYPE);
         if (!DoapMqConstants.USER_TYPE_OUTSOURCING.equals(type)) {
@@ -84,31 +126,18 @@ public class DoapUserSynchronizer
         }
         username = username.trim();
 
-        XWiki wiki = context.getWiki();
-        String wikiId = context.getWikiId();
-        DocumentReference userRef = new DocumentReference(wikiId, "XWiki", username);
-
         // 1. 用户不存在则新建
-        XWikiDocument userDoc = wiki.getDocument(userRef, context);
-        if (userDoc.isNew()) {
-            wiki.createUser(username, Collections.emptyMap(), context);
-            userDoc = wiki.getDocument(userRef, context);
-            LOGGER.info("DOAP MQ 新建用户: [{}]", username);
-        }
+        EnsuredUser user = ensureUser(username, context);
 
         // 2. 加入统一权限组「开发中心科技外包组」
-        DocumentReference groupRef =
-            new DocumentReference(wikiId, "XWiki", DoapMqConstants.OUTSOURCING_GROUP_NAME);
-        EntityReference groupClassRef =
-            wiki.getGroupClass(context).getDocumentReference().removeParent(groupRef.getWikiReference());
-        this.ensureGroup(groupRef, groupClassRef, context);
-        this.addMemberIfMissing(groupRef, groupClassRef, userRef, userDoc.getFullName(), context);
+        addMembersToOutsourcingGroup(Collections.singletonList(user.getFullName()), context);
 
         // 3. 禁用判断：isDeleted=true 或 status=dismission → 禁用；否则保持原状态（不重新启用）
         boolean isDeleted = Boolean.TRUE.equals(message.getBoolean(DoapMqConstants.FIELD_IS_DELETED));
         String status = message.getString(DoapMqConstants.FIELD_STATUS);
         boolean dismission = status != null && status.trim().equals(DoapMqConstants.STATUS_DISMISSION);
         if (isDeleted || dismission) {
+            DocumentReference userRef = new DocumentReference(context.getWikiId(), "XWiki", username);
             XWikiUser xwikiUser = new XWikiUser(userRef);
             if (!xwikiUser.isDisabled(context)) {
                 xwikiUser.setDisabled(true, context);
@@ -119,8 +148,99 @@ public class DoapUserSynchronizer
         }
     }
 
-    private void ensureGroup(DocumentReference groupRef, EntityReference groupClassRef, XWikiContext context)
+    /**
+     * 幂等建号：用户不存在则按工号新建。
+     *
+     * @param username the staff id, also the XWiki user name
+     * @param context the XWiki context
+     * @return the ensured user (full name + whether it was created now)
+     * @throws XWikiException if the user cannot be created
+     */
+    public EnsuredUser ensureUser(String username, XWikiContext context) throws XWikiException
+    {
+        XWiki wiki = context.getWiki();
+        DocumentReference userRef = new DocumentReference(context.getWikiId(), "XWiki", username);
+        XWikiDocument userDoc = wiki.getDocument(userRef, context);
+        if (!userDoc.isNew()) {
+            return new EnsuredUser(userDoc.getFullName(), false);
+        }
+
+        wiki.createUser(username, Collections.emptyMap(), context);
+        userDoc = wiki.getDocument(userRef, context);
+        LOGGER.info("OA 用户同步新建用户: [{}]", username);
+        return new EnsuredUser(userDoc.getFullName(), true);
+    }
+
+    /**
+     * 把若干成员批量加入统一外包权限组，返回真正新增的成员数。
+     * <p>
+     * 串行执行（组文档是单点，不能并发写）；按已有成员求差集后分块保存，
+     * 每个待加成员都创建**新的** XWikiGroups 对象，绝不覆盖已有成员。
+     *
+     * @param memberFullNames the member full names, e.g. {@code XWiki.10086}
+     * @param context the XWiki context
+     * @return how many members were actually added
+     * @throws XWikiException if the group cannot be created or saved
+     */
+    public int addMembersToOutsourcingGroup(Collection<String> memberFullNames, XWikiContext context)
         throws XWikiException
+    {
+        if (memberFullNames == null || memberFullNames.isEmpty()) {
+            return 0;
+        }
+
+        XWiki wiki = context.getWiki();
+        DocumentReference groupRef =
+            new DocumentReference(context.getWikiId(), "XWiki", DoapMqConstants.OUTSOURCING_GROUP_NAME);
+        EntityReference groupClassRef =
+            wiki.getGroupClass(context).getDocumentReference().removeParent(groupRef.getWikiReference());
+        ensureGroup(groupRef, context);
+
+        List<String> toAdd = computeMissingMembers(wiki.getDocument(groupRef, context), groupClassRef, memberFullNames);
+        if (toAdd.isEmpty()) {
+            return 0;
+        }
+
+        for (int start = 0; start < toAdd.size(); start += GROUP_CHUNK_SIZE) {
+            List<String> chunk = toAdd.subList(start, Math.min(start + GROUP_CHUNK_SIZE, toAdd.size()));
+            XWikiDocument modified = wiki.getDocument(groupRef, context).clone();
+            for (String memberFullName : chunk) {
+                BaseObject memberObject = modified.newXObject(groupClassRef, context);
+                memberObject.setStringValue("member", memberFullName);
+            }
+            wiki.saveDocument(modified,
+                "OA sync: 批量添加 " + chunk.size() + " 名成员到组 " + groupRef.getName(), context);
+        }
+        LOGGER.info("OA 用户同步入组: 组=[{}] 新增成员=[{}]", DoapMqConstants.OUTSOURCING_GROUP_NAME, toAdd.size());
+        return toAdd.size();
+    }
+
+    private List<String> computeMissingMembers(XWikiDocument groupDoc, EntityReference groupClassRef,
+        Collection<String> memberFullNames)
+    {
+        Set<String> existing = new HashSet<>();
+        List<BaseObject> objects = groupDoc.getXObjects(groupClassRef);
+        if (objects != null) {
+            for (BaseObject object : objects) {
+                if (object != null) {
+                    String member = object.getStringValue("member");
+                    if (member != null && !member.isBlank()) {
+                        existing.add(member.trim());
+                    }
+                }
+            }
+        }
+
+        List<String> toAdd = new ArrayList<>();
+        for (String memberFullName : memberFullNames) {
+            if (memberFullName != null && !memberFullName.isBlank() && existing.add(memberFullName.trim())) {
+                toAdd.add(memberFullName.trim());
+            }
+        }
+        return toAdd;
+    }
+
+    private void ensureGroup(DocumentReference groupRef, XWikiContext context) throws XWikiException
     {
         XWiki wiki = context.getWiki();
         XWikiDocument groupDoc = wiki.getDocument(groupRef, context);
@@ -130,21 +250,5 @@ public class DoapUserSynchronizer
             wiki.saveDocument(doc, "DOAP MQ sync: 创建权限组 " + DoapMqConstants.OUTSOURCING_GROUP_NAME, context);
             LOGGER.info("DOAP MQ 创建权限组: [{}]", DoapMqConstants.OUTSOURCING_GROUP_NAME);
         }
-    }
-
-    private void addMemberIfMissing(DocumentReference groupRef, EntityReference groupClassRef,
-        DocumentReference userRef, String userFullName, XWikiContext context) throws XWikiException, GroupException
-    {
-        if (this.groupManager.getMembers(groupRef, false).contains(userRef)) {
-            return;
-        }
-        XWiki wiki = context.getWiki();
-        XWikiDocument groupDoc = wiki.getDocument(groupRef, context).clone();
-        BaseObject memberObject = groupDoc.getXObject(groupClassRef);
-        if (memberObject == null) {
-            memberObject = groupDoc.newXObject(groupClassRef, context);
-        }
-        memberObject.setStringValue("member", userFullName);
-        wiki.saveDocument(groupDoc, "DOAP MQ sync: 添加成员 " + userFullName + " 到组 " + groupRef.getName(), context);
     }
 }
