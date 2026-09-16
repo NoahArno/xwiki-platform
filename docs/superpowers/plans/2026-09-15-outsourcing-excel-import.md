@@ -1731,6 +1731,15 @@ git commit -m "外包同步：修复加组成员覆盖已有成员的 bug，并�
 > 当前计划的服务实现已经有 `(outcome == null ? "任务超时或异常" : outcome.getMessage())` 的写法，
 > 符合上述要求；这一段是把它从"碰巧写对"变成**显式约定**，避免后续改动丢掉。
 
+> **`joinedGroup` 是"参考值"而非强校验**（Task 4 复审的提醒）。`addMembersToOutsourcingGroup`
+> 的"新增成员数"是按 `member` **字符串**比较算出来的。若组里已存在**全限定形式**的成员串
+> （如 `xwiki:XWiki.10086`，XAR 导入或跨 wiki 添加会产生），同一人会被判成"新成员"而多加一个对象，
+> 于是 `joinedGroup` 偏大 1~N。这**不影响权限**（多一个重复对象而已），且第二次调用即幂等。
+> 因此：
+> - 不要把 `joinedGroup` 当作"组内人数"的权威来源；权威来源始终是组文档的成员数
+> - 若页面向管理员展示"新增 N 人"，在文案或文档里注明这个口径
+> - **真正的人数校验放在端到端验证里**（Task 8：组内成员数 == Excel 去重后的行数）
+
 - [ ] **Step 1: 写失败的服务测试**
 
 创建 `OutsourcingExcelImportServiceTest.java`：
