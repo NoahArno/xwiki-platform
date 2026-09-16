@@ -1284,6 +1284,14 @@ git commit -m "外包Excel导入：新增并发执行器（每任务独立上下
 写成 `inOrder.verify(store, times(2)).cleanUp(...)` + `inOrder.verify(execution, times(2)).removeContext()`
 这种"先全部再全部"的形式会**不稳定失败**。正确做法是线程数设为 1 + 逐次交替 verify。
 
+**收口时的诚实性核对（复审的反证结论，别过度声称）**：6 个用例里**只有超时回归用例
+`keepsResultsOfAlreadyFinishedTasksWhenOneTaskTimesOut` 真正钉住了本次 C1 修复**
+（反证时唯一变红）；`returnsTaskResultsInSubmissionOrderEvenWhenCompletionOrderDiffers`、
+上下文实例互异（`ArgumentCaptor` + `assertNotSame`）两个加固用例在修复前也通过。
+而 cleanUp 用例的 `InOrder` 部分是**承重**的——把 `cleanupStore()` 挪到 `ExecutionContextRunnable`
+外面后，只有 `InOrder` 断言失败，`verify(store, times(2))` 仍然通过。
+所以：加固用例是"回归防护"，不是"修复验证"，两者别混为一谈。
+
 **未采纳**（经技术评估）：M5 的接口形状（`null` 同时表示"失败/合法 null/未等待到"三种含义）
 与队列无界无背压——属计划级最小主义，单管理员操作场景可接受；已在 Task 5 的规格里明确承接 `null` 的语义。
 
