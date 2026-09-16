@@ -2425,7 +2425,7 @@ public class OutsourcingExcelImportService
 - [ ] **Step 5: 运行测试确认通过**
 
 Run: 同 Step 2
-Expected: `Tests run: 5, Failures: 0, Errors: 0`
+Expected: `Tests run: 6, Failures: 0, Errors: 0`（原计划是 5 个，后补了 `null` 槽位用例）
 
 - [ ] **Step 6: 注册组件**
 
