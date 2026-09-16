@@ -94,6 +94,21 @@ api 模块进 reactor 后，`-Dtest=SomeTest` 在 api 模块匹配不到任何�
 surefire 会报 `No tests were executed!` 并以非 0 退出，导致整个构建失败。
 `-DfailIfNoTests=false` 让"该模块没有匹配到测试"不算失败。
 
+### 必须用 Java 21 构建（实测）
+
+本仓库的 enforcer 规则要求**最低 Java 21**。用 JDK 17 构建会**直接失败**：
+
+```
+[ERROR] You must build with Java 21 minimum!
+```
+
+实测用 `ms-21.0.10` 可以跑通。若你的 `JAVA_HOME` 指向 17，请先切到 21：
+
+```bash
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+java -version   # 确认是 21
+```
+
 ### 沙箱对 `~/.m2` 的限制
 
 若执行环境是 workspace-write 沙箱，`~/.m2` 可能**只读**，`install` 会失败
