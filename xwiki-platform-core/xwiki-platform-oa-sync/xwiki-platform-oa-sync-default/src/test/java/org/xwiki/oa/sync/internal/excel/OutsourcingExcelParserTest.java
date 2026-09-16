@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FormulaError;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -348,6 +349,108 @@ class OutsourcingExcelParserTest
 
         assertTrue(result.getUsernames().isEmpty());
         assertTrue(result.getErrors().isEmpty());
+    }
+
+    @Test
+    void stripsLineAndParagraphSeparatorsAroundStaffId() throws Exception
+    {
+        Path lineSeparator = xlsx(new String[] { "姓名", "staff_id" },
+            new String[] { "张三", "T001\u2028" });
+        assertEquals(List.of("T001"), parse(lineSeparator).getUsernames());
+
+        Path paragraphSeparator = xlsx(new String[] { "姓名", "staff_id" },
+            new String[] { "张三", "T001\u2029" });
+        assertEquals(List.of("T001"), parse(paragraphSeparator).getUsernames());
+    }
+
+    @Test
+    void rejectsLineSeparatorInsideStaffId() throws Exception
+    {
+        Path file = xlsx(new String[] { "姓名", "staff_id" },
+            new String[] { "张三", "T001\u2028X" });
+
+        OutsourcingExcelParseResult result = parse(file);
+
+        assertTrue(result.getUsernames().isEmpty());
+        assertEquals(1, result.getErrors().size());
+        assertTrue(result.getErrors().get(0).contains("非法字符"), result.getErrors().get(0));
+    }
+
+    @Test
+    void rejectsNegativeNumericStaffId() throws Exception
+    {
+        Path file = xlsxWithStyledBColumn(
+            (workbook, cell, rawValue) -> cell.setCellValue(Double.parseDouble(rawValue)),
+            new String[] { "姓名", "staff_id" },
+            new String[] { "张三", "-123" });
+
+        OutsourcingExcelParseResult result = parse(file);
+
+        assertTrue(result.getUsernames().isEmpty());
+        assertEquals(1, result.getErrors().size());
+        assertTrue(result.getErrors().get(0).contains("正整数"), result.getErrors().get(0));
+    }
+
+    @Test
+    void rejectsScientificNotationNumericStaffId() throws Exception
+    {
+        // 1e21 的原始 double 是精确的（精度校验通过），但 NumberToTextConverter 渲染成 "1E+21"，
+        // 若不校验形状就会被静默当成工号
+        Path file = xlsxWithStyledBColumn(
+            (workbook, cell, rawValue) -> cell.setCellValue(Double.parseDouble(rawValue)),
+            new String[] { "姓名", "staff_id" },
+            new String[] { "张三", "1e21" });
+
+        OutsourcingExcelParseResult result = parse(file);
+
+        assertTrue(result.getUsernames().isEmpty());
+        assertEquals(1, result.getErrors().size());
+        assertTrue(result.getErrors().get(0).contains("正整数"), result.getErrors().get(0));
+    }
+
+    @Test
+    void rejectsBooleanStaffIdCell() throws Exception
+    {
+        Path file = xlsxWithStyledBColumn(
+            (workbook, cell, rawValue) -> cell.setCellValue(Boolean.parseBoolean(rawValue)),
+            new String[] { "姓名", "staff_id" },
+            new String[] { "张三", "true" });
+
+        OutsourcingExcelParseResult result = parse(file);
+
+        assertTrue(result.getUsernames().isEmpty());
+        assertEquals(1, result.getErrors().size());
+        assertTrue(result.getErrors().get(0).contains("布尔值"), result.getErrors().get(0));
+    }
+
+    @Test
+    void rejectsErrorStaffIdCell() throws Exception
+    {
+        Path file = xlsxWithStyledBColumn(
+            (workbook, cell, rawValue) -> cell.setCellErrorValue(FormulaError.NUM.getCode()),
+            new String[] { "姓名", "staff_id" },
+            new String[] { "张三", "ignored" });
+
+        OutsourcingExcelParseResult result = parse(file);
+
+        assertTrue(result.getUsernames().isEmpty());
+        assertEquals(1, result.getErrors().size());
+        assertTrue(result.getErrors().get(0).contains("错误值"), result.getErrors().get(0));
+    }
+
+    @Test
+    void skipsRowWhoseOnlyContentIsAnInvisibleSpace() throws Exception
+    {
+        // 空行口径与空工号口径统一：B 列只有不可见空格时整行按空行跳过（不记错误）
+        Path file = xlsx(new String[] { "姓名", "staff_id" },
+            new String[] { null, "\u00A0" },
+            new String[] { null, "\u3000" },
+            new String[] { "张三", "T001" });
+
+        OutsourcingExcelParseResult result = parse(file);
+
+        assertEquals(List.of("T001"), result.getUsernames());
+        assertTrue(result.getErrors().isEmpty(), result.getErrors().toString());
     }
 
     private OutsourcingExcelParseResult parse(Path file) throws IOException
