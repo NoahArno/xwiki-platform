@@ -186,6 +186,27 @@ class DoapUserSynchronizerTest
     }
 
     @Test
+    void addsMoreThanOneChunkOfMembersWithoutLosingAny() throws Exception
+    {
+        // 生产场景约 800 个成员、GROUP_CHUNK_SIZE = 200 ⇒ 一定会走多块（450 = 200 + 200 + 50）。
+        // 若每块不是在上一块已保存的基础上累加，就会静默只留最后一块 —— 这条路径必须被钉住。
+        List<String> names = new ArrayList<>();
+        for (int i = 0; i < 450; i++) {
+            names.add("XWiki.chunk" + i);
+        }
+
+        int added = this.synchronizer.addMembersToOutsourcingGroup(names, this.context);
+
+        assertEquals(450, added);
+        assertEquals(450, groupMembers().size());
+        assertTrue(groupMembers().containsAll(names), "成员必须按块累加，不能只剩最后一块");
+
+        // 幂等：再调一次不新增
+        assertEquals(0, this.synchronizer.addMembersToOutsourcingGroup(names, this.context));
+        assertEquals(450, groupMembers().size());
+    }
+
+    @Test
     void ensureUserReportsCreatedThenExisted() throws Exception
     {
         DoapUserSynchronizer.EnsuredUser created = this.synchronizer.ensureUser("10086", this.context);

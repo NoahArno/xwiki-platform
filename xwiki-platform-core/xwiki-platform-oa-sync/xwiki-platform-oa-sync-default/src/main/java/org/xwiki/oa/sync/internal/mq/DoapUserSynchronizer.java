@@ -69,6 +69,18 @@ public class DoapUserSynchronizer
     private static final int GROUP_CHUNK_SIZE = 200;
 
     /**
+     * 组文档是单点，读-改-写必须互斥。
+     * <p>
+     * MQ 消费是并发多线程的（{@code xwiki.doap-mq.consume-thread-max} 默认 8），
+     * 若两个线程同时读同一版本的组文档再各写整篇，后者会覆盖前者，结果是某个用户
+     * "建号成功 + 日志 success + MQ ACK"却不在组里 —— 静默丢权限，无重试无告警。
+     * <p>
+     * 这是 **JVM 级** 锁：单 Tomcat 部署下足够。若将来多节点各起不同消费组的 consumer
+     * 并发写同一个组文档，仍需要数据库级的并发控制（版本冲突重试或行锁），本锁不覆盖。
+     */
+    private static final Object GROUP_WRITE_LOCK = new Object();
+
+    /**
      * 建号结果。
      */
     public static final class EnsuredUser
@@ -161,21 +173,24 @@ public class DoapUserSynchronizer
         XWiki wiki = context.getWiki();
         DocumentReference userRef = new DocumentReference(context.getWikiId(), "XWiki", username);
         XWikiDocument userDoc = wiki.getDocument(userRef, context);
-        if (!userDoc.isNew()) {
-            return new EnsuredUser(userDoc.getFullName(), false);
+        boolean created = false;
+        if (userDoc.isNew()) {
+            // createUser 对已存在用户返回 -3（不抛异常），因此以返回码为准判断是否真的新建：
+            // 仅靠 isNew() 是 check-then-act，并发下两个线程会各自报 created=true
+            created = wiki.createUser(username, Collections.emptyMap(), context) == 1;
+            userDoc = wiki.getDocument(userRef, context);
         }
-
-        wiki.createUser(username, Collections.emptyMap(), context);
-        userDoc = wiki.getDocument(userRef, context);
-        LOGGER.info("OA 用户同步新建用户: [{}]", username);
-        return new EnsuredUser(userDoc.getFullName(), true);
+        if (created) {
+            LOGGER.info("OA 用户同步新建用户: [{}]", username);
+        }
+        return new EnsuredUser(userDoc.getFullName(), created);
     }
 
     /**
      * 把若干成员批量加入统一外包权限组，返回真正新增的成员数。
      * <p>
-     * 串行执行（组文档是单点，不能并发写）；按已有成员求差集后分块保存，
-     * 每个待加成员都创建**新的** XWikiGroups 对象，绝不覆盖已有成员。
+     * 组写入用 {@link #GROUP_WRITE_LOCK} 串行化（JVM 级）；多节点部署下本锁不覆盖跨 JVM 并发。
+     * 按已有成员求差集后分块保存，每个待加成员都创建**新的** XWikiGroups 对象，绝不覆盖已有成员。
      *
      * @param memberFullNames the member full names, e.g. {@code XWiki.10086}
      * @param context the XWiki context
@@ -189,30 +204,34 @@ public class DoapUserSynchronizer
             return 0;
         }
 
-        XWiki wiki = context.getWiki();
-        DocumentReference groupRef =
-            new DocumentReference(context.getWikiId(), "XWiki", DoapMqConstants.OUTSOURCING_GROUP_NAME);
-        EntityReference groupClassRef =
-            wiki.getGroupClass(context).getDocumentReference().removeParent(groupRef.getWikiReference());
-        ensureGroup(groupRef, context);
+        synchronized (GROUP_WRITE_LOCK) {
+            XWiki wiki = context.getWiki();
+            DocumentReference groupRef =
+                new DocumentReference(context.getWikiId(), "XWiki", DoapMqConstants.OUTSOURCING_GROUP_NAME);
+            EntityReference groupClassRef =
+                wiki.getGroupClass(context).getDocumentReference().removeParent(groupRef.getWikiReference());
+            ensureGroup(groupRef, context);
 
-        List<String> toAdd = computeMissingMembers(wiki.getDocument(groupRef, context), groupClassRef, memberFullNames);
-        if (toAdd.isEmpty()) {
-            return 0;
-        }
-
-        for (int start = 0; start < toAdd.size(); start += GROUP_CHUNK_SIZE) {
-            List<String> chunk = toAdd.subList(start, Math.min(start + GROUP_CHUNK_SIZE, toAdd.size()));
-            XWikiDocument modified = wiki.getDocument(groupRef, context).clone();
-            for (String memberFullName : chunk) {
-                BaseObject memberObject = modified.newXObject(groupClassRef, context);
-                memberObject.setStringValue("member", memberFullName);
+            List<String> toAdd =
+                computeMissingMembers(wiki.getDocument(groupRef, context), groupClassRef, memberFullNames);
+            if (toAdd.isEmpty()) {
+                return 0;
             }
-            wiki.saveDocument(modified,
-                "OA sync: 批量添加 " + chunk.size() + " 名成员到组 " + groupRef.getName(), context);
+
+            for (int start = 0; start < toAdd.size(); start += GROUP_CHUNK_SIZE) {
+                List<String> chunk = toAdd.subList(start, Math.min(start + GROUP_CHUNK_SIZE, toAdd.size()));
+                XWikiDocument modified = wiki.getDocument(groupRef, context).clone();
+                for (String memberFullName : chunk) {
+                    BaseObject memberObject = modified.newXObject(groupClassRef, context);
+                    memberObject.setStringValue("member", memberFullName);
+                }
+                wiki.saveDocument(modified,
+                    "OA sync: 批量添加 " + chunk.size() + " 名成员到组 " + groupRef.getName(), context);
+            }
+            LOGGER.info("OA 用户同步入组: 组=[{}] 新增成员=[{}]", DoapMqConstants.OUTSOURCING_GROUP_NAME,
+                toAdd.size());
+            return toAdd.size();
         }
-        LOGGER.info("OA 用户同步入组: 组=[{}] 新增成员=[{}]", DoapMqConstants.OUTSOURCING_GROUP_NAME, toAdd.size());
-        return toAdd.size();
     }
 
     private List<String> computeMissingMembers(XWikiDocument groupDoc, EntityReference groupClassRef,
