@@ -3158,6 +3158,29 @@ curl -sS -o /dev/null -w '%{http_code}\n' -u "Admin:admin" -X POST \
 
 Expected: `400`
 
+- [ ] **Step 8.2: 验证超限上传的真实行为（Task 7 复审提出，单测覆盖不到）**
+
+端点读到 `MAX_UPLOAD_BYTES + 1` 字节即返回 400，**不排空剩余 body**；
+而 Tomcat 默认 `maxSwallowSize = 2 MiB`，传几十 MB 时浏览器/客户端可能在写完前就被 reset。
+单测覆盖不到这一层，必须在真实实例上确认管理员看到的是**有用的错误**而不是连接被重置。
+
+```bash
+# 造一个 50 MB 的文件
+dd if=/dev/zero of=/tmp/big.xlsx bs=1m count=50
+
+curl -sS -w '\nHTTP %{http_code}\n' -u "Admin:admin" -X POST \
+  -H "Content-Type: application/octet-stream" \
+  --data-binary @/tmp/big.xlsx \
+  http://localhost:8080/xwiki/rest/oa-sync/outsourcing-excel
+```
+
+Expected: 拿到 **400** 且 body 含"上传文件超过体积上限"。
+
+> 若观察到连接被重置（curl 报 `Send failure` / 页面报 `Failed to fetch`），
+> 说明 `maxSwallowSize` 生效了。**不要**在前端 JS 里复制 10 MiB 常量做预检来"绕过"，
+> 正确做法是调大 Tomcat 的 `maxSwallowSize`（或把闸门改成先看 `Content-Length`）。
+> 把实际观察到的行为记进实施记录。
+
 - [ ] **Step 8.5: 验证上传的"正向路径"（Task 6 复审特别要求，**不可省略**）**
 
 **为什么必须单独验这一步**：单测里 `contentType` 是手工传进去的，
