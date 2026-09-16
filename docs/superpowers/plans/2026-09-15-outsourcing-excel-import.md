@@ -73,6 +73,53 @@ L231-243：仅当 `POST` 且媒体类型匹配上述之一时，才要求 `XWiki
 
 ---
 
+## 执行环境注意事项（Task 1 实测发现）
+
+### 为什么每条 `-pl` 命令都带上了 `xwiki-platform-oa-sync-api`
+
+Task 4 之后 `oa-sync-default` 会用到 Task 1 在 **api 模块**新增的 `getExcelImportThreads()`。
+若 `-pl` 只写 `oa-sync-default`，Maven 会从本地仓库解析 api 的**旧 jar**，
+于是 `@Override` 报「方法不会覆盖或实现超类型的方法」。
+
+因此所有 `-pl` 都写成 api + default 两个模块一起进 reactor
+（Maven 会按依赖顺序先构建 api）。**不要**改成 `-am`：那会把 oldcore、rest-server 等
+上游模块全部拉进 reactor 重新构建，极慢。
+
+`xwiki-platform-oa-sync-ui` 以 `runtime` scope 依赖 `oa-sync-default`（见其 pom），
+因此构建 ui 时也要把 api + default 一起放进 reactor，否则会解析到本地仓库里的旧 jar。
+
+### 为什么每条测试命令都带 `-DfailIfNoTests=false`
+
+api 模块进 reactor 后，`-Dtest=SomeTest` 在 api 模块匹配不到任何测试，
+surefire 会报 `No tests were executed!` 并以非 0 退出，导致整个构建失败。
+`-DfailIfNoTests=false` 让"该模块没有匹配到测试"不算失败。
+
+### 沙箱对 `~/.m2` 的限制
+
+若执行环境是 workspace-write 沙箱，`~/.m2` 可能**只读**，`install` 会失败
+（`Operation not permitted`）。可行的适配方式（不污染真实本地仓库）：
+
+```bash
+# 一次性：克隆一份可写的本地仓库副本（APFS clonefile，约 10s）
+cp -c -a ~/.m2/repository /tmp/dsh-m2repo
+
+# 之后所有 maven 命令都追加
+-o -Dmaven.repo.local=/tmp/dsh-m2repo
+```
+
+另外仓库自带的 Develocity 扩展（`.mvn/extensions.xml`）在部分 Maven 环境下会初始化报错；
+若构建因它失败，可临时改名后重试，**构建完必须改回原名**：
+
+```bash
+mv .mvn/extensions.xml .mvn/extensions.xml.bak   # 构建前
+mv .mvn/extensions.xml.bak .mvn/extensions.xml   # 构建后务必还原
+```
+
+这个环境下通常需要同时使用「离线 + 重定向本地仓库」，因为改掉扩展文件后，
+`xwiki-commons-pom` 里无版本的 `com.gradle:develocity-maven-extension` 会触发远程版本解析。
+
+---
+
 ## 文件结构
 
 ### 新增
@@ -159,8 +206,9 @@ L231-243：仅当 `POST` 且媒体类型匹配上述之一时，才要求 `XWiki
 Run:
 ```bash
 mvn -s ~/.m2/settings-xwiki.xml -f pom.xml \
-  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
-  -Dtest=DefaultOASyncConfigurationTest -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true test
+  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-api,\
+xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
+  -Dtest=DefaultOASyncConfigurationTest -DfailIfNoTests=false -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true test
 ```
 Expected: 编译失败，`cannot find symbol: method getExcelImportThreads()`
 
@@ -215,7 +263,8 @@ Expected: `Tests run: ... Failures: 0, Errors: 0`
 Run:
 ```bash
 mvn -s ~/.m2/settings-xwiki.xml -f pom.xml \
-  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
+  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-api,\
+xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
   -DskipTests=true -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true install
 ```
 Expected: `BUILD SUCCESS`
@@ -513,8 +562,9 @@ class OutsourcingExcelParserTest
 Run:
 ```bash
 mvn -s ~/.m2/settings-xwiki.xml -f pom.xml \
-  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
-  -Dtest=OutsourcingExcelParserTest -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true test
+  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-api,\
+xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
+  -Dtest=OutsourcingExcelParserTest -DfailIfNoTests=false -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true test
 ```
 Expected: 编译失败，找不到 `OutsourcingExcelParseResult` / `OutsourcingExcelParser`
 
@@ -896,8 +946,9 @@ class ExcelImportExecutorTest
 Run:
 ```bash
 mvn -s ~/.m2/settings-xwiki.xml -f pom.xml \
-  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
-  -Dtest=ExcelImportExecutorTest -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true test
+  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-api,\
+xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
+  -Dtest=ExcelImportExecutorTest -DfailIfNoTests=false -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true test
 ```
 Expected: 编译失败，找不到 `ExcelImportExecutor`
 
@@ -1207,8 +1258,9 @@ import com.xpn.xwiki.objects.BaseObject;
 Run:
 ```bash
 mvn -s ~/.m2/settings-xwiki.xml -f pom.xml \
-  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
-  -Dtest=DoapUserSynchronizerTest -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true test
+  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-api,\
+xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
+  -Dtest=DoapUserSynchronizerTest -DfailIfNoTests=false -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true test
 ```
 Expected: 编译失败（`addMembersToOutsourcingGroup` / `EnsuredUser` / `ensureUser` 不存在）。
 编译通过后，`keepsAllMembersWhenAddingSeveralUsers` 也会断言失败——这正是要修的 bug。
@@ -1471,8 +1523,9 @@ Expected: `Tests run: 11, Failures: 0, Errors: 0`（原有 6 个 + 新增 5 个�
 Run:
 ```bash
 mvn -s ~/.m2/settings-xwiki.xml -f pom.xml \
-  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
-  -Dtest='DoapUser*Test' -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true test
+  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-api,\
+xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
+  -Dtest='DoapUser*Test' -DfailIfNoTests=false -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true test
 ```
 Expected: 全部通过（`DoapUserSynchronizerTest`、`DoapUserMessageParserTest`、`DoapUserMessageDispatcherTest`、`DoapUserMessageHandlersTest`）
 
@@ -1703,8 +1756,9 @@ class OutsourcingExcelImportServiceTest
 Run:
 ```bash
 mvn -s ~/.m2/settings-xwiki.xml -f pom.xml \
-  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
-  -Dtest=OutsourcingExcelImportServiceTest -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true test
+  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-api,\
+xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
+  -Dtest=OutsourcingExcelImportServiceTest -DfailIfNoTests=false -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true test
 ```
 Expected: 编译失败，找不到 `ExcelImportResult` / `OutsourcingExcelImportService`
 
@@ -2243,8 +2297,9 @@ class OASyncRESTResourceTest
 Run:
 ```bash
 mvn -s ~/.m2/settings-xwiki.xml -f pom.xml \
-  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
-  -Dtest=OASyncRESTResourceTest -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true test
+  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-api,\
+xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
+  -Dtest=OASyncRESTResourceTest -DfailIfNoTests=false -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true test
 ```
 Expected: 编译失败，`importOutsourcingExcel` 不存在，且 `authorizationManager`/`excelImportService` 字段不存在
 
@@ -2435,7 +2490,9 @@ org.xwiki.oa.sync.internal.excel.OutsourcingExcelImportService
 Run:
 ```bash
 mvn -s ~/.m2/settings-xwiki.xml -f pom.xml \
-  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-ui \
+  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-api,\
+xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default,\
+xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-ui \
   -DskipTests=true -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true install
 ```
 Expected: `BUILD SUCCESS`，且 `xwiki-platform-oa-sync-ui/target/xwiki-platform-oa-sync-ui-18.1.0.xar` 被重新生成
@@ -2459,8 +2516,9 @@ git commit -m "外包Excel导入：注册组件并在 OASync 页面增加上传�
 Run:
 ```bash
 mvn -s ~/.m2/settings-xwiki.xml -f pom.xml \
-  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
-  -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true test
+  -pl xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-api,\
+xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default \
+  -DfailIfNoTests=false -Dxwiki.spoon.skip=true -Dlicense.skip=true -Dxwiki.checkstyle.skip=true test
 ```
 Expected: `BUILD SUCCESS`，无 `Failures` / `Errors`
 
