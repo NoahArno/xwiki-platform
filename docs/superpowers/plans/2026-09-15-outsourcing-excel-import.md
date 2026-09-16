@@ -1927,7 +1927,46 @@ class OutsourcingExcelImportServiceTest
         verify(this.synchronizer, never()).ensureUser(any(), any());
     }
 
-    private void parseReturns(String... usernames)
+    @Test
+    void treatsNullOutcomeAsFailureAndNeverReportsSuccess() throws Exception
+    {
+        // runAll 的 null 同时表示"确定失败""合法 null 返回""整体超时没等到"三种含义，
+        // 编排层无法区分，因此一律计失败；且必须判空后再调 getStatus()，否则 NPE
+        parseReturns("T001", "T002");
+        when(this.synchronizer.ensureUser(eq("T001"), any()))
+            .thenReturn(new DoapUserSynchronizer.EnsuredUser("XWiki.T001", true));
+        when(this.synchronizer.ensureUser(eq("T002"), any()))
+            .thenReturn(new DoapUserSynchronizer.EnsuredUser("XWiki.T002", true));
+        when(this.synchronizer.addMembersToOutsourcingGroup(anyCollection(), any())).thenReturn(1);
+
+        // 直接让 executor.runAll 返回含 null 的结果，模拟"超时没等到"
+        doAnswer(invocation -> {
+            List<Callable<?>> tasks = invocation.getArgument(0);
+            List<Object> results = new ArrayList<>();
+            results.add(tasks.get(0).call());
+            results.add(null);
+            return results;
+        }).when(this.executor).runAll(anyList());
+
+        ExcelImportResult result = this.service.importFrom(stream(), this.context);
+
+        assertEquals(2, result.getTotal());
+        assertEquals(1, result.getCreated());
+        assertEquals(1, result.getFailed());
+        assertEquals(1, result.getErrors().size());
+        assertTrue(result.getErrors().get(0).contains("T002"), result.getErrors().toString());
+
+        // null 槽位不得进组
+        verify(this.synchronizer).addMembersToOutsourcingGroup(eq(List.of("XWiki.T001")), eq(this.context));
+
+        // 存在 null 时绝不能判 SUCCESS
+        org.mockito.ArgumentCaptor<OASyncResult> captor =
+            org.mockito.ArgumentCaptor.forClass(OASyncResult.class);
+        verify(this.recordStore).save(captor.capture(), eq(this.context));
+        assertEquals(OASyncResult.Status.PARTIAL_FAILURE, captor.getValue().getStatus());
+    }
+
+    private void parseReturns(String... usernames) throws IOException
     {
         OutsourcingExcelParseResult parsed = new OutsourcingExcelParseResult();
         parsed.getUsernames().addAll(List.of(usernames));
