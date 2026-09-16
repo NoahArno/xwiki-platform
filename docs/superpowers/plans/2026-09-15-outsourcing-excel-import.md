@@ -1680,6 +1680,34 @@ git commit -m "外包同步：修复加组成员覆盖已有成员的 bug，并�
 改为每个待加成员 newXObject，并支持批量分块保存。"
 ```
 
+### Task 4 复审后的修订（代码为准，见提交 `cfeaf5c57a7`）
+
+**上面 Task 4 的代码块还有三处问题**，实际代码已按下面修订（**以仓库代码为准**）：
+
+| # | 问题 | 修订 |
+|---|---|---|
+| **Important** | **组写入的读-改-写无互斥 → 并发静默丢成员**。这不是理论风险：`DefaultDoapMqConsumer` 用 `MessageListenerConcurrently`，`consume-thread-max` 默认 **8**，多线程会同时调 `sync()` → `addMembersToOutsourcingGroup(singletonList)`。两线程各读同版本组文档、各写整篇 ⇒ 后者覆盖前者 ⇒ 某用户"建号成功 + 日志 success + MQ ACK"却**不在组里** ⇒ 静默丢权限、无重试无告警。而原 javadoc 写着"串行执行…不能并发写"——**该不变量没有任何代码强制** | 加 `private static final Object GROUP_WRITE_LOCK`，方法体整体 `synchronized`；javadoc 改为诚实描述：**JVM 级锁，单 Tomcat 足够，不覆盖跨 JVM 并发**（多节点各起不同消费组时仍需数据库级并发控制） |
+| Minor | `ensureUser` 的 `isCreated()` 是"意图"而非"事实"：`XWiki.createUser` 对已存在用户**返回 -3 而不抛异常**，仅靠 `isNew()` 是 check-then-act，并发下输的线程仍报 `created=true`，Task 5 的 `created` 计数偏高 | 以返回码为准：`created = wiki.createUser(...) == 1`；建号日志也挪进 `if (created)` |
+| Minor | `GROUP_CHUNK_SIZE = 200` 而生产约 800 人 ⇒ **必走多块**，这条路径 0 覆盖。若每块不是在上一块已保存的基础上累加，会**静默只留最后一块** | 补 `addsMoreThanOneChunkOfMembersWithoutLosingAny`（450 = 200+200+50，断言返回 450、成员数 450、`containsAll`、二次调用返回 0） |
+
+用例 11 → 12，MQ 回归 21 → 22。
+
+**反证证据**：临时把 `modified.newXObject(...)` 换回复用写法 `modified.getXObject(groupClassRef)` + 兜底后，
+新用例失败 `expected: <450> but was: <1>`。注意是 **1** 而不是分块累加的 3——buggy 模式下同一次保存内
+首个对象就被反复覆盖，破坏比预期更彻底。
+
+**未采纳**（记作后续项）：成员串规范化——组里已有全限定形式 `xwiki:XWiki.10086` 而传入 `XWiki.10086` 时
+会多建一个重复 member 对象、`joinedGroup` 计数偏大，但**不丢权限**且二次调用即幂等。
+
+**关于并发测试的取舍**：**故意不为 `GROUP_WRITE_LOCK` 写并发用例**。理由：本模块容器测试共用同一个
+`XWikiContext`，多线程共享它**本身就不安全**且会 flaky；"无锁是否必然失败"是概率性的，
+这类测试只能算装饰。2 行的结构性改动靠代码审查确认即可。
+
+**另一个未测但已实证的语义**：分块能正确累加，依赖 `XWikiCacheStore.saveXWikiDoc` 在 finally 里
+`invalidateCache(key)`（`XWikiCacheStore.java:280-292`），使下一块 `loadXWikiDoc` 缓存未命中而从 DB 重载。
+审查员已核对该失效逻辑（缓存不失效的话会**丢成员**，最终只剩最后一块）。测试环境用的是
+`MockitoOldcore.loadXWikiDoc`，走不到这条缓存失效路径，所以用例钉的是"每块累加"逻辑本身。
+
 ---
 
 ## Task 5: 导入统计与编排服务

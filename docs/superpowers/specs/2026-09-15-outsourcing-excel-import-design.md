@@ -80,6 +80,30 @@ memberObject.setStringValue("member", userFullName);
 **修复方式**：为每个待加成员 `newXObject` 创建**新**对象，绝不复用已有对象；
 并按 200 个成员一块分批保存（避免 800 个 XObject 挤在一个 revision 里）。
 
+### 2.2 组写入必须串行化（另一处实施中发现的问题）
+
+`addMembersToOutsourcingGroup` 是"读组文档 → 求差集 → 加成员 → 保存整篇"的**读-改-写**。
+它**不是**只在单线程里被调用：
+
+- MQ 侧 `DefaultDoapMqConsumer` 用 `MessageListenerConcurrently` 并发消费
+- `xwiki.doap-mq.consume-thread-max` 默认 **8**
+- 因此多个线程会同时 `sync()` → `addMembersToOutsourcingGroup(singletonList)`
+
+两个线程各读同一版本的组文档、各写整篇 ⇒ **后者覆盖前者** ⇒ 某用户"建号成功 + 日志 success +
+MQ ACK"却**不在组里** ⇒ **静默丢权限**，无重试无告警。
+
+**处置**：加 JVM 级锁 `GROUP_WRITE_LOCK` 把整段读-改-写串行化。这是一处**诚实标注了边界**的修复：
+
+> 该锁是 **JVM 级**的，单 Tomcat 部署下足够。若将来多节点各起**不同消费组**的 consumer
+> 并发写同一个组文档，仍需数据库级并发控制（版本冲突重试或行锁），本锁不覆盖。
+
+> 原 javadoc 曾写着"串行执行（组文档是单点，不能并发写）"，但那只是**愿望**——不变量没有任何代码强制。
+> 现已改为与实现一致的描述。
+
+**另一处相关修正**：`ensureUser` 的 `created` 标志原先只靠 `isNew()` 判断，是 check-then-act；
+`XWiki.createUser` 对已存在用户**返回 -3 而不抛异常**，并发下输的线程仍会报 `created=true`，
+使导入统计的"新建"数偏高。现改为以返回码为准（`createUser(...) == 1`）。
+
 > 顺带核对：`internal/sync/UserGroupSynchronizer`（文件链路的行员/外包同步）里有同名的
 > `addMemberIfMissing`，但它**已经是**无条件 `newXObject`（L140），不存在同类 bug，无需改动。
 
