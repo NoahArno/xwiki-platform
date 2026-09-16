@@ -207,20 +207,38 @@ fetch('$request.contextPath/rest/oa-sync/outsourcing-excel', {
 
 | 层级 | 处理 |
 |---|---|
-| 文件级（非法 xlsx、无 sheet、sheet 为空、IO 失败） | HTTP 400 + 原因，同时写一条 `FAILURE` 同步记录（便于事后追溯失败的上传） |
-| 行级（B 列为空、单元格读取异常、staff_id 超长/含非法字符） | 收集进 `errors`（带行号与原因），**不中断整体**，最终状态 `PARTIAL_FAILURE` |
+| 文件级（非法 xlsx、无 sheet、IO 失败） | HTTP 400 + 原因，同时写一条 `FAILURE` 同步记录（便于事后追溯失败的上传） |
+| 行级（B 列为空、单元格是公式或日期格式、staff_id 超长/含非法字符） | 收集进 `errors`（带行号与原因），**不中断整体**，最终状态 `PARTIAL_FAILURE` |
 | 用户级（`createUser` 抛 `XWikiException`） | 该用户计入 `failed`，其余继续（与 `DefaultOASyncService` 的逐条隔离一致） |
 | 入组失败 | 整体返回 `PARTIAL_FAILURE`；已建号不回收（重跑即可补齐入组） |
 
 **部分成功的语义**：建号成功但入组失败时，用户存在但不在组内。由于重跑幂等，再次导入即可修复，不需要事务回滚。
 
+**零数据行不算文件级失败**：只有表头、没有任何数据行是一个合法文件形态（不是错误文件），
+因此解析层返回空工号列表、不产生 error，导入结果为 `SUCCESS` 且 `total=0`。
+操作者在页面提示里能直接看到"总数=0"，足以识别"传错文件/传错月份"。
+把它当 400 会破坏"只导表头"这类合法场景，故不采纳。
+
 ### 7.3 解析细节
 
 - 用 POI `WorkbookFactory.create(InputStream)` 兼容 `.xlsx` / `.xls`
-- `DataFormatter` 按单元格显示格式取值，避免数字型单元格被读成 `1.0086E4` 之类
+- **按单元格类型取值，不能一律用 `DataFormatter`**。`DataFormatter` 返回的是"按单元格显示格式渲染的字符串"，
+  会把语义完全不同的单元格伪装成"看起来合法"的工号并被静默接受。实测后果：
+  - 数字型 + `#,##0` 格式 → `"10,086"`（逗号不在非法字符集里）→ 静默建出错误用户
+  - 日期格式 → `"2026-01-02"` → 静默建出错误用户
+  - 公式单元格 → 返回公式文本 → 静默建出错误用户
+
+  因此取值规则为：`FORMULA` → 记错误；`DateUtil.isCellDateFormatted` 为真 → 记错误；
+  `NUMERIC` → 用 `NumberToTextConverter.toText(double)` 取与显示格式无关的原始数值文本；
+  其余类型才交给 `DataFormatter`。
+- 工号两侧用 `strip()` 清理（`trim()` 只去 ASCII ≤U+0020，去不掉全角空格 U+3000）；
+  非法字符集并入 `\p{Zs}`，拦住 `strip()` 去不掉的不换行空格 U+00A0 等
+- `WorkbookFactory.create` 对用户可上传的坏文件抛的是 **unchecked** 异常
+  （空文件 → `EmptyFileException`，非 Office 文件 → `NotOfficeXmlFileException`），
+  必须统一转成 `IOException`，否则上游的"文件级失败"分支抓不到，只会变成 HTTP 500 且不落失败记录
 - 表头行仅跳过，不校验列名（B 列位置固定）
 - 文件内出现重复 staff_id 时**去重并记一条 warning**（不作为错误）
-- 空行静默跳过
+- 空行静默跳过；行内有内容但 B 列为空 → 记错误
 - 读取结束后按行号排序输出 `errors`，便于人工核对
 
 ## 8. 同步记录

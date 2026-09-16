@@ -144,7 +144,7 @@ mv .mvn/extensions.xml.bak .mvn/extensions.xml   # 构建后务必还原
 |---|---|
 | `.../internal/mq/DoapUserSynchronizer.java` | 抽出 `ensureUser`（返回 `EnsuredUser`）与 `addMembersToOutsourcingGroup`（批量、分块、**修复成员覆盖 bug**）；MQ 的 `sync()` 改为调用它们 |
 | `.../internal/rest/OASyncRESTResource.java` | 新增 `POST /oa-sync/outsourcing-excel`，做管理员权限校验 |
-| `xwiki-platform-oa-sync-default/src/main/resources/META-INF/components.txt` | 注册 3 个新组件 |
+| `xwiki-platform-oa-sync-default/src/main/resources/META-INF/components.txt` | 按任务追加注册：解析器（Task 2）、执行器（Task 3）、编排服务（Task 5）；Task 7 只核对 |
 | `xwiki-platform-oa-sync-default/pom.xml` | 增加 `poi-ooxml` 依赖 |
 | `xwiki-platform-oa-sync-api/.../OASyncConfiguration.java` | 新增 `getExcelImportThreads()` |
 | `.../internal/configuration/DefaultOASyncConfiguration.java` | 实现 `getExcelImportThreads()`（默认 4，钳制到 1..8） |
@@ -819,6 +819,42 @@ git add xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-defaul
 git commit -m "外包Excel导入：新增 POI 解析器（单sheet/跳表头/B列/去重/工号校验）"
 ```
 
+### Task 2 复审后的修订（代码为准，见提交 `6b7f63eb432`）
+
+Task 2 通过规格审查后，代码质量审查实测出三个会导致"静默建出错误用户"或"500 且不落失败记录"的问题。
+**上面 Task 2 的代码块是修订前的版本**，实际代码已按下面修订（**以仓库代码为准**）：
+
+| # | 问题 | 修订 |
+|---|---|---|
+| I1 | `DataFormatter` 按**显示格式**渲染，把语义不同的单元格伪装成合法工号：数字 + `#,##0` → `"10,086"`（逗号不在非法字符集）→ 静默建出错误用户；日期格式 → `"2026-01-02"`；公式 → 公式文本 | 改为按单元格类型取值：`FORMULA` → 坏行；`DateUtil.isCellDateFormatted` → 坏行；`NUMERIC` → `NumberToTextConverter.toText(...)`；其余才用 `DataFormatter` |
+| I2 | `trim()` 只去 ASCII ≤U+0020，Java `\s` 只匹配 `[ \t\n\x0B\f\r]`，全角空格 U+3000 / NBSP U+00A0 会留在工号里 | `trim()` → `strip()`；非法字符集并入 `\p{Zs}` |
+| I3 | `WorkbookFactory.create` 对用户可上传的坏文件抛 **unchecked** 异常（`EmptyFileException` / `NotOfficeXmlFileException`），下游只 `catch (IOException)` → HTTP 500 且**不写 FAILURE 记录**（违反设计 §7.2） | 新增 `openWorkbook(InputStream)`，`catch (RuntimeException)` → 转 `IOException` |
+| M1 | `isBlankRow` 在 `try` 之外，整行扫描异常会中断整个导入 | 判定挪进 `try`；循环起点 `Math.max(0, row.getFirstCellNum())` |
+| M3 | `OutsourcingExcelParser` 标了 `@Component` 却没进 `components.txt` | 本任务追加注册（见下"组件注册的时机"） |
+| M5 | `.xls` 用例存成了 `test.xlsx`；同一用例内多次保存互相覆盖 | `.xls` 存 `.xls`；`save()` 用递增计数器生成唯一文件名；补"第二个 sheet 被忽略""255 接受 / 256 拒绝"用例 |
+| M6 | 注释称"文档名上限 255"，与 `xwiki.hbm.xml`（`length="768"`）不符 | 注释改为"255 是刻意收紧的上限，不是数据库硬限制" |
+
+新增用例 9 个，解析器用例总数 11 → 20，全模块回归 79 个通过。
+
+**未采纳**（经技术评估，非疏漏）：
+- **M2**（零行 sheet 报 SUCCESS）：判定为设计文档措辞问题而非代码缺陷，已改设计文档 §7.2（改代码会破坏"只导表头"的合法场景）
+- **M4**（不校验表头）：设计 §7.3 有意选择位置固定不校验；且真实 Excel 的 B1 表头文字尚未确认，加告警会误报
+- **M7**（logback 用 `off` 而非 `error`）：纯可选，上游基础 logback-test.xml 对第三方包即用 `level="error"`
+- **M8**（上传体积上限）：超出本任务范围，记为后续跟进项
+
+### 组件注册的时机（由 M3 修订）
+
+`components.txt` 的条目由**创建该组件的任务**负责追加，不要集中到 Task 7
+（否则"标注即注册"不成立，漏注册只在运行期才暴露）：
+
+| 任务 | 追加的条目 |
+|---|---|
+| Task 2 | `org.xwiki.oa.sync.internal.excel.OutsourcingExcelParser`（已完成） |
+| Task 3 | `org.xwiki.oa.sync.internal.excel.ExcelImportExecutor` |
+| Task 5 | `org.xwiki.oa.sync.internal.excel.OutsourcingExcelImportService` |
+
+Task 7 只做 UI + 核对三个条目齐全。
+
 ---
 
 ## Task 3: 并发执行器
@@ -826,6 +862,7 @@ git commit -m "外包Excel导入：新增 POI 解析器（单sheet/跳表头/B�
 **Files:**
 - Create: `xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/java/org/xwiki/oa/sync/internal/excel/ExcelImportExecutor.java`
 - Test: `xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/test/java/org/xwiki/oa/sync/internal/excel/ExcelImportExecutorTest.java`
+- Modify: `xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/resources/META-INF/components.txt`
 
 - [ ] **Step 1: 写失败的执行器测试**
 
@@ -1162,11 +1199,22 @@ public class ExcelImportExecutor implements Initializable, Disposable
 Run: 同 Step 2
 Expected: `Tests run: 4, Failures: 0, Errors: 0`
 
-- [ ] **Step 5: 提交**
+- [ ] **Step 5: 注册组件**
+
+在 `xwiki-platform-oa-sync-default/src/main/resources/META-INF/components.txt` **末尾追加一行**：
+
+```
+org.xwiki.oa.sync.internal.excel.ExcelImportExecutor
+```
+
+（注册由创建组件的任务负责，别留给 Task 7，否则漏注册只在运行期暴露。）
+
+- [ ] **Step 6: 提交**
 
 ```bash
 git add xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/java/org/xwiki/oa/sync/internal/excel/ExcelImportExecutor.java \
-  xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/test/java/org/xwiki/oa/sync/internal/excel/ExcelImportExecutorTest.java
+  xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/test/java/org/xwiki/oa/sync/internal/excel/ExcelImportExecutorTest.java \
+  xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/resources/META-INF/components.txt
 git commit -m "外包Excel导入：新增并发执行器（每任务独立上下文+会话清理+整体超时）"
 ```
 
@@ -1563,6 +1611,7 @@ git commit -m "外包同步：修复加组成员覆盖已有成员的 bug，并�
 - Create: `xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/java/org/xwiki/oa/sync/internal/excel/ExcelImportResult.java`
 - Create: `xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/java/org/xwiki/oa/sync/internal/excel/OutsourcingExcelImportService.java`
 - Test: `xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/test/java/org/xwiki/oa/sync/internal/excel/OutsourcingExcelImportServiceTest.java`
+- Modify: `xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/resources/META-INF/components.txt`
 
 - [ ] **Step 1: 写失败的服务测试**
 
@@ -2212,11 +2261,20 @@ public class OutsourcingExcelImportService
 Run: 同 Step 2
 Expected: `Tests run: 5, Failures: 0, Errors: 0`
 
-- [ ] **Step 6: 提交**
+- [ ] **Step 6: 注册组件**
+
+在 `xwiki-platform-oa-sync-default/src/main/resources/META-INF/components.txt` **末尾追加一行**：
+
+```
+org.xwiki.oa.sync.internal.excel.OutsourcingExcelImportService
+```
+
+- [ ] **Step 7: 提交**
 
 ```bash
 git add xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/java/org/xwiki/oa/sync/internal/excel \
-  xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/test/java/org/xwiki/oa/sync/internal/excel
+  xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/test/java/org/xwiki/oa/sync/internal/excel \
+  xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/resources/META-INF/components.txt
 git commit -m "外包Excel导入：新增导入统计与编排服务（并发建号+串行入组+同步记录）"
 ```
 
@@ -2432,15 +2490,18 @@ git commit -m "外包Excel导入：新增 REST 上传端点（管理员权限校
 - Modify: `xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/resources/META-INF/components.txt`
 - Modify: `xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-ui/src/main/resources/OASync/WebHome.xml`
 
-- [ ] **Step 1: 注册组件**
+- [ ] **Step 1: 核对组件注册齐全**
 
-在 `components.txt` 末尾追加：
+Task 2 已注册 `OutsourcingExcelParser`、Task 3 注册 `ExcelImportExecutor`、Task 5 注册
+`OutsourcingExcelImportService`（注册由创建组件的任务负责，避免漏注册只在运行期暴露）。
+这里只需核对三条都在 `components.txt` 里：
 
+```bash
+grep -n "internal.excel" \
+  xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/resources/META-INF/components.txt
 ```
-org.xwiki.oa.sync.internal.excel.OutsourcingExcelParser
-org.xwiki.oa.sync.internal.excel.ExcelImportExecutor
-org.xwiki.oa.sync.internal.excel.OutsourcingExcelImportService
-```
+
+Expected: 恰好 3 行，分别对应解析器、执行器、编排服务。缺哪条就补哪条。
 
 - [ ] **Step 2: 页面增加上传区块**
 
