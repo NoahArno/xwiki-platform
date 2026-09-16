@@ -42,9 +42,13 @@
 ## 2. 构建与测试状态（已完成，本地实测）
 
 ```
-Tests run: 118, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 121, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS（api / default / ui 三模块）
 ```
+
+> ⚠️ **端到端验证尚未执行，因此当前状态是"代码已完成并通过评审、但不应合并"**。
+> 原因不是遗漏：部署需要写 Tomcat 的 `WEB-INF/lib`，而实现环境对其是只读的
+> （实测 `Operation not permitted`）。**第 4 节就是为此准备的清单。**
 
 产物：
 
@@ -167,10 +171,18 @@ curl -sS -o /dev/null -w '%{http_code}\n' -u "someNonAdminUser:password" -X POST
 
 # 既有的 trigger 端点现在也应拒绝非管理员（本次新补的鉴权）
 curl -sS -o /dev/null -w '%{http_code}\n' -u "someNonAdminUser:password" -X POST \
+  -H "Content-Type: application/json" -d '{}' \
+  http://localhost:8080/xwiki/rest/oa-sync/trigger
+
+# trigger 缺 Content-Type → 415（本次补的 CSRF 防线，两个端点口径一致）
+curl -sS -o /dev/null -w '%{http_code}\n' -u "Admin:admin" -X POST \
   http://localhost:8080/xwiki/rest/oa-sync/trigger
 ```
 
-Expected: 两次都是 **403**
+Expected: 依次 `403`、`403`、`415`
+
+> `trigger` 不带 body 就不发 `Content-Type`，而 XWiki 的 CSRF 过滤器**只在 `Content-Type` 存在时**
+> 才校验 token —— 所以"省略该头"曾经是一条免 token 的绕过路径。两个端点现在都要求该头存在。
 
 ### 4.5 坏输入
 
@@ -266,7 +278,11 @@ Expected: **400** 且 body 含"上传文件超过体积上限"。
 | 2 | **渲染缓存** | `DefaultRenderingCache` 的缓存 key **不含用户**，而页面里有用户相关的 `#if`。默认 `core.renderingcache.enabled=false` 且未配置 pattern，今天无影响；**启用渲染缓存时不要把 `OASync.WebHome` 匹配进 `core.renderingcache.documents`** |
 | 3 | **并发入组的锁是 JVM 级** | 单 Tomcat 足够；多节点各起**不同消费组**的 consumer 并发写同一个组文档时，仍需数据库级并发控制 |
 | 4 | **`joinedGroup` 是参考值** | 按 `member` 字符串比较得出，组内已有全限定形式时会偏大 1~N（不影响权限、二次调用幂等）。人数校验以组文档为准 |
-| 5 | **`failCount` 与 `status` 是不同维度** | `status` 运行级（有 error 即 `PARTIAL_FAILURE`），`failCount` 用户级（沿用 api javadoc 与 FTP 链路口径）。所以"PARTIAL_FAILURE 且 failCount=0"（如入组整体失败）是正常的，原因看 `errorLog` 的 `[错误]` 条目 |
+| 5 | **`failCount` 与 `status` 是不同维度** | `status` 运行级（有 error 即 `PARTIAL_FAILURE`），`failCount` 用户级（沿用 api javadoc 与 FTP 链路口径）。所以"PARTIAL_FAILURE 且 failCount=0"（如入组整体失败）是正常的，原因看 `errorLog` 的 `[错误]` 条目**和页面上新加的失败明细区** |
+| 6 | **入组整体失败时 `joinedGroup`/`alreadyMember` 显示 0** | 分块写入可能已落了 2/4 块才抛异常，"未知"被写成了 0。页面会显示"入组=0 已在组=0"，而实际可能部分成功。**人数以组文档为准** |
+| 7 | **线程池是常驻单例池** | 改了 `xwiki.oa-sync.excel.threads` **需要重启**才生效（不是每个任务结束就关池） |
+| 8 | **10 MiB 闸门 ≠ 内存上限** | 它只限制**读取量**。`WorkbookFactory` 是 DOM 式加载，而 `ZipSecureFile` 默认允许约 100× 膨胀 ⇒ 10 MiB 压缩包理论上可展开到约 1 GB。端点仅管理员可达，所以影响有限，但**不要**把它当成防内存打爆的措施 |
+| 9 | **两条链路缺"最终状态等价"的用例** | 两条链路共用同一份建号/入组实现（结构性保证强），但没有任何用例断言"同一用户走 MQ 与走 Excel 后 XWiki 状态相同"。真正确认这一点的是第 4 节的端到端验证 |
 
 ---
 
