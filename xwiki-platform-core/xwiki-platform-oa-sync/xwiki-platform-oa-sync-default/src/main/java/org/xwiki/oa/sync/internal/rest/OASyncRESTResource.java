@@ -90,7 +90,7 @@ public class OASyncRESTResource extends XWikiResource implements XWikiRestCompon
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
     @Inject
-    private OASyncService oaSyncService;
+    OASyncService oaSyncService;
 
     @Inject
     ContextualAuthorizationManager authorizationManager;

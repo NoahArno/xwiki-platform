@@ -102,6 +102,8 @@
     }
     button.disabled = true;
     status.textContent = &#x27;导入中，请勿关闭页面…&#x27;;
+    // 清掉上一次的失败明细，避免本次请求失败时旧内容滞留在页面上
+    document.getElementById(&#x27;oa-excel-errors&#x27;).textContent = &#x27;&#x27;;
     fetch(&#x27;$request.contextPath/rest/oa-sync/outsourcing-excel&#x27;, {
       method: &#x27;POST&#x27;,
       headers: { &#x27;Content-Type&#x27;: &#x27;application/octet-stream&#x27; },

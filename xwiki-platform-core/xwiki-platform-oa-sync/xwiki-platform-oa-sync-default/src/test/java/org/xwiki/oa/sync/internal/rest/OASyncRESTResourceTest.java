@@ -29,6 +29,7 @@ import jakarta.ws.rs.core.Response;
 
 import org.junit.jupiter.api.Test;
 import org.xwiki.model.reference.DocumentReference;
+import org.xwiki.oa.sync.OASyncService;
 import org.xwiki.oa.sync.internal.excel.ExcelImportResult;
 import org.xwiki.oa.sync.internal.excel.OutsourcingExcelImportService;
 import org.xwiki.security.authorization.AccessDeniedException;
@@ -62,6 +63,8 @@ class OASyncRESTResourceTest
         mock(ContextualAuthorizationManager.class);
 
     private final OutsourcingExcelImportService importService = mock(OutsourcingExcelImportService.class);
+
+    private final OASyncService oaSyncService = mock(OASyncService.class);
 
     private final OASyncRESTResource resource = new OASyncRESTResource();
 
@@ -158,6 +161,7 @@ class OASyncRESTResourceTest
     void triggerAlsoRejectsNonAdmin() throws Exception
     {
         this.resource.authorizationManager = this.authorizationManager;
+        this.resource.oaSyncService = this.oaSyncService;
         doThrow(new AccessDeniedException(Right.ADMIN,
             new DocumentReference("xwiki", "XWiki", "Admin"),
             new DocumentReference("xwiki", "XWiki", "WebHome")))
@@ -167,6 +171,8 @@ class OASyncRESTResourceTest
             () -> this.resource.trigger(null, null, MediaType.APPLICATION_JSON));
 
         assertEquals(Response.Status.FORBIDDEN.getStatusCode(), exception.getResponse().getStatus());
+        // 权限闸门必须早于任何副作用
+        verify(this.oaSyncService, never()).syncAll(any(), any());
     }
 
     @Test

@@ -35,7 +35,7 @@
 |---|---|---|
 | 1 | `DoapUserSynchronizer.addMemberIfMissing` 用 `getXObject`（返回该类的**第一个**对象）取对象，新增成员时会**覆盖第一个已有成员** | 「开发中心科技外包组」**永远只能容纳一个外包用户**。线上那个组当前很可能只剩最后一个人。**本次全量导入会把所有人重新加回来，不需要额外的一次性数据修复** |
 | 2 | 组写入是"读-改-写"且**没有任何互斥**，而 MQ 消费者是并发多线程的（`consume-thread-max` 默认 8） | 两个线程各写整篇 ⇒ 后者覆盖前者 ⇒ 某用户"建号成功 + 日志 success + MQ ACK"**却不在组里**（静默丢权限）。已加 JVM 级锁；**注意该锁不覆盖跨 JVM 并发**（多节点各起不同消费组时仍需数据库级并发控制） |
-| 3 | `OASyncRESTResource.trigger()`（`POST /rest/oa-sync/trigger`）**完全没有权限校验**，且内部服务也没有 | 任何已登录用户都能触发全量行员/外包同步。已补管理员校验 |
+| 3 | `OASyncRESTResource.trigger()`（`POST /rest/oa-sync/trigger`）**完全没有权限校验**，且内部服务也没有；同时也**没有 `Content-Type` 要求**（缺 CSRF 防线） | 任何已登录用户都能触发全量行员/外包同步；且不带 `Content-Type` 的跨站 `POST` 不会触发 CSRF token 校验，仍能路由到该端点。**两个问题本次都已修**（`requireAdmin()` + `rejectMissingContentType()`） |
 
 ---
 

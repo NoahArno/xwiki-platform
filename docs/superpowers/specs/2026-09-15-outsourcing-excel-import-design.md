@@ -191,7 +191,11 @@ flowchart TD
 | `xwiki.oa-sync.excel.threads` | 4（上限 8） | 瓶颈是 DB 写与文档保存；4 线程已能大幅压缩 800 次建号。再高容易在 `xwikidoc` / `xwikiobjects` 上产生锁竞争，收益递减 |
 | 线程命名 | `oa-excel-import-N` | 便于日志排查 |
 | 整体超时 | 10 分钟 | 防止请求线程永久挂住 |
-| 关闭 | 任务结束后关闭池 | 组件实现 `Disposable`，容器关闭时兜底释放 |
+| 关闭 | 组件初始化时创建、**常驻** | 组件实现 `Disposable`，容器关闭时执行 `shutdownNow()` |
+
+- 线程池在组件初始化时创建一次并**常驻**（不是每个任务结束就关池）；
+  因此修改 `xwiki.oa-sync.excel.threads` **需要重启**才生效。
+  容器关闭时由 `Disposable.dispose()` 执行 `shutdownNow()`。
 
 ### 5.5 必须知晓的副作用：新建用户的文档作者
 
@@ -298,6 +302,9 @@ XWiki 的 REST 前置过滤器只在 `Content-Type` 属于**浏览器简单请�
 统一用共享的 `requireAdmin()`（`ContextualAuthorizationManager.checkAccess(Right.ADMIN)`），
 失败返回 **403**（有意偏离仓库里 `WikiResourceImpl` 的 401："已认证但无权限"语义上应当是 Forbidden），
 body 为合法 JSON 且保留 `AccessDeniedException` 作为 cause。
+
+此外，`trigger` 与 6.3.1 的表格一致，**也要求请求带 `Content-Type`**（缺失/blank 即 415）：
+它不只有权限校验，同样有那道 CSRF 防线，两个端点都必须保持这一点。
 
 #### 6.3.3 页面门禁必须与端点口径一致
 
