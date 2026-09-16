@@ -143,7 +143,9 @@ class OASyncRESTResourceTest
         Response response = testableResource.importOutsourcingExcel(new ByteArrayInputStream(new byte[0]), null);
 
         assertEquals(Response.Status.UNSUPPORTED_MEDIA_TYPE.getStatusCode(), response.getStatus());
+        // 415 既不进导入，也不落失败记录（"不走 badRequest、不落记录"）
         verify(this.importService, never()).importFrom(any(), any());
+        verify(this.importService, never()).recordFileFailure(any(), any());
     }
 
     @Test

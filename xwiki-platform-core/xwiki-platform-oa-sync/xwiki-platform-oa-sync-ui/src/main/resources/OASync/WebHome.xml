@@ -24,6 +24,8 @@
 * **记录**：每种来源保留最近 10 条
 * **状态说明**：SUCCESS=全部成功；PARTIAL_FAILURE=部分失败；FAILURE=整体失败（详见 errorLog）
 
+#if ($xwiki.hasAdminRights())
+
 == 手动触发 ==
 
 {{html}}
@@ -60,6 +62,58 @@
 })();
 &lt;/script&gt;
 {{/html}}
+
+== Excel 全量导入：科技外包 ==
+
+按 `staff_id` 建号并全部加入「开发中心科技外包组」，只补齐 Excel 中存在的人，可重复执行。
+
+{{html}}
+&lt;p&gt;
+&lt;input type=&quot;file&quot; id=&quot;oa-excel-file&quot; accept=&quot;.xlsx&quot; /&gt;
+&lt;button class=&quot;btn btn-primary&quot; id=&quot;oa-excel-upload&quot;&gt;上传并导入&lt;/button&gt;
+&lt;span id=&quot;oa-excel-status&quot; style=&quot;margin-left:8px&quot;&gt;&lt;/span&gt;
+&lt;/p&gt;
+&lt;script&gt;
+(function () {
+  var fileInput = document.getElementById(&#x27;oa-excel-file&#x27;);
+  var button = document.getElementById(&#x27;oa-excel-upload&#x27;);
+  var status = document.getElementById(&#x27;oa-excel-status&#x27;);
+  button.addEventListener(&#x27;click&#x27;, function () {
+    if (!fileInput.files || fileInput.files.length === 0) {
+      new XWiki.widgets.Notification(&#x27;请先选择 .xlsx 文件&#x27;, &#x27;warning&#x27;);
+      return;
+    }
+    button.disabled = true;
+    status.textContent = &#x27;导入中，请勿关闭页面…&#x27;;
+    fetch(&#x27;$request.contextPath/rest/oa-sync/outsourcing-excel&#x27;, {
+      method: &#x27;POST&#x27;,
+      headers: { &#x27;Content-Type&#x27;: &#x27;application/octet-stream&#x27; },
+      body: fileInput.files[0]
+    }).then(function (resp) {
+      return resp.json().catch(function () { return {}; }).then(function (data) {
+        if (resp.ok) {
+          var level = data.status === &#x27;SUCCESS&#x27; ? &#x27;done&#x27; : &#x27;warning&#x27;;
+          new XWiki.widgets.Notification(
+            &#x27;导入完成：总数=&#x27; + data.total + &#x27; 新建=&#x27; + data.created
+            + &#x27; 已存在=&#x27; + data.existed + &#x27; 入组=&#x27; + data.joinedGroup
+            + &#x27; 已在组=&#x27; + data.alreadyMember + &#x27; 失败=&#x27; + data.failed, level);
+        } else {
+          new XWiki.widgets.Notification(&#x27;导入失败：&#x27; + (data.message || resp.status), &#x27;error&#x27;);
+        }
+      });
+    }).catch(function (err) {
+      new XWiki.widgets.Notification(&#x27;导入请求失败：&#x27; + err, &#x27;error&#x27;);
+    }).finally(function () {
+      button.disabled = false;
+      status.textContent = &#x27;&#x27;;
+    });
+  });
+})();
+&lt;/script&gt;
+{{/html}}
+#else
+{{warning}}本页操作需要管理员权限。{{/warning}}
+#end
 
 == 最近同步记录 ==
 
