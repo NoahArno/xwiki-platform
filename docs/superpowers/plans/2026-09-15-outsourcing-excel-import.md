@@ -1258,6 +1258,35 @@ git add xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-defaul
 git commit -m "外包Excel导入：新增并发执行器（每任务独立上下文+会话清理+整体超时）"
 ```
 
+### Task 3 复审后的修订（代码为准，见提交 `f20a14d5f90`）
+
+**上面 Task 3 的代码块有 bug**，实际代码已按下面修订（**以仓库代码为准**）：
+
+| # | 问题 | 修订 |
+|---|---|---|
+| **C1** | **超时分支丢弃已完成结果**：`await` 在 `remaining <= 0` 时直接 `return null`，**不检查 `future.isDone()`**。futures 是**按提交顺序**等待的，所以一个慢任务会把它后面**所有早已成功**的任务一起毒化成 `null`。实测（pool=2、任务 0 睡 300ms、任务 1/2 立即成功、deadline 150ms）：现状 `[null, null, null]`，应为 `[null, fast-1, fast-2]`。后果：一次挂起（DB 锁/连接池耗尽）就让整批**已成功建号**的工号在统计与同步记录里全变成失败，管理员报告错误 | 循环开头加 `if (future.isDone()) { harvest(...); continue; }`；到期时改用 `collectRemaining(...)`：已完成且未取消的**收割**，否则 `cancel(false)` + `null` |
+| I1 | 超时后不取消，**排队中的任务也会继续跑**（`newFixedThreadPool` 队列无界），HTTP 响应结束后仍可能持续很久 | 到期时对剩余 future `cancel(false)`（能挡住排队任务，运行中的挡不住，靠建号幂等 + 重跑兜底） |
+| I2 | `TIMEOUT_MINUTES` 是 `private static final long` 且参与 `TimeUnit.MINUTES.toNanos(...)` 编译期常量表达式，**值被内联**，超时分支连反射都改不了 → 不可测（C1 正因此潜伏） | 改为包级可见**非 final** 字段 `long timeoutNanos`，并补超时回归用例 |
+| M1 | `cleanupStore()` 在 `finally` 里，一旦抛出会**覆盖任务本身的异常**，且 `failure` 永远读不到 | 整体包 try/catch + ERROR 日志，保证永不改变任务结果 |
+| M2 | `InterruptedException` 分支无日志，被中断会静默把后面全报成失败 | 加 WARN |
+| M3 | 日志无任务标识、超时逐条打 ERROR | `await`/`harvest` 日志带 `index`；整体超时只打一条（带未完成数量） |
+| M4 | `dispose()` 把字段置 null，之后 `runAll` 变成裸 NPE | 不置 null，让 `submit` 抛 `RejectedExecutionException` |
+
+用例 4 → 6（新增超时回归 + cleanUp 真实调用；另加固 2 个原有弱断言），全模块回归 92 → 94。
+
+**方法论提醒**：这次 Critical 来自"超时分支不可测"，而修复者被要求做**反证**——
+临时还原修复前语义，确认新用例确实变红
+（`AssertionFailedError: 早已完成的任务必须被收割 ==> expected: <fast-1> but was: <null>`），
+再改回来。加回归用例后应做这个反向验证。
+
+**一个容易写错的细节**：`InOrder` 钉"`cleanUp` 早于 `removeContext`"时**必须用单线程池**。
+多线程池下两个任务真并发，交错顺序不确定（可能是 `cleanUp₁, cleanUp₂, removeContext₁, removeContext₂`），
+写成 `inOrder.verify(store, times(2)).cleanUp(...)` + `inOrder.verify(execution, times(2)).removeContext()`
+这种"先全部再全部"的形式会**不稳定失败**。正确做法是线程数设为 1 + 逐次交替 verify。
+
+**未采纳**（经技术评估）：M5 的接口形状（`null` 同时表示"失败/合法 null/未等待到"三种含义）
+与队列无界无背压——属计划级最小主义，单管理员操作场景可接受；已在 Task 5 的规格里明确承接 `null` 的语义。
+
 ---
 
 ## Task 4: 重构 DoapUserSynchronizer 并修复成员覆盖 bug
@@ -1652,6 +1681,19 @@ git commit -m "外包同步：修复加组成员覆盖已有成员的 bug，并�
 - Create: `xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/java/org/xwiki/oa/sync/internal/excel/OutsourcingExcelImportService.java`
 - Test: `xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/test/java/org/xwiki/oa/sync/internal/excel/OutsourcingExcelImportServiceTest.java`
 - Modify: `xwiki-platform-core/xwiki-platform-oa-sync/xwiki-platform-oa-sync-default/src/main/resources/META-INF/components.txt`
+
+> **必须显式承接 `ExcelImportExecutor.runAll` 的 `null` 语义**（Task 3 复审留下的计划级洞）。
+> `runAll` 的 `results[i] == null` 同时表示三种情况：任务**确定失败**、任务返回了合法 `null`、
+> **整体超时没等到**。编排层无法区分它们，因此：
+>
+> - 一律计入 `failed`，错误文案必须写成"**建号失败或超时**"（不要只写"失败"，那会误导）
+> - 后果是**报告不完整而非数据损坏**：`ensureUser` 幂等、组成员只是字符串引用，
+>   给"尚未建号"的用户入组不会报错；超时被 `cancel(false)` 掉的工号下次重跑会得到"已存在"
+> - 因此**绝不能**在存在 `null` 时把本次导入判为 `SUCCESS`；有 `null` 就必须是 `PARTIAL_FAILURE`
+> - 运维语义：管理员看到 `failed > 0` 直接重跑即可（幂等），不需要人工清理
+>
+> 当前计划的服务实现已经有 `(outcome == null ? "任务超时或异常" : outcome.getMessage())` 的写法，
+> 符合上述要求；这一段是把它从"碰巧写对"变成**显式约定**，避免后续改动丢掉。
 
 - [ ] **Step 1: 写失败的服务测试**
 
