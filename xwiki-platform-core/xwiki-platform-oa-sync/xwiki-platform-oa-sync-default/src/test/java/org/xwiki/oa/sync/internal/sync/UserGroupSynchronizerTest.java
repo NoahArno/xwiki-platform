@@ -39,8 +39,6 @@ import com.xpn.xwiki.web.Utils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 /**
@@ -106,9 +104,18 @@ class UserGroupSynchronizerTest
     }
 
     @Test
-    void rejectsBlankOrgCode()
+    void fallsBackToDefaultOrgWhenOrgCodeIsBlank() throws Exception
     {
-        assertThrows(Exception.class,
-            () -> this.synchronizer.sync(new OAUserRecord("10086", "  ", "科技部", true), this.context));
+        when(this.configuration.getDefaultOrgCode()).thenReturn("0");
+        when(this.configuration.getDefaultOrgName()).thenReturn("未知机构");
+
+        this.synchronizer.sync(new OAUserRecord("10086", "  ", "科技部", true), this.context);
+
+        XWikiDocument groupDoc = this.context.getWiki().getDocument(
+            new DocumentReference(this.context.getWikiId(), "XWiki", "0"), this.context);
+        assertFalse(groupDoc.isNew());
+        assertEquals("未知机构", groupDoc.getTitle());
+        assertFalse(groupDoc.getXObjects(new DocumentReference(this.context.getWikiId(), "XWiki", "XWikiGroups"))
+            .isEmpty());
     }
 }

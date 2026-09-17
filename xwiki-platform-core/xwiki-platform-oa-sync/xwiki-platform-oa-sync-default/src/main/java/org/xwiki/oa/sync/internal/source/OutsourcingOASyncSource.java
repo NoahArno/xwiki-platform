@@ -41,8 +41,6 @@ import org.xwiki.oa.sync.model.OASyncParseResult;
 @Singleton
 public class OutsourcingOASyncSource extends AbstractOASyncSource
 {
-    private final OutsourcingFileParser parser = new OutsourcingFileParser();
-
     @Override
     public String getType()
     {
@@ -53,7 +51,11 @@ public class OutsourcingOASyncSource extends AbstractOASyncSource
     public OASyncParseResult parse(Path file)
     {
         try {
-            return this.parser.parse(file, Charset.forName(this.configuration.getSourceEncoding(getType())));
+            // 解析器需要默认机构编号/名称来回填序号19 为空的行，因此用配置构造
+            // （configuration 是字段注入，字段初始化时还不可用）
+            OutsourcingFileParser parser = new OutsourcingFileParser(this.configuration.getDefaultOrgCode(),
+                this.configuration.getDefaultOrgName());
+            return parser.parse(file, Charset.forName(this.configuration.getSourceEncoding(getType())));
         } catch (Exception e) {
             throw new RuntimeException("解析外包用户文件失败: " + e.getMessage(), e);
         }

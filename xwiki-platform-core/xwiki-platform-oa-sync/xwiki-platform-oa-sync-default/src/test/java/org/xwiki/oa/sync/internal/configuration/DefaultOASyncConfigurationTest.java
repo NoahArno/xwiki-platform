@@ -101,6 +101,26 @@ class DefaultOASyncConfigurationTest
     }
 
     @Test
+    void defaultOrgDefaultsWithoutExplicitConfig()
+    {
+        this.config.configuration = this.source;
+
+        assertEquals("0", this.config.getDefaultOrgCode());
+        assertEquals("未知机构", this.config.getDefaultOrgName());
+    }
+
+    @Test
+    void explicitDefaultOrgConfigOverridesDefaults()
+    {
+        this.config.configuration = this.source;
+        when(this.source.getProperty("xwiki.oa-sync.default-org.code", String.class)).thenReturn("9999");
+        when(this.source.getProperty("xwiki.oa-sync.default-org.name", String.class)).thenReturn("其他机构");
+
+        assertEquals("9999", this.config.getDefaultOrgCode());
+        assertEquals("其他机构", this.config.getDefaultOrgName());
+    }
+
+    @Test
     void explicitOutsourcingConfigOverridesDefaults()
     {
         this.config.configuration = this.source;

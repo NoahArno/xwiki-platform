@@ -100,6 +100,18 @@ public class DefaultOASyncConfiguration implements OASyncConfiguration
         return getInt("xwiki.oa-sync.source." + type + ".date-offset-days", 1);
     }
 
+    @Override
+    public String getDefaultOrgCode()
+    {
+        return get("xwiki.oa-sync.default-org.code", "0");
+    }
+
+    @Override
+    public String getDefaultOrgName()
+    {
+        return get("xwiki.oa-sync.default-org.name", "未知机构");
+    }
+
     private String defaultSourceBasePath(String type)
     {
         if ("employee".equals(type)) {

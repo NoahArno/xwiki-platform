@@ -47,7 +47,7 @@ class OutsourcingFileParserTest
 
     private static final String SEP = "\u0006";
 
-    private final OutsourcingFileParser parser = new OutsourcingFileParser();
+    private final OutsourcingFileParser parser = new OutsourcingFileParser("0", "未知机构");
 
     private Path writeFile(String... lines) throws IOException
     {
@@ -156,7 +156,7 @@ class OutsourcingFileParserTest
     }
 
     @Test
-    void recordsErrorOnBlankOrgCode() throws Exception
+    void usesDefaultOrgWhenOrgCodeIsBlank() throws Exception
     {
         String[] f = this.fields20();
         f[1] = "90007";
@@ -165,7 +165,26 @@ class OutsourcingFileParserTest
         f[19] = "运营外包七部";
 
         OASyncParseResult result = this.parser.parse(writeFile(this.line(f)), StandardCharsets.UTF_8);
-        assertTrue(result.getRecords().isEmpty());
-        assertEquals(1, result.getErrors().size());
+        // 编号为空不再报错丢弃，而是回落到默认机构；名称也一并取默认值，避免默认组被不同机构名反复改名
+        assertEquals(0, result.getErrors().size());
+        OAUserRecord r = result.getRecords().get(0);
+        assertEquals("90007", r.getUsername());
+        assertEquals("0_1", r.getOrgCode());
+        assertEquals("未知机构_外包组", r.getOrgName());
+        assertTrue(r.isActive());
+    }
+
+    @Test
+    void keepsConfiguredOrgWhenOnlyOrgNameIsBlank() throws Exception
+    {
+        String[] f = this.fields20();
+        f[1] = "90008";
+        f[9] = "1";
+        f[18] = "7708";
+        f[19] = "  ";
+
+        OAUserRecord r = this.parser.parse(writeFile(this.line(f)), StandardCharsets.UTF_8).getRecords().get(0);
+        assertEquals("7708_1", r.getOrgCode());
+        assertEquals("未知机构_外包组", r.getOrgName());
     }
 }

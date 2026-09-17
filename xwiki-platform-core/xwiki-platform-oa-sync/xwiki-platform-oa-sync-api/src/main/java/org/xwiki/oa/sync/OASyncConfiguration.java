@@ -91,6 +91,26 @@ public interface OASyncConfiguration
     int getExcelImportThreads();
 
     /**
+     * 数据文件里归属机构编号为空时使用的默认机构编号。
+     *
+     * @return the default organization code, {@code 0} unless overridden by configuration
+     */
+    default String getDefaultOrgCode()
+    {
+        return "0";
+    }
+
+    /**
+     * 数据文件里归属机构编号为空时使用的默认机构名称。
+     *
+     * @return the default organization name, 未知机构 unless overridden by configuration
+     */
+    default String getDefaultOrgName()
+    {
+        return "未知机构";
+    }
+
+    /**
      * @return the wiki space where sync record and org-group classes/pages live
      */
     default String getRecordSpace()

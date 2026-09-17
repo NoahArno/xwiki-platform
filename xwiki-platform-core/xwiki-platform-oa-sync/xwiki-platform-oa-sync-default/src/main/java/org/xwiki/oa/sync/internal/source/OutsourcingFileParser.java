@@ -36,6 +36,7 @@ import org.xwiki.oa.sync.model.OASyncParseResult;
  *   <li>序号19 = 归口管理部门机构编号；作为权限组唯一标识，编号后追加 {@code _1}</li>
  *   <li>序号20 = 归口管理部门机构中文名；作为权限组显示名，名称后追加 {@code _外包组}</li>
  * </ul>
+ * 序号19 为空时不报错、不丢弃用户，改用构造时传入的默认机构（默认编号/名称）。
  *
  * @version $Id$
  */
@@ -54,6 +55,20 @@ public class OutsourcingFileParser
      * 需要取到序号20，因此最少 20 个字段。
      */
     private static final int REQUIRED_FIELDS = 20;
+
+    private final String defaultOrgCode;
+
+    private final String defaultOrgName;
+
+    /**
+     * @param defaultOrgCode 序号19 归口管理部门机构编号为空时使用的默认编号
+     * @param defaultOrgName 序号20 归口管理部门机构名称为空时使用的默认名称
+     */
+    public OutsourcingFileParser(String defaultOrgCode, String defaultOrgName)
+    {
+        this.defaultOrgCode = defaultOrgCode;
+        this.defaultOrgName = defaultOrgName;
+    }
 
     /**
      * Parse a whole file.
@@ -97,13 +112,17 @@ public class OutsourcingFileParser
             result.getErrors().add("第 " + lineNo + " 行员工工号为空");
             return;
         }
-        if (orgCode.isEmpty()) {
-            result.getErrors().add("第 " + lineNo + " 行归口管理部门机构编号为空");
-            return;
-        }
         if (!ACCOUNT_STATUS_ENABLED.equals(acctStatus) && !ACCOUNT_STATUS_DISABLED.equals(acctStatus)) {
             result.getErrors().add("第 " + lineNo + " 行账号状态无法判定: " + acctStatus);
             return;
+        }
+        // 归口管理部门机构编号为空时不再丢弃该用户，回落到默认机构：
+        // 编号与名称同时取默认值，避免同一默认组被不同行的机构名反复改名。
+        if (orgCode.isEmpty()) {
+            orgCode = this.defaultOrgCode;
+            orgName = this.defaultOrgName;
+        } else if (orgName.isEmpty()) {
+            orgName = this.defaultOrgName;
         }
         boolean active = ACCOUNT_STATUS_ENABLED.equals(acctStatus);
         // 机构编号/名称追加后缀，作为权限组唯一标识，避免与行员机构组（纯编号）冲突。

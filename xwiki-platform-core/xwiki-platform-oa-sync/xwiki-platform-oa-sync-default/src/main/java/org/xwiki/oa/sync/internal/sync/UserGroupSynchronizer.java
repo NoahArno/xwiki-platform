@@ -25,6 +25,8 @@ import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xwiki.component.annotation.Component;
 import org.xwiki.model.reference.DocumentReference;
 import org.xwiki.model.reference.EntityReference;
@@ -50,6 +52,8 @@ import com.xpn.xwiki.user.api.XWikiUser;
 @Singleton
 public class UserGroupSynchronizer
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserGroupSynchronizer.class);
+
     @Inject
     private OASyncConfiguration configuration;
 
@@ -87,16 +91,20 @@ public class UserGroupSynchronizer
 
         // 3. Org group membership
         String orgCode = record.getOrgCode();
+        String orgName = record.getOrgName();
         if (orgCode == null || orgCode.isBlank()) {
-            throw new XWikiException(XWikiException.MODULE_XWIKI_USER, XWikiException.ERROR_XWIKI_UNKNOWN,
-                "用户 [" + username + "] 归属机构编号为空");
+            // 机构编号缺失不是错误：数据源未给出归属时统一回落到默认机构，
+            // 既保证用户能同步成功，也保证这些用户在权限体系里有确定的归属。
+            orgCode = this.configuration.getDefaultOrgCode();
+            orgName = this.configuration.getDefaultOrgName();
+            LOGGER.warn("用户 [{}] 归属机构编号为空，回落到默认机构 [{}]", username, orgCode);
         }
         DocumentReference groupRef = new DocumentReference(wikiId, "XWiki", orgCode);
-        this.ensureGroup(groupRef, record, context);
+        this.ensureGroup(groupRef, orgCode, orgName, context);
         this.addMemberIfMissing(groupRef, userRef, userFullName, context);
     }
 
-    private void ensureGroup(DocumentReference groupRef, OAUserRecord record, XWikiContext context)
+    private void ensureGroup(DocumentReference groupRef, String orgCode, String orgName, XWikiContext context)
         throws XWikiException
     {
         XWiki wiki = context.getWiki();
@@ -108,22 +116,22 @@ public class UserGroupSynchronizer
         XWikiDocument groupDoc = wiki.getDocument(groupRef, context);
         if (groupDoc.isNew()) {
             XWikiDocument doc = new XWikiDocument(groupRef);
-            doc.setTitle(record.getOrgName());
+            doc.setTitle(orgName);
             doc.newXObject(groupClassRef, context);
             BaseObject orgObj = doc.newXObject(orgClassRef, context);
-            orgObj.setStringValue("orgCode", record.getOrgCode());
-            orgObj.setStringValue("orgName", record.getOrgName());
-            wiki.saveDocument(doc, "OA sync: 创建机构组 " + record.getOrgCode(), context);
-        } else if (!Objects.equals(groupDoc.getTitle(), record.getOrgName())) {
+            orgObj.setStringValue("orgCode", orgCode);
+            orgObj.setStringValue("orgName", orgName);
+            wiki.saveDocument(doc, "OA sync: 创建机构组 " + orgCode, context);
+        } else if (!Objects.equals(groupDoc.getTitle(), orgName)) {
             XWikiDocument modified = groupDoc.clone();
-            modified.setTitle(record.getOrgName());
+            modified.setTitle(orgName);
             BaseObject orgObj = modified.getXObject(orgClassRef);
             if (orgObj == null) {
                 orgObj = modified.newXObject(orgClassRef, context);
             }
-            orgObj.setStringValue("orgCode", record.getOrgCode());
-            orgObj.setStringValue("orgName", record.getOrgName());
-            wiki.saveDocument(modified, "OA sync: 更新机构组 " + record.getOrgCode(), context);
+            orgObj.setStringValue("orgCode", orgCode);
+            orgObj.setStringValue("orgName", orgName);
+            wiki.saveDocument(modified, "OA sync: 更新机构组 " + orgCode, context);
         }
     }
 

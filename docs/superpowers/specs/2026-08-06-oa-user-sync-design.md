@@ -28,7 +28,7 @@
 | 11 | 账号类型代码 | **只处理 = 1 的行；真实文件里行员该列为空，空值也按行员处理** |
 | 12 | 员工状态代码 | 1/10/101/102/103 = 在职；2/3/4 = 离职 → 禁用 |
 | 13 | 账号状态代码 | 0 = 禁用 → 禁用用户；1 = 启用 → 按序号 12 决定 |
-| 23 | 归属机构编号 | 权限组唯一键（一串数字字符串） |
+| 23 | 归属机构编号 | 权限组唯一键（一串数字字符串）；为空时回落到默认机构 |
 | 24 | 归属机构中文名 | 权限组显示名 |
 
 **启用/禁用判定（已与需求方确认）**：
@@ -131,6 +131,12 @@ xwiki.oa-sync.source.outsourcing.base-path=/comm/bdpp/oa/non/%s
 xwiki.oa-sync.source.outsourcing.file-pattern=IOA_NON_EMPLOYEE_WIKI_%s.dat
 xwiki.oa-sync.source.outsourcing.encoding=GBK
 xwiki.oa-sync.source.outsourcing.date-offset-days=1
+
+# ---------- 机构编号为空时的默认机构（行员/外包共用） ----------
+# 数据文件里归属机构编号（行员序号23 / 外包序号19）为空时不报错、不丢用户，
+# 统一归入该默认机构；外包仍按约定追加 _1 / _外包组 后缀，与行员默认组区分。
+xwiki.oa-sync.default-org.code=0
+xwiki.oa-sync.default-org.name=未知机构
 
 xwiki.oa-sync.record.space=OASync
 ```
