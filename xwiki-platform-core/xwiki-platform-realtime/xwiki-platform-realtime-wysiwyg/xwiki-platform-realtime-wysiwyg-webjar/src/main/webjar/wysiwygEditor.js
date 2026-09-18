@@ -76,10 +76,24 @@ define('xwiki-realtime-wysiwyg', [
         status: ConnectionStatus.DISCONNECTED
       };
 
-      // Track IME composition state to prevent remote DOM patches from interrupting the user while they are composing
-      // (e.g., typing Chinese/Japanese/Korean characters).
+      // IME / composition handling. While the user is composing we pause the realtime sync so that an incoming remote
+      // patch cannot replace the text node holding the in-progress composition, which would make the browser cancel
+      // the composition and commit incomplete text.
+      //
+      // We PAUSE rather than queue the incoming update, and this is essential for data safety: pausing makes both
+      // directions no-op (see _onLocal / _onRemote), so the editor DOM can never fall behind the replicated document,
+      // and _resumeRealtimeSync() reconciles the two with a 3-way merge. Pushing the editor content after it has
+      // fallen behind sends a patch computed against the latest committed document, and therefore DELETES the
+      // collaborators' concurrent edits.
       this._isComposing = false;
-      this._pendingRemoteUpdate = null;
+      // Short grace period after the last composition before the sync is resumed, so that a burst of IME commits
+      // (one per word) results in a single reconciliation instead of one per word.
+      this._compositionResume = null;
+      this._compositionResumeDelay = 250;
+      // Safety net: a browser can abort a composition without firing `compositionend` (e.g. when the composed DOM
+      // node is replaced, or when the composition is cancelled on focus loss), so never stay paused forever.
+      this._compositionWatchdog = null;
+      this._compositionMaxDelay = 5000;
 
       // Don't create the checkbox if we can't connect to the WebSocket service.
       if (realtimeContext.realtimeEnabled !== 0) {
@@ -299,69 +313,90 @@ define('xwiki-realtime-wysiwyg', [
     }
 
     _registerCompositionListeners() {
-      // Protect IME composition from being interrupted by remote DOM patches. When the user is composing (e.g., typing
-      // Chinese/Japanese/Korean), we defer remote updates until composition ends to avoid the browser forcibly
-      // cancelling the composition when DiffDOM modifies the text node holding the in-progress composition state.
+      // A remote DOM patch replaces the text node that holds the in-progress composition, which makes the browser
+      // cancel the composition and commit incomplete text. That is why we pause the realtime sync while the user is
+      // composing; see the comment on _isComposing for why pausing is the only data-safe way to do this.
       //
-      // We listen on both the main document (for inline/in-place editing mode) and the content wrapper's owner document
-      // (for iframe-based standalone editing mode), since composition events do not cross iframe boundaries.
-      const onCompositionStart = () => {
-        this._isComposing = true;
-      };
-      const onCompositionEnd = () => {
-        this._isComposing = false;
-
-        // Flush any pending local changes immediately to push the committed composition text to ChainPad
-        // BEFORE applying the deferred remote update. Without this, the _onLocal debounce (100ms) would
-        // fire after _onRemote (scheduled with 0ms timeout), causing the remote patch to overwrite the
-        // newly committed text before it reaches ChainPad.
-        clearTimeout(this._localContentChangeTimeout);
-        this._onLocal();
-
-        if (this._pendingRemoteUpdate) {
-          const info = this._pendingRemoteUpdate;
-          this._pendingRemoteUpdate = null;
-          // Defer with setTimeout to let CKEditor finish its own compositionend handling (committing the
-          // composition text and updating internal state) before we apply the remote DOM patch. Without
-          // this delay, the remote patch can interfere with CKEditor's composition processing, corrupting
-          // the saved selection offsets.
-          setTimeout(() => {
-            this._onRemote(info);
-          }, 0);
-        }
-      };
-      const cleanup = () => {
-        this._pendingRemoteUpdate = null;
-        this._isComposing = false;
-      };
-
-      const documents = new Set();
-      // Always listen on the main document (covers inline/in-place editing mode).
-      documents.add(document);
-
-      // Also listen on the content wrapper's owner document (covers iframe-based standalone editing mode).
+      // The listeners are attached only to the document that owns the editor's content wrapper: in standalone edit
+      // mode that is the editor iframe's document, in in-place edit mode it is the main document. Listening on the
+      // main document unconditionally would also catch compositions happening in unrelated fields (page title, edit
+      // summary, macro / link dialogs) and would wrongly pause the editor's remote updates.
       const contentWrapper = this._editor.getContentWrapper();
-      if (contentWrapper) {
-        documents.add(contentWrapper.ownerDocument);
-      } else {
-      }
+      const compositionTarget = contentWrapper ? contentWrapper.ownerDocument : document;
 
-      for (const doc of documents) {
-        doc.addEventListener('compositionstart', onCompositionStart);
-        doc.addEventListener('compositionend', onCompositionEnd);
-      }
+      const onCompositionStart = () => {
+        // The user is composing again: cancel a pending resume and stay paused.
+        this._clearCompositionResume();
+        if (!this._isComposing) {
+          this._isComposing = true;
+          this._pauseRealtimeSync();
+        }
+        // Some IMEs fire start/end repeatedly while the user keeps composing, so (re)arm the safety net each time.
+        this._clearCompositionWatchdog();
+        this._compositionWatchdog = setTimeout(this._endImeComposition.bind(this), this._compositionMaxDelay);
+      };
+
+      const onCompositionEnd = () => {
+        if (!this._isComposing) {
+          return;
+        }
+        // Resume only once the user has stopped composing for a short while. An IME commits once per word, so
+        // resuming immediately would reconcile (and push) once per word, which is exactly the amplification that
+        // makes typing lag grow with the number of editors. This grace period coalesces a burst of commits into a
+        // single reconciliation while keeping the composition itself protected the whole time.
+        this._clearCompositionResume();
+        this._compositionResume = setTimeout(this._endImeComposition.bind(this), this._compositionResumeDelay);
+      };
+
+      compositionTarget.addEventListener('compositionstart', onCompositionStart);
+      compositionTarget.addEventListener('compositionend', onCompositionEnd);
       this._connection.listeners.push({
         removeListener: () => {
-          for (const doc of documents) {
-            doc.removeEventListener('compositionstart', onCompositionStart);
-            doc.removeEventListener('compositionend', onCompositionEnd);
-          }
-          cleanup();
+          compositionTarget.removeEventListener('compositionstart', onCompositionStart);
+          compositionTarget.removeEventListener('compositionend', onCompositionEnd);
+          // Don't resume here: the session teardown path already handles the paused state (see _onAbort).
+          this._isComposing = false;
+          this._clearCompositionTimers();
         }
       });
     }
 
+    _clearCompositionWatchdog() {
+      if (this._compositionWatchdog) {
+        clearTimeout(this._compositionWatchdog);
+        this._compositionWatchdog = null;
+      }
+    }
+
+    _clearCompositionResume() {
+      if (this._compositionResume) {
+        clearTimeout(this._compositionResume);
+        this._compositionResume = null;
+      }
+    }
+
+    _clearCompositionTimers() {
+      this._clearCompositionWatchdog();
+      this._clearCompositionResume();
+    }
+
+    /**
+     * End the current composition (if any) and resume the realtime sync, which reconciles the local and remote
+     * content. Safe to call multiple times.
+     */
+    _endImeComposition() {
+      if (!this._isComposing) {
+        return;
+      }
+      this._isComposing = false;
+      this._clearCompositionTimers();
+      this._resumeRealtimeSync();
+    }
+
     async _flushUncommittedWork() {
+      // If a composition is still in progress, end it first so that the sync is resumed (and the committed text is
+      // pushed) before we flush and settle.
+      this._endImeComposition();
       if (this._connection.status === ConnectionStatus.CONNECTED) {
         // Commit local changes right away (because they are debounced otherwise).
         this._onLocal();
@@ -707,13 +742,10 @@ define('xwiki-realtime-wysiwyg', [
       if (this._connection.status !== ConnectionStatus.CONNECTED) {
         return;
       }
-      // Don't push local content updates while the user is composing (IME is active). During inline composition
-      // (e.g., in Chrome), the browser modifies the DOM text directly with the in-progress composition text, which
-      // triggers CKEditor's change event and this handler. Pushing partial composition text to other users would not
-      // only be incorrect but could also trigger ChainPad internal reconciliation that modifies the DOM.
-      if (this._isComposing) {
-        return;
-      }
+      // Note: we deliberately do NOT skip this while an IME composition is active. Local changes must always reach
+      // ChainPad and the auto-saver (through saver.contentModifiedLocally); holding them back here is what made user
+      // edits silently stop propagating and prevented the auto-save from ever running. What needs protection from
+      // remote patches is the composition itself, and that is handled in _onRemote.
       if (typeof localContent !== 'string') {
         // Get the local content from the editor.
         localContent = this._getLocalContent();
@@ -757,14 +789,8 @@ define('xwiki-realtime-wysiwyg', [
         return;
       }
 
-      // Don't apply remote DOM patches while the user is composing (IME is active). Doing so would modify text nodes
-      // that hold the in-progress composition state, causing the browser to forcibly cancel the composition and commit
-      // incomplete text (e.g., turning "denglinfeng" into "deng林峰" instead of "邓林峰").
-      if (this._isComposing) {
-        this._pendingRemoteUpdate = info;
-        return;
-      }
-
+      // Note: while the user is composing, the realtime sync is PAUSED, so the check above already prevents the
+      // remote DOM patch from being applied (and therefore from cancelling the composition).
       // We have to pause the realtime sync while we apply remote changes because reloading the content (e.g. when a
       // rendering macro is inserted or updated) and restoring the selection are asynchronous operations (macros have to
       // be rendered server-side and selection restore uses a Web Worker to perform the diff).
