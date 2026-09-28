@@ -156,7 +156,14 @@ dirs(list) = "a/b/"           // 各元素以 "/" 连接
 
 验证结果：以 `backup-2026_06_27.zip` 对应的真实实例为样本，用上述公式重算全部 31 个附件路径，与磁盘上 31 个真实路径**完全一致（0 漏算、0 多算）**。
 
-边界情况：`id < 1000` 时 `gen()` 的补位行为需按反编译结果对齐（本地无样本），实现时须补单元测试。
+**已实现并固化为回归测试**（`AttachmentPathRule` + `AttachmentPathRuleTest`，31 条黄金样本）。
+
+补充精确语义（读反编译字节码确认，非拟合）：
+
+- `padToSize` 在段数不足时把 `0` **追加到列表末尾**（`list.add(0)`），不是插到开头。
+  这对手工推导的结果有实质影响：`gen(42)` 是 `[42, 0]` 而非 `[0, 42]`。
+- 因此短 ID 的路径形如 `42/0/42`。实现中已按此对齐并补了单元测试。
+- `ver003` 来自 `FileSystemAttachmentDataDao.ATTACHMENT_SUBDIRECTORY_NAME` 常量。
 
 ## 5. 架构总览
 
@@ -284,11 +291,11 @@ cf-exporter/
 | # | 项 | 影响 | 处理 |
 |---|---|---|---|
 | 1 | **生成器与 XWiki 的落地拓扑未定** | 影响部署与磁盘规划 | 三选一：共享挂载 / 直写 XWiki 磁盘 / HTTP `url:` |
-| 2 | **附件子片是否需带 container page 骨架** | 若不带，附件可能被静默跳过 | 用 §9 的行为等价验证在第一周内实验确定 |
-| 3 | **回收站/草稿的级联引用** | 正常页面若引用被丢弃对象会产生死链 | 生成器需明确策略（补空壳 / 断引用 / 重写链接）；台账记录分片边界以便事后修 |
-| 4 | **生产环境体量未知** | 影响分片参数与架构比例 | 由子项目 0 产出 |
+| 2 | **附件子片是否需带 container page 骨架** | 若不带，附件可能被静默跳过 | ✅ 第一版以"单空间整包"回避了该问题；`PackageValidator` 已能检出悬空引用。真正分片时仍需实验确定 |
+| 3 | **回收站/草稿的级联引用** | 正常页面若引用被丢弃对象会产生死链 | ✅ 已实现：指向包外对象的引用一律丢弃并告警，且由校验器复核 |
+| 4 | **生产环境体量未知** | 影响分片参数与架构比例 | 由子项目 0 产出（工具已就绪） |
 | 5 | **跨片引用断裂** | 分片边界必然切断跨片链接 | 与 XWiki 官方 `includedPages` 同源副作用；靠后续 URL 映射修，但须记录边界 |
-| 6 | `id < 1000` 的 `gen()` 边界行为 | 理论上一旦出现会错定位附件 | 按反编译结果对齐并补测试（本地无样本） |
+| 6 | ~~`id < 1000` 的 `gen()` 边界行为~~ | — | ✅ 已按反编译结果对齐并补测试 |
 | 7 | **生产环境状态词表未确认** | 若生产存在 `deleted`/`archived`，排除规则需相应扩展 | 由子项目 0 回答 |
 
 ## 11. 明确不做的事（YAGNI）
@@ -327,3 +334,79 @@ createdByBuildNumber=8401
 backupAttachments=true
 defaultUsersGroup=confluence-users
 ```
+
+## 13. 实现进展（2026-09-24）
+
+### 已交付
+
+模块：`tools/confluence-migration`（独立 Maven 工程，不参与 `xwiki-platform` reactor）。
+
+| 命令 | 作用 |
+|---|---|
+| `inventory` | 子项目 0：数据体检，含状态词表分布、附件存储方式判定、空间分类、CSV 导出 |
+| `export` | 子项目 1：单空间或全量导出为可导入的包目录 |
+| `validate` | 校验包的引用完整性与附件文件齐全性 |
+
+已覆盖实体：`Space`、`SpaceDescription`、`Page`、`BlogPost`、`BodyContent`、`Attachment`、`Comment`、
+`ContentProperty`、`Label`、`Labelling`、`ConfluenceUserImpl`。
+
+在本地 Confluence 7.3.3 实例上端到端跑通：2 个空间、12 个页面、26 个附件；
+**248 条引用全部可解析，附件文件齐全，校验通过**。
+
+### 实现期间新验证的格式事实
+
+这些结论会影响任何后续实现，必须记录：
+
+1. **Confluence 的导出器会省略 null 属性。**
+   参考包中 `Page` 全部 31 个对象都没有 `creator`/`lastModifier`，一度让人以为"Confluence 不导页面作者"。
+   实测 `CONTENT.CREATOR` 在该实例中**整列为 NULL**——是数据为空，不是格式如此。
+   因此生成器对这类属性应当"非空才写"，而不是无条件写空标签。
+   例外：`ContentProperty` 的 `stringValue`/`longValue`/`dateValue` 是 **211/211 全部出现**
+   （null 写成自闭合空标签），必须无条件写出。
+
+2. **导入器自己会合成 `labellings` 反向引用。**
+   `ConfluenceXMLPackage` 在读到 `Labelling` 对象时会主动执行
+   `parent.addProperty(KEY_LABELLINGS, labellingId)`。因此生成器**不需要**在页面/空间描述上写出
+   `labellings` 集合——写了也是冗余。
+
+3. **导入器不读 `Page` 的 `attachments` 与 `children` 集合**（没有对应的 `KEY_*` 常量）。
+   附件归属由导入器从 `Attachment.containerContent` 自行建索引，层级由 `parent` 建。
+   因此这两个集合无需生成；`outgoingLinks` 更是必须省略（其目标 `OutgoingLink` 实体不在生成范围内，
+   写了会悬空）。
+
+4. **导入器不支持附件标签。** 源码注释原文：*"when what is labelled is an attachment we skip saving
+   the labelling object altogether. We don't currently support importing attachment labels."*
+
+5. **`imageDetailsDTO` 在参考包中 5/5 全为空集合。** 不能臆造嵌套的 `ImageDetails` 对象——
+   这是"看起来像但不是"的典型陷阱。
+
+6. **标题等字符串有时写纯文本、有时写 CDATA**（如 `<property name="title">Welcome to Confluence</property>`
+   与 `<property name="title"><![CDATA[step04-02.png]]></property>` 并存）。
+   两种形式解析结果相同，因此**验收不能拿原始字节做 diff**，必须比对解析后的结构或行为。
+   生成器统一使用 CDATA（语义等价且对任意内容安全）。
+
+7. **草稿会被 Confluence 自行清理。** 开发过程中实测到一棵草稿子树（1 个草稿页 + 5 个附件）
+   在几分钟内消失，磁盘目录与数据库行同时消失。这既印证了"不导草稿"的决策，
+   也说明**必须对数据库快照运行导出**。
+
+### 实现期间发现并修正的自身缺陷
+
+诚实记录，这些均已补上回归测试或校验：
+
+| 缺陷 | 后果 | 修正 |
+|---|---|---|
+| 体检把草稿页计入 `pageCount` | `migratableContentCount()` 重复计数，虚报体量，可能误判"要分片" | 抽出 `MigrationPolicy` 统一判定，体检与导出共用 |
+| 布尔开关（`--all`）吞掉后续参数 | `--all --output /x` 报"无法识别的参数: /x" | `Arguments.parse` 显式声明开关名；补 8 个测试 |
+| 评论的正文与属性从未被加载 | 评论内容静默丢失（结构化 diff 才发现） | 评论 ID 并入正文/属性查询；补测试 |
+| `BodyContent.content`、`Attachment.containerContent`、`Labelling.content` 的实体类名硬编码为 `Page` | 空间描述正文、博客附件等引用类型错误 | 按内容 ID 反查真实 `CONTENTTYPE` 决定类名与包名 |
+
+### 测试
+
+17 个单元测试，全部离线可跑：附件路径算法（31 条真实样本 + 边界语义）、
+XML 写入器（CDATA `]]>` 断裂、Unicode 往返、日期格式）、参数解析。
+
+### 尚未覆盖
+
+用户与组、权限、历史版本、增量同步、真正的大空间分片。导入时对应使用
+`usersEnabled=false`、`rightsEnabled=false`、`historyEnabled=false`。
+
