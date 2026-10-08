@@ -19,7 +19,9 @@
  */
 package org.xwiki.contrib.confluence.migration.cli;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,10 +29,13 @@ import java.util.Set;
  * 极简的 {@code --key value} 命令行参数解析。
  *
  * <p>刻意不引入第三方 CLI 库：参数很少，且希望这个工具能单 jar 运行。</p>
+ *
+ * <p>同一个参数名可以出现多次（例如 {@code --space DS --space SPC}），
+ * 取值全部保留，用 {@link #getAll(String)} 读取；{@link #get(String)} 返回最后一个。</p>
  */
 final class Arguments
 {
-    private final Map<String, String> values = new LinkedHashMap<>();
+    private final Map<String, List<String>> values = new LinkedHashMap<>();
 
     private Arguments()
     {
@@ -56,19 +61,24 @@ final class Arguments
             String key = arg.substring(2);
             int equals = key.indexOf('=');
             if (equals >= 0) {
-                arguments.values.put(key.substring(0, equals), key.substring(equals + 1));
+                arguments.add(key.substring(0, equals), key.substring(equals + 1));
                 continue;
             }
             if (booleanFlags.contains(key)) {
-                arguments.values.put(key, "");
+                arguments.add(key, "");
                 continue;
             }
             if (i + 1 >= args.length) {
                 throw new IllegalArgumentException("参数缺少取值: " + arg);
             }
-            arguments.values.put(key, args[++i]);
+            arguments.add(key, args[++i]);
         }
         return arguments;
+    }
+
+    private void add(String key, String value)
+    {
+        values.computeIfAbsent(key, ignored -> new ArrayList<>()).add(value);
     }
 
     /**
@@ -77,7 +87,19 @@ final class Arguments
      */
     String get(String key)
     {
-        return values.get(key);
+        List<String> list = values.get(key);
+        return list == null || list.isEmpty() ? null : list.get(list.size() - 1);
+    }
+
+    /**
+     * 同名参数出现多次时，返回全部取值（按出现顺序）。
+     *
+     * @param key 参数名
+     * @return 全部取值，未提供时为空列表
+     */
+    List<String> getAll(String key)
+    {
+        return values.getOrDefault(key, List.of());
     }
 
     /**
@@ -87,7 +109,8 @@ final class Arguments
      */
     String get(String key, String defaultValue)
     {
-        return values.getOrDefault(key, defaultValue);
+        String value = get(key);
+        return value == null ? defaultValue : value;
     }
 
     /**
@@ -97,7 +120,7 @@ final class Arguments
      */
     String require(String key)
     {
-        String value = values.get(key);
+        String value = get(key);
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("缺少必需参数: --" + key);
         }
@@ -111,7 +134,7 @@ final class Arguments
      */
     long getLong(String key, long defaultValue)
     {
-        String value = values.get(key);
+        String value = get(key);
         return value == null ? defaultValue : Long.parseLong(value);
     }
 

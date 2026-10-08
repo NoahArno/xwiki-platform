@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -210,15 +211,82 @@ public final class Main
     private static List<String> resolveSpaceKeys(Arguments arguments, ConfluenceHome home)
         throws IOException, SQLException
     {
+        // 空间来源可以叠加：--all 取全部，--space/--spaces/--space-file 指定子集，
+        // 最后统一减去 --exclude-space/--exclude-spaces。用 LinkedHashSet 去重并保持书写顺序。
+        Set<String> keys = new LinkedHashSet<>();
+
         if (arguments.has("all")) {
             try (ConfluenceDb db = ConfluenceDb.open(home.dbConfig())) {
-                List<String> keys = db.query("SELECT SPACEKEY FROM SPACES ORDER BY SPACEKEY",
-                    rs -> rs.getString(1));
-                System.out.printf("待导出空间: %d 个%n", keys.size());
-                return keys;
+                keys.addAll(db.query("SELECT SPACEKEY FROM SPACES ORDER BY SPACEKEY", rs -> rs.getString(1)));
+            }
+            System.out.printf("按 --all 选出全部空间: %d 个%n", keys.size());
+        }
+
+        keys.addAll(arguments.getAll("space"));
+        for (String value : arguments.getAll("spaces")) {
+            keys.addAll(splitCommaSeparated(value));
+        }
+        for (String file : arguments.getAll("space-file")) {
+            keys.addAll(readSpaceKeysFromFile(Path.of(file)));
+        }
+
+        if (keys.isEmpty()) {
+            throw new IllegalArgumentException(
+                "没有指定要导出的空间。使用 --space <KEY>（可重复）、--spaces <K1,K2>、"
+                    + "--space-file <文件> 或 --all");
+        }
+
+        Set<String> excluded = new LinkedHashSet<>();
+        excluded.addAll(arguments.getAll("exclude-space"));
+        for (String value : arguments.getAll("exclude-spaces")) {
+            excluded.addAll(splitCommaSeparated(value));
+        }
+        if (!excluded.isEmpty()) {
+            keys.removeAll(excluded);
+            System.out.printf("已排除 %d 个空间，剩余 %d 个%n", excluded.size(), keys.size());
+        }
+
+        if (keys.isEmpty()) {
+            throw new IllegalArgumentException("排除之后没有剩下任何空间");
+        }
+
+        System.out.printf("待导出空间: %d 个%n", keys.size());
+        return new ArrayList<>(keys);
+    }
+
+    static List<String> splitCommaSeparated(String value)
+    {
+        List<String> keys = new ArrayList<>();
+        for (String part : value.split(",")) {
+            String trimmed = part.trim();
+            if (!trimmed.isEmpty()) {
+                keys.add(trimmed);
             }
         }
-        return List.of(arguments.require("space"));
+        return keys;
+    }
+
+    /**
+     * 从文件读取空间 Key 列表。
+     *
+     * <p>兼容两种输入：纯文本每行一个 Key，以及体检命令产出的 CSV（取第一列、
+     * 跳过表头，因此可以直接用 {@code --csv} 的产物）。空行与 {@code #} 开头的注释行被忽略。</p>
+     */
+    static List<String> readSpaceKeysFromFile(Path file) throws IOException
+    {
+        List<String> keys = new ArrayList<>();
+        for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
+            String trimmed = line.strip();
+            if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+                continue;
+            }
+            String key = trimmed.contains(",") ? trimmed.substring(0, trimmed.indexOf(',')).strip() : trimmed;
+            if (key.isEmpty() || "spaceKey".equals(key)) {
+                continue;
+            }
+            keys.add(key);
+        }
+        return keys;
     }
 
     private static void printExportResult(ExportResult result)
@@ -331,8 +399,13 @@ public final class Main
               --csv <路径>               额外输出 CSV 报表
 
             export 选项:
-              --space <KEY>              导出指定空间（与 --all 二选一）
+              --space <KEY>              指定空间，可重复书写
+              --spaces <K1,K2,...>       逗号分隔的多个空间
+              --space-file <路径>        从文件读空间列表（每行一个 Key；
+                                         也可直接喂 inventory 产出的 CSV，取第一列）
               --all                      导出全部空间
+              --exclude-space <KEY>      排除某空间，可重复书写
+              --exclude-spaces <K1,K2>   逗号分隔的排除列表
               --output <路径>            输出根目录，实际包目录为 <输出根>/<SPACEKEY>
               --no-attachments           只导出内容与附件元数据，不复制附件文件
 
@@ -345,6 +418,10 @@ public final class Main
 
               confluence-migration export \\
                 --confluence-home /data/confluence --space ds --output /mnt/migration
+
+              confluence-migration export \\
+                --confluence-home /data/confluence --all \\
+                --exclude-spaces ARCHIVE,TEST --output /mnt/migration
 
               confluence-migration validate --package /mnt/migration
             """);
