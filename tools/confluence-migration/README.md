@@ -133,6 +133,32 @@ java -cp "$CP" ...Main validate --package /mnt/migration
 | 博客 | 代码路径已支持，但本地实例无博客数据可验证 |
 | 增量同步 | 尚未实现（属于第二阶段） |
 
+> 以上四项**按当前迁移范围已明确不需要**：本工具只负责把数据迁过去。
+
+## B 侧：自动导入
+
+A 侧产出包之后，B 侧（XWiki）需要一个东西把它导进去。见 [`xwiki-side/`](xwiki-side/README.md)：
+
+- 生成器跑在 A（Confluence 那台，读本机 MySQL + 本机附件目录）
+- 包经 `rsync` 到 B 的 `<permanentDir>/migration/`
+- B 上的一个 Scheduler (Groovy) 作业定时扫描该目录并逐个导入，写 `ledger.csv` 台账
+
+**为什么不从 A 远程调 B 的接口**：触发导入需要 `Right.PROGRAM`，而你们的 XWiki 走自定义 OA SSO，
+让 A 去 HTTP 触发 B 需要额外的服务账号并打通 SSO。"往目录丢文件、XWiki 自己扫"不需要任何外部认证。
+
+## A、B 之间的契约
+
+`export` 会在输出根目录写 `manifest.csv`：
+
+```csv
+spaceKey,packageDir,pageCount,blogPostCount,attachmentCount,attachmentBytes,exportedAt
+ds,ds,10,0,20,785398,2026-10-08 10:59:38
+```
+
+- `packageDir` 是**相对路径**：包从 A 搬到 B 后绝对路径必然不同，相对路径才不会失效
+- 清单由 A 写定、B 只读；导入状态记在 B 自己的 `ledger.csv` 里，两边互不覆盖
+- 清单里的预期数量用于导入后核对——否则"导进去了但少了一半页面"没有任何信号
+
 ## 配置来源
 
 `--confluence-home` 指向包含 `confluence.cfg.xml` 的目录，本工具从中读取

@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -32,6 +33,7 @@ import org.xwiki.contrib.confluence.migration.db.ConfluenceDb;
 import org.xwiki.contrib.confluence.migration.db.ConfluenceHome;
 import org.xwiki.contrib.confluence.migration.db.DbConfig;
 import org.xwiki.contrib.confluence.migration.export.ExportResult;
+import org.xwiki.contrib.confluence.migration.export.MigrationManifest;
 import org.xwiki.contrib.confluence.migration.export.SpaceExporter;
 import org.xwiki.contrib.confluence.migration.inventory.InventoryCollector;
 import org.xwiki.contrib.confluence.migration.inventory.InventoryRenderer;
@@ -174,11 +176,15 @@ public final class Main
             System.out.println();
 
             SpaceExporter exporter = new SpaceExporter(db, home.attachmentsDir());
+            List<ExportResult> results = new ArrayList<>();
             int failures = 0;
             for (String spaceKey : spaceKeys) {
                 try {
                     ExportResult result = exporter.export(spaceKey, outputRoot, includeAttachments);
+                    results.add(result);
                     printExportResult(result);
+                    // 每导完一个空间就重写清单：中途中断时磁盘上始终是一份完整可读的清单
+                    MigrationManifest.write(outputRoot, results);
                 } catch (Exception e) {
                     // 单个空间失败不应中断整批迁移，记录后继续
                     failures++;
@@ -189,8 +195,11 @@ public final class Main
                 }
             }
 
+            Path manifest = MigrationManifest.write(outputRoot, results);
+            System.out.printf("%n已导出 %d 个空间，清单: %s%n", results.size(), manifest.toAbsolutePath());
+
             if (failures > 0) {
-                System.err.printf("%n共 %d 个空间导出失败。%n", failures);
+                System.err.printf("共 %d 个空间导出失败。%n", failures);
                 return 1;
             }
         }
