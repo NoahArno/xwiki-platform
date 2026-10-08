@@ -47,6 +47,7 @@ import org.xwiki.contrib.confluence.migration.export.ConfluenceLoader.LabellingD
 import org.xwiki.contrib.confluence.migration.export.ConfluenceLoader.LabellingRow;
 import org.xwiki.contrib.confluence.migration.export.ConfluenceLoader.PropertyRow;
 import org.xwiki.contrib.confluence.migration.export.ConfluenceLoader.SpaceRow;
+import org.xwiki.contrib.confluence.migration.policy.MigrationPolicy;
 
 /**
  * 把一个 Confluence 空间导出成 XWiki 导入器可读的包目录。
@@ -114,6 +115,19 @@ public final class SpaceExporter
 
         Path packageDirectory = outputRoot.resolve(spaceKey);
         Files.createDirectories(packageDirectory);
+
+        // 排除规则是一份"已知坏值"清单，必然有盲区，而且盲区的后果是静默的。
+        // 因此把该空间实际出现的状态取值一律摆出来核对，出现未预期取值就告警。
+        Map<String, Long> statusDistribution = loader.loadStatusDistribution(space.id());
+        List<String> unknownStatuses = statusDistribution.keySet().stream()
+            .filter(status -> !MigrationPolicy.isKnownStatus(status))
+            .toList();
+        if (!unknownStatuses.isEmpty()) {
+            warnings.add(String.format(
+                "该空间出现了预期之外的内容状态 %s（实际分布: %s）。"
+                    + "排除规则只认识 %s，因此这些条目可能被错误地包含或排除，请人工确认后再导入。",
+                unknownStatuses, statusDistribution, MigrationPolicy.KNOWN_STATUSES));
+        }
 
         List<ContentRow> contents = loader.loadContents(space.id());
         Set<Long> includedIds = contents.stream().map(ContentRow::id).collect(Collectors.toCollection(LinkedHashSet::new));

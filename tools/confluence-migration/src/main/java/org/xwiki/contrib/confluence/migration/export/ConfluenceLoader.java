@@ -134,6 +134,30 @@ public final class ConfluenceLoader
     }
 
     /**
+     * 读取一个空间内 {@code CONTENT_STATUS} 的取值分布。
+     *
+     * <p>用于在导出前发现预期之外的状态取值。排除规则是一份"已知坏值"清单，必然有盲区；
+     * 盲区的后果是静默的（要么漏排回收站内容，要么漏掉本该迁移的内容），
+     * 因此必须把实际出现的取值摆到台面上核对，而不是假定清单是完备的。</p>
+     *
+     * @param spaceId 空间 ID
+     * @return 状态取值到数量的映射，按取值排序
+     * @throws SQLException 查询失败时
+     */
+    public Map<String, Long> loadStatusDistribution(long spaceId) throws SQLException
+    {
+        String sql = "SELECT CONTENT_STATUS, COUNT(*) FROM CONTENT WHERE SPACEID = ? "
+            + "GROUP BY CONTENT_STATUS ORDER BY CONTENT_STATUS";
+
+        Map<String, Long> distribution = new LinkedHashMap<>();
+        for (Map.Entry<String, Long> entry : db.query(sql, rs -> Map.entry(
+            rs.getString(1) == null ? "(null)" : rs.getString(1), rs.getLong(2)), spaceId)) {
+            distribution.put(entry.getKey(), entry.getValue());
+        }
+        return distribution;
+    }
+
+    /**
      * 读取一个空间下需要导出的内容行（已排除草稿与回收站）。
      *
      * <p>评论的 {@code SPACEID} 可能为空，因此评论需要按容器单独读取，见

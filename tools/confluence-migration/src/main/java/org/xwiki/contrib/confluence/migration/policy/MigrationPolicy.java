@@ -19,7 +19,9 @@
  */
 package org.xwiki.contrib.confluence.migration.policy;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 迁移范围的统一判定规则。
@@ -37,34 +39,70 @@ import java.util.List;
  *   <li>草稿页可能没有空间归属（{@code SPACEID} 为 {@code NULL}），
  *       而这正是导入器注释里点名的已知问题。</li>
  * </ul>
+ *
+ * <h2>为什么排除列表里同时有 trashed 和 deleted</h2>
+ * <p>开发所用的实例里只有 {@code current} 与 {@code draft} 两种取值，<strong>从未观测到回收站内容</strong>，
+ * 因此"回收站到底叫什么"无法从该实例得到答案。而 XWiki 导入器的源码检查的是字面量
+ * {@code "deleted"}（{@code mustIgnoreContent} 与附件过滤两处），说明 Confluence 产出的词表里
+ * 存在 {@code deleted}。为稳妥起见两个都排除——多排除一个不存在的值不会有副作用，
+ * 少排除一个则会放回收站内容进包。</p>
+ *
+ * <p>更关键的是不能只靠一份"已知坏值"清单：清单一定会有盲区，而盲区的后果是静默的。
+ * 因此 {@link #isKnownStatus(String)} 用于在导出时把<strong>任何未预期的取值显式告警</strong>，
+ * 而不是让它悄悄通过。</p>
  */
 public final class MigrationPolicy
 {
     /** 内容状态：草稿。 */
     public static final String STATUS_DRAFT = "draft";
 
-    /** 内容状态：回收站。 */
+    /** 内容状态：回收站（导入器源码里使用的字面量）。 */
+    public static final String STATUS_DELETED = "deleted";
+
+    /** 内容状态：回收站的另一种可能取值。 */
     public static final String STATUS_TRASHED = "trashed";
+
+    /** 内容状态：已归档。 */
+    public static final String STATUS_ARCHIVED = "archived";
+
+    /** 内容状态：正常内容。这是唯一应当被迁移的取值。 */
+    public static final String STATUS_CURRENT = "current";
 
     /**
      * 被排除的内容状态。
      *
-     * <p>取值来自对真实 Confluence 7.3.3 实例的实测：{@code CONTENT.CONTENT_STATUS}
-     * 与导出 XML 的 {@code contentStatus} 使用同一套词表（实测到 {@code current} 与
-     * {@code draft}），因此无需做值映射。</p>
+     * <p>注意：这是一份"已知坏值"清单，必然存在盲区。因此绝不能只依赖它——
+     * 导出时会用 {@link #isKnownStatus(String)} 检查是否出现了清单之外的取值并告警。</p>
      */
-    public static final List<String> EXCLUDED_STATUSES = List.of(STATUS_DRAFT, STATUS_TRASHED);
+    public static final List<String> EXCLUDED_STATUSES =
+        List.of(STATUS_DRAFT, STATUS_TRASHED, STATUS_DELETED, STATUS_ARCHIVED);
+
+    /**
+     * 已知的全部取值（应当迁移的 + 应当排除的）。
+     *
+     * <p>出现此集合之外的取值时，说明源库的词表与预期不符，必须人工确认而不是静默处理。</p>
+     */
+    public static final Set<String> KNOWN_STATUSES = knownStatuses();
 
     private MigrationPolicy()
     {
         // constants only
     }
 
+    private static Set<String> knownStatuses()
+    {
+        Set<String> known = new LinkedHashSet<>();
+        known.add(STATUS_CURRENT);
+        known.add(null);
+        known.addAll(EXCLUDED_STATUSES);
+        return known;
+    }
+
     /**
      * 判断某个内容状态是否应当从迁移中排除。
      *
      * @param contentStatus {@code CONTENT_STATUS} 的取值，可为 {@code null}
-     * @return 是否排除
+     * @return 是否排除；{@code null} 视为可迁移
      */
     public static boolean isExcludedStatus(String contentStatus)
     {
@@ -72,6 +110,25 @@ public final class MigrationPolicy
             return false;
         }
         return EXCLUDED_STATUSES.stream().anyMatch(status -> status.equalsIgnoreCase(contentStatus));
+    }
+
+    /**
+     * 判断某个内容状态是否在已知词表内。
+     *
+     * <p>返回 {@code false} 意味着源库出现了预期之外的取值：既不能假定它该迁移，
+     * 也不能假定它该排除。调用方应当把这个事实<strong>告警出去</strong>，交由人工确认。</p>
+     *
+     * @param contentStatus {@code CONTENT_STATUS} 的取值，可为 {@code null}
+     * @return 是否已知
+     */
+    public static boolean isKnownStatus(String contentStatus)
+    {
+        if (contentStatus == null) {
+            return true;
+        }
+        return KNOWN_STATUSES.stream()
+            .filter(status -> status != null)
+            .anyMatch(status -> status.equalsIgnoreCase(contentStatus));
     }
 
     /**
