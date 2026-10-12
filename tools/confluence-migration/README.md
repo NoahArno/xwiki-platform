@@ -87,12 +87,15 @@ rsync -av --delete /mnt/migration/ user@B:<permanentDir>/migration/
 点 **Convert**，进度看页面上的 *Current conversion*。
 
 包多的时候，把 [`xwiki-side/ImportPage.groovy`](xwiki-side/ImportPage.groovy) 全文粘到一个新页面
-（建议 `Migration.Import`，语法 `xwiki/2.1`，用有编程权限的用户保存）当索引用：它会列出所有包、
-显示 manifest 的期望值 vs XWiki 现状，并给出**参数已预填**的转换链接，点一下就到上面那张表。
+（建议 `Migration.Import`，语法 `xwiki/2.1`，用有编程权限的用户保存）。它把 B 侧剩下的活都包了：
 
-## 四、对账
+- 列出所有包，显示 manifest 期望值 vs XWiki 现状，给出**参数已预填**的转换链接（点一下就到上面那张表）；
+- 导入完成、数字对上之后，点 **注册为空间** 或 **一键注册全部已完成的空间**，
+  由它在 `<SpaceKey>.WebHome` 上挂一个 `SpaceCode.SpaceClass` 对象。
 
-刷新索引页，或直接拿 `manifest.csv` 对：
+## 四、对账 + 注册空间
+
+**对账**：刷新索引页，或直接拿 `manifest.csv` 对：
 
 ```csv
 spaceKey,packageDir,pageCount,blogPostCount,attachmentCount,attachmentBytes,exportedAt
@@ -104,6 +107,21 @@ ds,ds,10,0,20,785398,2026-10-10 16:13:42
 `WebHome`，所以「页面数」= 该前缀下 `*.WebHome` 文档数（不含自动生成的 `<SpaceKey>.WebPreferences`）。
 数字对不上就是没导完或导坏了。重导是幂等的（导入器会先清掉上次导入产生的页面）。
 
+**注册空间**：Confluence 的一个空间导入后，落点就是顶层空间 `<SpaceKey>.WebHome`，
+所以**不需要移动任何内容**，只差一个标记对象。点击索引页的注册按钮即可，规则如下：
+
+| 项 | 规则 |
+|---|---|
+| 判定口径 | 顶层空间的 `WebHome` 上有没有 `SpaceCode.SpaceClass` 对象（与 `Spaces` 空间目录、`SpaceManager` 完全一致） |
+| 空间名 | 取 `<SpaceKey>.WebHome` 的标题（导入器从 Confluence 带过来，如 `ds` → `Demonstration Space`）；没有则用空间 Key |
+| 类型 | 默认 `public`；Key 以 `~` 开头的（Confluence 个人空间）记 `personal` |
+| owner | 记当前操作者（本工具不迁用户，无法还原原 owner） |
+| 前置条件 | **只有现状与 manifest 完全一致**的包才允许注册；数字对不上会拒绝，避免把没导完的空间标成已完成 |
+| 幂等 | 已注册的空间会跳过，不会重复挂对象 |
+
+> 这一步不修改任何 `xwiki-platform` 代码——「是不是空间」只由那条 XWQL 判定，
+> 注册本质上就是给已有页面加一个对象，用脚本 API 即可完成。
+
 ## 五、排错
 
 | 现象 | 处理 |
@@ -113,6 +131,8 @@ ds,ds,10,0,20,785398,2026-10-10 16:13:42
 | `validate` 报附件文件缺失 | 附件目录指错，或 Confluence 清理过数据，用快照重导 |
 | Filter 页面里没有 `confluence+xml` | 导入器没装 |
 | 「管理 → 扩展」搜不到扩展 | `xwiki.properties` 的 `extension.repositories` 是空的，只能手工装 `WEB-INF/lib` |
+| 注册按钮点了没反应 / 报"现状与 manifest 不一致" | 包还没导完或导坏了，先按上面的对账口径查一遍 |
+| 注册成功但页面顶部不显示空间信息 | `SpaceClassDocumentInitializer` 把 `SpaceCode.SpaceSheet` 绑成了 class sheet，但该页面不存在（404），所以对象不会被渲染。不影响「是不是空间」（目录能列出来），只是显示缺一块 |
 
 ## 附：完整参数
 
