@@ -1,10 +1,9 @@
 # Confluence → XWiki 迁移工具
 
-从 Confluence 数据库 + 附件目录直接生成 XWiki 可导入的包，再手动导入到 XWiki。
+从 Confluence 数据库 + 附件目录**只读**生成 XWiki 可导入的包，再手动导入到 XWiki。
 
 流程：**A 侧指定空间 → 导出到目录 → 人工拷到 B → 在 B 上导入**。
-
----
+已在 Confluence 7.3.3 + XWiki 18.1.0 上实测通过。
 
 ## 一、A 侧：导出
 
@@ -22,41 +21,24 @@ CP="target/classes:$MYSQL"
 ALIAS=org.xwiki.contrib.confluence.migration.cli.Main
 ```
 
-**1. 看有哪些空间**（可选，但建议先跑）
-
 ```bash
+# 1. 体检：有哪些空间、各多大（建议先跑）
 java -cp "$CP" $ALIAS inventory --confluence-home /data/confluence --csv /tmp/inventory.csv
-```
 
-**2. 导出指定的空间**
-
-```bash
-# 用 --spaces 指定（逗号分隔）
+# 2. 导出：--spaces 逗号分隔；也可 --space 重复书写 / --all / --space-file / --exclude-spaces
 java -cp "$CP" $ALIAS export \
-  --confluence-home /data/confluence \
-  --spaces DS,SPC \
-  --output /mnt/migration
+  --confluence-home /data/confluence --spaces DS,SPC --output /mnt/migration
 
-# --space 可重复书写；--all 导全部；--space-file 从文件读（可直接喂上面的 CSV）
-```
-
-也可以排除某些空间：`--exclude-spaces ARCHIVE,TEST`。
-
-**3. 校验产出**
-
-```bash
+# 3. 校验：每次导出后都该跑
 java -cp "$CP" $ALIAS validate --package /mnt/migration
 ```
 
-输出：
+产出：
 
 ```
 /mnt/migration/
   manifest.csv                      # A 写定、B 只读；导入后按它对账
-  <SPACEKEY>/
-    entities.xml
-    exportDescriptor.properties
-    attachments/<容器ID>/<附件ID>/<版本>
+  <SPACEKEY>/{entities.xml, exportDescriptor.properties, attachments/...}
 ```
 
 ## 二、搬运到 B
@@ -69,11 +51,11 @@ rsync -av --delete /mnt/migration/ user@B:<permanentDir>/migration/
 
 ## 三、B 侧：导入
 
-前置（一次性）：XWiki 上已装 **Confluence 导入器**（`confluence+xml`）和
-**Filter Streams Converter** 应用。以管理员打开 `/xwiki/bin/view/Filter/`，Input type 里能看到
+前置：XWiki 已装 **Confluence 导入器**（`confluence+xml`）与 **Filter Streams Converter**。
+以管理员打开 `/xwiki/bin/view/Filter/`，Input type 里能看到
 `Confluence XML input stream (confluence+xml)` 即可。
 
-浏览器打开 `/xwiki/bin/view/Filter/`，一个空间导一次：
+一个空间导一次：
 
 | 字段 | 填什么 |
 |---|---|
@@ -82,100 +64,82 @@ rsync -av --delete /mnt/migration/ user@B:<permanentDir>/migration/
 | Output type | `XWiki instance output stream (xwiki+instance)` |
 | `historyEnabled` / `usersEnabled` / `groupsEnabled` / `rightsEnabled` | 都改成 `false` |
 | `archivedDocumentsEnabled` / `archivedSpacesEnabled` | 都改成 `false` |
-| 其余 | 保持默认 |
+| 其余 | 保持默认（作者映射另见第五节） |
 
-点 **Convert**，进度看页面上的 *Current conversion*。
+点 **Convert**，进度看 *Current conversion*。
 
-包多的时候，把 [`xwiki-side/ImportPage.groovy`](xwiki-side/ImportPage.groovy) 全文粘到一个新页面
-（建议 `Migration.Import`，语法 `xwiki/2.1`，用有编程权限的用户保存）。它把 B 侧剩下的活都包了：
-
-- 列出所有包，显示 manifest 期望值 vs XWiki 现状，给出**参数已预填**的转换链接（点一下就到上面那张表）；
-- 导入完成、数字对上之后，点 **注册为空间** 或 **一键注册全部已完成的空间**，
-  由它在 `<SpaceKey>.WebHome` 上挂一个 `SpaceCode.SpaceClass` 对象。
+包多时把 [`xwiki-side/ImportPage.groovy`](xwiki-side/ImportPage.groovy) 粘到一个新页面
+（建议 `Migration.Import`，语法 `xwiki/2.1`，用有编程权限的用户保存）：它列出所有包、
+显示 manifest 期望值 vs XWiki 现状、给出**参数已预填**的转换链接，对账通过后还能一键注册空间。
 
 ## 四、对账 + 注册空间
 
-**对账**：刷新索引页，或直接拿 `manifest.csv` 对：
+**落点**：Confluence 页面 → 嵌套空间 `<SpaceKey>.<标题>` 的 `WebHome`；
+Confluence 博客 → `<SpaceKey>.Blog.<标题>`（普通文档）。导入器还会自建
+`<SpaceKey>.Blog.WebHome` 与 `<SpaceKey>.WebPreferences` 两个壳文档。
 
-```csv
-spaceKey,packageDir,pageCount,blogPostCount,attachmentCount,attachmentBytes,exportedAt
-SPC,SPC,2,0,6,121718,2026-10-10 16:13:42
-ds,ds,10,0,20,785398,2026-10-10 16:13:42
-```
-
-导入器把一个 Confluence 页面落成一个**嵌套空间** `<SpaceKey>.<PageTitle>`，内容在该空间的
-`WebHome`；Confluence **博客**则落到 `<SpaceKey>.Blog.<博客标题>`（一个普通文档，不是 WebHome），
-另外它会自建 `<SpaceKey>.Blog.WebHome` 与 `<SpaceKey>.WebPreferences` 两个壳文档。
-所以「页面数」= 前缀下 `*.WebHome` 文档数（要排掉 `.Blog` 这个博客空间），「博客数」单独数。
+**对账**：期望值来自 `manifest.csv`（`pageCount` / `blogPostCount` / `attachmentCount` /
+`attachmentBytes`），现状按上面的落点口径数（页面数要排掉 `.Blog` 那个博客空间）。
 数字对不上就是没导完或导坏了。重导是幂等的（导入器会先清掉上次导入产生的页面）。
 
-**注册空间**：Confluence 的一个空间导入后，落点就是顶层空间 `<SpaceKey>.WebHome`，
-所以**不需要移动任何内容**，只差一个标记对象。点击索引页的注册按钮即可，规则如下：
+**注册空间**：Confluence 空间导入后的落点就是顶层空间 `<SpaceKey>.WebHome`，
+**不需要移动任何内容**，只差一个标记对象。判定口径与 `Spaces` 空间目录、`SpaceManager` 一致：
+该 WebHome 上有没有 `SpaceCode.SpaceClass`。
 
 | 项 | 规则 |
 |---|---|
-| 判定口径 | 顶层空间的 `WebHome` 上有没有 `SpaceCode.SpaceClass` 对象（与 `Spaces` 空间目录、`SpaceManager` 完全一致） |
-| 空间名 | 取 `<SpaceKey>.WebHome` 的标题（导入器从 Confluence 带过来，如 `ds` → `Demonstration Space`）；没有则用空间 Key |
-| 类型 | 默认 `public`；Key 以 `~` 开头的（Confluence 个人空间）记 `personal` |
-| owner | 记当前操作者（本工具不迁用户，无法还原原 owner） |
-| 前置条件 | **只有现状与 manifest 完全一致**的包才允许注册；数字对不上会拒绝，避免把没导完的空间标成已完成 |
-| 幂等 | 已注册的空间会跳过，不会重复挂对象 |
+| 空间名 | 取 `<SpaceKey>.WebHome` 的标题（导入器从 Confluence 带来）；没有则用空间 Key |
+| 类型 | 默认 `public`；Key 以 `~` 开头（Confluence 个人空间）记 `personal` |
+| owner | 记当前操作者（不迁账号，无法还原原 owner） |
+| 前提 | **只有现状与 manifest 完全一致**才允许注册，避免把没导完的空间标成已完成 |
+| 幂等 | 已注册的跳过 |
 
-> 这一步不修改任何 `xwiki-platform` 代码——「是不是空间」只由那条 XWQL 判定，
-> 注册本质上就是给已有页面加一个对象，用脚本 API 即可完成。
+> **重导会清掉空间标记**：导入器默认先删掉上次导入产生的页面，`<SpaceKey>.WebHome` 上的
+> 对象也会一起没；回索引页再点一次即可。注册不修改任何 `xwiki-platform` 代码，
+> 只是给已有页面加一个对象。
 
-## 五、作者（创建人/修改人）
+## 五、作者与用户
 
-页面、博客、评论、附件、空间描述的作者与创建时间都会随包导出，导入后落到对应的 XWiki 用户上，
-**不需要迁账号**（账号由 OA 同步按工号建，认证走 SSO）。
+页面、博客、评论、附件、空间描述的作者与创建时间都会随包导出，并落到对应的 XWiki 用户上。
+**不迁账号**——账号由 OA 同步按工号建，认证走 SSO。
 
-导入器把 Confluence 用户名转成 XWiki 用户引用的规则（`ConfluenceConverter`）：
+Confluence 用户名 → XWiki 用户引用的规则（`ConfluenceConverter`），按优先级：
 
 1. `userIdMapping` 显式映射（`confluence用户名=XWiki用户名`，`|` 分隔）；
 2. 特例 `admin` → `Admin`；
-3. `userFormat`；
-4. **默认：只把非法字符换成 `_`**。
+3. `userFormat`（`${username}` / `${username._lowerCase}` / `${username._clean}` 等）；
+4. 默认：只把 `.`、空格、`/` 换成 `_`，**其余原样保留，大小写不变**。
 
-工号是纯字母数字，走第 4 条后**原样保留**，所以结果就是 `XWiki.<工号>` ——
-只要 XWiki 里已经有这个工号的用户，作者就直接对上，无需任何配置。
+工号是纯字母数字，走第 4 条原样通过：`S1100` → `XWiki.S1100`，`wx` → `XWiki.wx`。
+**只要 XWiki 里存在同名同大小写的用户文档，就零配置直接对上。**
 
-**两个实测踩到的坑：**
+三个实测确认的点：
 
-- **`admin` 会被写死映射成 `XWiki.Admin`（大写 A）**。标准 XWiki 的管理员文档是 `XWiki.Admin`，
-  但你们这个 fork 里是 **`XWiki.admin`（小写）**，于是 Confluence 的 `admin` 建的页面会挂到一个
-  **不存在的用户**上。修法是导入时给 `userIdMapping=admin=admin`——它的优先级高于那个特例。
-- **Confluence 只允许小写用户名**。想建 `S1100` 会直接报「用户名必须是小写」，只能建成 `s1100`，
-  于是映射出来也是 `XWiki.s1100`。如果你们 XWiki 侧的工号用户是**大写**（比如 `XWiki.S1100`），
-  就对不上了（Linux 式的字段大小写敏感），需要用 `userIdMapping` 或 `userFormat` 统一大小写。
+- **`admin` 被写死映射成 `XWiki.Admin`（大写 A）**。标准 XWiki 的管理员文档是这个名字，
+  但本 fork 里是 `XWiki.admin`（小写），于是 admin 建的内容会挂到一个不存在的用户上。
+  这条排在 `userFormat` **之前**，所以只有 `userIdMapping=admin=admin` 能修。
+- **用户名大小写**：Confluence 的用户管理界面强制小写，但那是**表单层校验**，
+  从 AD/LDAP 同步进来的用户不经过它、保留目录里的原样大小写（所以内网出现 `S1100` 很正常）。
+  迁移时大小写原样带过去；若 XWiki 侧大小写不一致，用 `userFormat=${username._lowerCase}`（批量）
+  或 `userIdMapping`（逐个）统一。
+- **`CREATOR` 为 NULL 的内容很常见**（实测有一个空间 30 行全是 NULL），这类内容导入后
+  作者会回退成执行导入的人——是源数据没带作者，不是丢数据。
 
-前提与注意：
+前提：**XWiki 里必须已存在该用户**，否则 XWiki 不报错，但页面上是一个不存在的用户引用。
+关掉 `usersEnabled` **不影响**作者映射（它只决定要不要发 `InternalUser` 实体）。
 
-- **XWiki 里必须已存在该用户**。不存在时 XWiki 不会报错，但页面上会显示一个不存在的用户引用；
-- 关掉 `usersEnabled` **不影响**作者映射——它只决定要不要发 `InternalUser` 实体；
-- Confluence 库里 `CREATOR` 为 NULL 的内容很常见（实测有一个空间的 30 行全是 NULL），
-  这类内容导入后作者会回退成执行导入的人，属于数据本身没带作者，不是丢数据；
-- Confluence 用户名与工号**不一致**时（比如英文名、带域后缀），用 `userIdMapping` 兜底。
+> 导出依赖 `CONTENT.PARENTCOMMENTID` 列（7.3.3 实测存在）。
 
-> **重导会清掉空间标记**：导入器默认先删掉上次导入产生的页面，所以 `<SpaceKey>.WebHome` 上的
-> `SpaceCode.SpaceClass` 对象也会一起没。重导后回索引页再点一次「注册为空间」即可。
+## 六、评论与 @提及
 
-**评论**也会一起迁移：正文、作者、时间，以及**回复层级**。两个容易踩的点：
+评论（正文、作者、时间、**回复层级**）与 **@提及** 都会一起迁移：
 
-- 挂在**附件**上的评论会被归到附件所属的页面上。导入器只认页面作为评论的宿主
-  （`ConfluenceXMLPackage.readCommentObject` 只把它挂到 Page 下），不这样处理评论会被**静默丢弃**；
-- 回复的父评论有两种写法，实测都遇到过：UI 建的回复用 `PARENTCOMMENTID`，部分 API 写入的回复
-  把父评论放在 `PAGEID` 上。两种都兼容。
+- 挂在**附件**上的评论会归到附件所属的页面上——导入器只认页面作评论宿主，
+  不这样处理评论会被静默丢弃；
+- 提及会被转成 XWiki 的 `{{mention}}`；导出时会扫一遍正文，把"只被提及、不是任何作者"的人
+  也写进包，否则提及会退化成一个不存在的用户引用（且不报错）。
 
-> 导出依赖 `CONTENT.PARENTCOMMENTID` 列（Confluence 7.3.3 实测存在）。
-
-**@提及**也会一起迁移。Confluence 的提及写在正文里（`<ri:user ri:userkey="…"/>`），
-导入器会把它转成 XWiki 的 `{{mention}}` 并按 key 反查用户名。反查依赖包里的
-`ConfluenceUserImpl` 实体，所以导出时会**扫一遍正文**，把「只被提及、不是任何内容作者」的人
-也补进用户集合——不补的话提及会退化成一个不存在的用户引用，而且不报错。
-
-> 正文里的 `ri:account-id`（Confluence Cloud 写法）也会一起收；本地 7.3.3 用的是 `ri:userkey`。
-
-## 六、排错
+## 七、排错
 
 | 现象 | 处理 |
 |---|---|
@@ -184,8 +148,8 @@ ds,ds,10,0,20,785398,2026-10-10 16:13:42
 | `validate` 报附件文件缺失 | 附件目录指错，或 Confluence 清理过数据，用快照重导 |
 | Filter 页面里没有 `confluence+xml` | 导入器没装 |
 | 「管理 → 扩展」搜不到扩展 | `xwiki.properties` 的 `extension.repositories` 是空的，只能手工装 `WEB-INF/lib` |
-| 注册按钮点了没反应 / 报"现状与 manifest 不一致" | 包还没导完或导坏了，先按上面的对账口径查一遍 |
-| 注册成功但页面顶部不显示空间信息 | `SpaceClassDocumentInitializer` 把 `SpaceCode.SpaceSheet` 绑成了 class sheet，但该页面不存在（404），所以对象不会被渲染。不影响「是不是空间」（目录能列出来），只是显示缺一块 |
+| 注册报"现状与 manifest 不一致" | 包还没导完或导坏了，先按第四节对账 |
+| 注册成功但页面顶部不显示空间信息 | 类 sheet `SpaceCode.SpaceSheet` 在本 fork 里不存在，对象不会被渲染；不影响"是不是空间" |
 
 ## 附：完整参数
 
@@ -193,13 +157,11 @@ ds,ds,10,0,20,785398,2026-10-10 16:13:42
 java -cp "$CP" $ALIAS help
 ```
 
-配置来源：`--confluence-home` 指向含 `confluence.cfg.xml` 的目录，本工具从中读取
+`--confluence-home` 指向含 `confluence.cfg.xml` 的目录，本工具从中读取
 `hibernate.connection.url` / `username` / `password` 与 `attachments.dir`。
 
-## 附：当前不迁移的内容
+## 附：不迁移的内容
 
-用户与组实体、权限、历史版本、增量同步（导入时对应开关关掉）。草稿与回收站按策略一律不导出。
-
-作者/创建时间是迁的（见[第五节](#五作者创建人修改人)），评论（含回复层级）与 @提及 也是；
-但**不建账号**——账号归 OA 同步。收藏（Confluence 的 `favourite` 标签）本身是导出的，
-但需要 XWiki 侧装 Favorites Application 才会生效；关注/监视在 Confluence 的导出格式里没有，不迁。
+用户与组实体、权限、历史版本、增量同步、关注/监视（Confluence 的导出格式里也没有）。
+草稿与回收站按策略不导出。收藏（Confluence 的 `favourite` 标签）本身随包导出，
+但需要 XWiki 侧装 Favorites Application 才会生效。
