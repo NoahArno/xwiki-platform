@@ -36,6 +36,12 @@ final String DEFAULT_MIGRATION_DIR = 'migration'
 final String SPACE_CLASS = 'SpaceCode.SpaceClass'
 
 /**
+ * 导入器放博客的空间后缀（它自己的 {@code blogSpaceName} 默认是 {@code Blog}）。
+ * Confluence 的博客会落到 {@code <SpaceKey>.Blog.<标题>}。
+ */
+final String BLOG_SPACE_SUFFIX = '.Blog'
+
+/**
  * 导入时显式关掉的开关。
  * 本工具的导出范围只有内容与附件（见 README「当前未覆盖的范围」），
  * 所以用户/组/权限/历史一律不开；不开就不会去猜、也不会写坏现有数据。
@@ -96,6 +102,7 @@ if (manifestFile.isFile()) {
             try {
                 manifest[parts[0].trim()] = [
                     pages      : parts[2].trim() as int,
+                    blogPosts  : parts[3].trim() as int,
                     attachments: parts[4].trim() as int,
                     bytes      : parts[5].trim() as long,
                 ]
@@ -106,30 +113,46 @@ if (manifestFile.isFile()) {
     }
 }
 
-// ---- 2. B 侧现状：这个空间现在有多少页面/附件 ----
-// 导入器把一个 Confluence 页面落成一个嵌套空间 <SpaceKey>.<PageTitle>/WebHome，
-// 所以「页面数」= 该前缀下所有 *.WebHome 文档数（自动生成的 <SpaceKey>.WebPreferences 不算页面）。
+// ---- 2. B 侧现状：这个空间现在有多少页面/博客/附件 ----
+// 导入器的落点规则（实测）：
+//   Confluence 页面   -> <SpaceKey>.<PageTitle>/WebHome（嵌套空间）
+//   Confluence 博客   -> <SpaceKey>.Blog.<博客标题>（一个普通文档，不是 WebHome）
+//   另外它还会自建 <SpaceKey>.Blog.WebHome 与 <SpaceKey>.WebPreferences 这两个"壳"文档。
+// 所以数页面时要排掉博客空间本身，博客单独按 <SpaceKey>.Blog 下的非 WebHome 文档数算。
 def currentState = { String spaceKey ->
+    String blogSpacePrefix = spaceKey + BLOG_SPACE_SUFFIX
     def query = services.query.xwql(
         'select doc.fullName from Document doc where doc.space = :key or doc.space like :nested')
     query.bindValue('key', spaceKey)
     query.bindValue('nested', spaceKey + '.%')
 
     int pages = 0
+    int blogPosts = 0
     int attachments = 0
     long bytes = 0L
     query.execute().each { Object fullName ->
-        if (fullName.toString().endsWith('.WebHome')) {
+        String name = fullName.toString()
+        int lastDot = name.lastIndexOf('.')
+        String space = lastDot > 0 ? name.substring(0, lastDot) : ''
+        String localName = lastDot > 0 ? name.substring(lastDot + 1) : name
+
+        if (space == blogSpacePrefix || space.startsWith(blogSpacePrefix + '.')) {
+            // 博客空间：壳文档（WebHome）不算，其余的都是博客
+            if (localName != 'WebHome') {
+                blogPosts++
+            }
+        } else if (localName == 'WebHome') {
             pages++
         }
-        def doc = xcontext.getXWiki().getDocument(fullName.toString(), xcontext.getContext())
+
+        def doc = xcontext.getXWiki().getDocument(name, xcontext.getContext())
         if (doc != null) {
             def list = doc.getAttachmentList()
             attachments += list.size()
             list.each { bytes += it.getLongSize() }
         }
     }
-    [pages: pages, attachments: attachments, bytes: bytes]
+    [pages: pages, blogPosts: blogPosts, attachments: attachments, bytes: bytes]
 }
 
 // ---- 3. 空间注册 ----
@@ -184,6 +207,7 @@ def stateOf = { String spaceKey ->
     def expected = manifest[spaceKey]
     def actual = currentState(spaceKey)
     boolean matches = expected != null && expected.pages == actual.pages
+        && expected.blogPosts == actual.blogPosts
         && expected.attachments == actual.attachments
     [expected: expected, actual: actual, matches: matches, registered: isRegisteredAsSpace(spaceKey)]
 }
@@ -269,7 +293,7 @@ rows.each { row ->
             "<input type='hidden' name='space' value='${esc(key)}'/>" +
             (dirParam ? "<input type='hidden' name='dir' value='${esc(dirParam)}'/>" : '') +
             "<input type='submit' class='button' value='注册为空间'/></form>"
-    } else if (actual.pages == 0 && actual.attachments == 0) {
+    } else if (actual.pages == 0 && actual.blogPosts == 0 && actual.attachments == 0) {
         status = "<span class='ci-todo'>未导入</span>"
         actions = "<a class='button' href='${converterLink(row.pkg)}'>导入 →</a>"
     } else {
@@ -279,12 +303,14 @@ rows.each { row ->
 
     String expectedText = expected == null
         ? "<span class='ci-warn'>清单里没有这个空间</span>"
-        : "${expected.pages} 页 / ${expected.attachments} 附件 / ${expected.bytes} 字节".toString()
+        : "${expected.pages} 页 / ${expected.blogPosts} 博客 / ${expected.attachments} 附件 / ${expected.bytes} 字节"
+            .toString()
 
     out.append("<tr>")
     out.append("<td><code>${esc(key)}</code></td>")
     out.append("<td>${expectedText}</td>")
-    out.append("<td>${actual.pages} 页 / ${actual.attachments} 附件 / ${actual.bytes} 字节</td>")
+    out.append("<td>${actual.pages} 页 / ${actual.blogPosts} 博客 / ${actual.attachments} 附件 / "
+        + "${actual.bytes} 字节</td>")
     out.append("<td>${status}</td>")
     out.append("<td>${actions}</td>")
     out.append("</tr>")

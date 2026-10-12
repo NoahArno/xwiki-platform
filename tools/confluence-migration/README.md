@@ -104,7 +104,9 @@ ds,ds,10,0,20,785398,2026-10-10 16:13:42
 ```
 
 导入器把一个 Confluence 页面落成一个**嵌套空间** `<SpaceKey>.<PageTitle>`，内容在该空间的
-`WebHome`，所以「页面数」= 该前缀下 `*.WebHome` 文档数（不含自动生成的 `<SpaceKey>.WebPreferences`）。
+`WebHome`；Confluence **博客**则落到 `<SpaceKey>.Blog.<博客标题>`（一个普通文档，不是 WebHome），
+另外它会自建 `<SpaceKey>.Blog.WebHome` 与 `<SpaceKey>.WebPreferences` 两个壳文档。
+所以「页面数」= 前缀下 `*.WebHome` 文档数（要排掉 `.Blog` 这个博客空间），「博客数」单独数。
 数字对不上就是没导完或导坏了。重导是幂等的（导入器会先清掉上次导入产生的页面）。
 
 **注册空间**：Confluence 的一个空间导入后，落点就是顶层空间 `<SpaceKey>.WebHome`，
@@ -136,6 +138,15 @@ ds,ds,10,0,20,785398,2026-10-10 16:13:42
 
 工号是纯字母数字，走第 4 条后**原样保留**，所以结果就是 `XWiki.<工号>` ——
 只要 XWiki 里已经有这个工号的用户，作者就直接对上，无需任何配置。
+
+**两个实测踩到的坑：**
+
+- **`admin` 会被写死映射成 `XWiki.Admin`（大写 A）**。标准 XWiki 的管理员文档是 `XWiki.Admin`，
+  但你们这个 fork 里是 **`XWiki.admin`（小写）**，于是 Confluence 的 `admin` 建的页面会挂到一个
+  **不存在的用户**上。修法是导入时给 `userIdMapping=admin=admin`——它的优先级高于那个特例。
+- **Confluence 只允许小写用户名**。想建 `S1100` 会直接报「用户名必须是小写」，只能建成 `s1100`，
+  于是映射出来也是 `XWiki.s1100`。如果你们 XWiki 侧的工号用户是**大写**（比如 `XWiki.S1100`），
+  就对不上了（Linux 式的字段大小写敏感），需要用 `userIdMapping` 或 `userFormat` 统一大小写。
 
 前提与注意：
 
