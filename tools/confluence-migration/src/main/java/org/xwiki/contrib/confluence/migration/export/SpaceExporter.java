@@ -168,6 +168,29 @@ public final class SpaceExporter
         contents.forEach(row -> contentTypeById.put(row.id(), row.contentType()));
         comments.forEach(row -> contentTypeById.put(row.id(), row.contentType()));
 
+        // Confluence 里「评论属于谁」有两套并存的写法，实测确认：
+        //   1. UI 建的回复：PAGEID = 页面，PARENTCOMMENTID = 父评论（规范做法，以它为准）；
+        //   2. 部分 API 写入的回复：PAGEID = 父评论，PARENTCOMMENTID 为空。
+        // 而导入器只按「页面的 comments 集合」读评论（见 ConfluenceXMLPackage.readCommentObject），
+        // 挂在附件或父评论上的评论不会被挂到任何页面上、会被静默丢弃。
+        // 所以这里显式给每个页面写出它的整条评论线索，并把回复的父评论单独写出来。
+        Map<Long, ContentRow> contentById = new HashMap<>();
+        contents.forEach(row -> contentById.put(row.id(), row));
+        // 评论也要放进这张表：形式 2 的回复要靠它上溯，判断容器是不是评论也靠它
+        comments.forEach(row -> contentById.put(row.id(), row));
+        Map<Long, List<Long>> commentIdsByPage = new LinkedHashMap<>();
+        Map<Long, Long> parentCommentById = new HashMap<>();
+        for (ContentRow comment : comments) {
+            Long pageId = resolveOwningPage(comment, contentById);
+            if (pageId != null) {
+                commentIdsByPage.computeIfAbsent(pageId, key -> new ArrayList<>()).add(comment.id());
+            }
+            Long parentCommentId = resolveParentComment(comment, contentById);
+            if (parentCommentId != null) {
+                parentCommentById.put(comment.id(), parentCommentId);
+            }
+        }
+
         List<Long> contentIds = List.copyOf(includedIds);
         Map<Long, List<BodyRow>> bodies = loader.loadBodies(contentIds);
         Map<Long, List<PropertyRow>> properties = loader.loadProperties(contentIds);
@@ -197,16 +220,19 @@ public final class SpaceExporter
                 writeSpaceDescription(xml, description, space, bodies, includedIds);
             }
             for (ContentRow page : pages) {
-                writePage(xml, page, ConfluenceEntity.PAGE, bodies, properties, ancestors, includedIds);
+                writePage(xml, page, ConfluenceEntity.PAGE, bodies, properties, ancestors, includedIds,
+                    commentIdsByPage.getOrDefault(page.id(), List.of()));
             }
             for (ContentRow blogPost : blogPosts) {
-                writePage(xml, blogPost, ConfluenceEntity.BLOG_POST, bodies, properties, ancestors, includedIds);
+                writePage(xml, blogPost, ConfluenceEntity.BLOG_POST, bodies, properties, ancestors, includedIds,
+                    commentIdsByPage.getOrDefault(blogPost.id(), List.of()));
             }
             for (ContentRow attachment : attachments) {
                 writeAttachment(xml, attachment, space, properties, commentIdsByContainer, contentTypeById);
             }
             for (ContentRow comment : comments) {
-                writeComment(xml, comment, bodies, properties, includedIds, contentTypeById);
+                writeComment(xml, comment, bodies, properties, includedIds, contentTypeById,
+                    parentCommentById.get(comment.id()));
             }
             writeBodyContents(xml, bodies, includedIds, contentTypeById);
             writeContentProperties(xml, properties);
@@ -283,9 +309,13 @@ public final class SpaceExporter
     /**
      * 写出一个页面或博客。包级可见是为了让 {@code SpaceExporterTest} 能在没有数据库的情况下
      * 直接验证「作者字段有没有写出来」——本方法的实现不依赖任何实例状态。
+     *
+     * @param commentIds 属于这个页面的整条评论线索（含各级回复）；导入器只按页面的
+     *     {@code comments} 集合找评论，不写出来评论就进不去
      */
     void writePage(EntitiesXmlWriter xml, ContentRow page, String className, Map<Long, List<BodyRow>> bodies,
-        Map<Long, List<PropertyRow>> properties, Map<Long, List<AncestorRow>> ancestors, Set<Long> includedIds)
+        Map<Long, List<PropertyRow>> properties, Map<Long, List<AncestorRow>> ancestors, Set<Long> includedIds,
+        List<Long> commentIds)
         throws IOException
     {
         xml.beginObject(className, ConfluenceEntity.PKG_PAGES);
@@ -311,6 +341,14 @@ public final class SpaceExporter
         // 页面与博客的作者必须写出来：不写，导入器拿不到 creator，
         // 会把作者回退成「执行导入的人」，迁移后所有内容都变成同一个人创建的。
         writeCreatorAndLastModifier(xml, page);
+        // 评论线索：导入器按这个集合读评论，回复的层级再由评论自己的 parent 决定
+        if (!commentIds.isEmpty()) {
+            xml.beginCollection("comments", ConfluenceEntity.COLLECTION);
+            for (Long commentId : commentIds) {
+                xml.element(ConfluenceEntity.COMMENT, ConfluenceEntity.PKG_PAGES, commentId);
+            }
+            xml.endCollection();
+        }
         xml.endObject();
     }
 
@@ -354,9 +392,13 @@ public final class SpaceExporter
 
     /**
      * 写出一个评论。包级可见的理由同 {@link #writePage}。
+     *
+     * @param parentCommentId 该评论回复的父评论 ID；一级评论传 {@code null}。
+     *     导入器靠这个属性填评论对象的 {@code replyto}
      */
     void writeComment(EntitiesXmlWriter xml, ContentRow comment, Map<Long, List<BodyRow>> bodies,
-        Map<Long, List<PropertyRow>> properties, Set<Long> includedIds, Map<Long, String> contentTypeById)
+        Map<Long, List<PropertyRow>> properties, Set<Long> includedIds, Map<Long, String> contentTypeById,
+        Long parentCommentId)
         throws IOException
     {
         xml.beginObject(ConfluenceEntity.COMMENT, ConfluenceEntity.PKG_PAGES);
@@ -379,7 +421,62 @@ public final class SpaceExporter
         }
         // 评论作者同理：不写就全挂在执行导入的人名下
         writeCreatorAndLastModifier(xml, comment);
+        // 回复关系：导入器读这个属性来填 replyto
+        if (parentCommentId != null) {
+            xml.reference("parent", ConfluenceEntity.COMMENT, ConfluenceEntity.PKG_PAGES, parentCommentId);
+        }
         xml.endObject();
+    }
+
+    /**
+     * 找出评论回复的父评论。
+     *
+     * <p>优先用 {@code PARENTCOMMENTID}（Confluence UI 写回复时用的规范字段）；
+     * 为空时再退回「{@code PAGEID} 指着一条评论」这种非规范写法，两者都兼容。</p>
+     *
+     * @return 父评论的内容 ID；一级评论返回 {@code null}
+     */
+    static Long resolveParentComment(ContentRow comment, Map<Long, ContentRow> contentById)
+    {
+        if (comment.parentCommentId() != null) {
+            return comment.parentCommentId();
+        }
+        ContentRow directContainer =
+            comment.containerId() == null ? null : contentById.get(comment.containerId());
+        return directContainer != null && ConfluenceEntity.TYPE_COMMENT.equals(directContainer.contentType())
+            ? directContainer.id()
+            : null;
+    }
+
+    /**
+     * 找出评论最终归属的<strong>页面</strong>。
+     *
+     * <p>评论的直接容器在 {@code PAGEID} 上：规范写法下是页面或附件（回复也是页面），
+     * 非规范写法下回复的 {@code PAGEID} 会是父评论。导入器只会把评论挂到页面上
+     * （附件与评论都不能作为评论的宿主），所以这里要沿父评论一路往上找到非评论的内容，
+     * 附件再往上取它所属的页面。</p>
+     *
+     * @return 归属页面的内容 ID；链路上出现包内不存在的内容、或成环时返回 {@code null}
+     */
+    static Long resolveOwningPage(ContentRow comment, Map<Long, ContentRow> contentById)
+    {
+        Long containerId = comment.containerId();
+        Set<Long> visited = new LinkedHashSet<>();
+
+        while (containerId != null && visited.add(containerId)) {
+            ContentRow container = contentById.get(containerId);
+            if (container == null) {
+                return null;
+            }
+            if (!ConfluenceEntity.TYPE_COMMENT.equals(container.contentType())) {
+                return ConfluenceEntity.TYPE_ATTACHMENT.equals(container.contentType())
+                    ? container.containerId()
+                    : container.id();
+            }
+            containerId = container.containerId();
+        }
+
+        return null;
     }
 
     private void writeBodyContents(EntitiesXmlWriter xml, Map<Long, List<BodyRow>> bodies, Set<Long> includedIds,

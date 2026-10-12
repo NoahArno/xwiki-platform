@@ -71,7 +71,8 @@ public final class ConfluenceLoader
     /** 内容行（页面、博客、附件、评论、空间描述共用）。 */
     public record ContentRow(long id, String contentType, String title, String lowerTitle, int hibernateVersion,
         int version, String creator, LocalDateTime creationDate, String lastModifier, LocalDateTime lastModDate,
-        String versionComment, String contentStatus, Long containerId, Long spaceId, Integer position, Long parentId)
+        String versionComment, String contentStatus, Long containerId, Long spaceId, Integer position, Long parentId,
+        Long parentCommentId)
     {
     }
 
@@ -171,7 +172,7 @@ public final class ConfluenceLoader
     {
         String sql = "SELECT c.CONTENTID, c.CONTENTTYPE, c.TITLE, c.LOWERTITLE, c.HIBERNATEVERSION, c.VERSION, "
             + "c.CREATOR, c.CREATIONDATE, c.LASTMODIFIER, c.LASTMODDATE, c.VERSIONCOMMENT, c.CONTENT_STATUS, "
-            + "c.PAGEID, c.SPACEID, c.CHILD_POSITION, c.PARENTID "
+            + "c.PAGEID, c.SPACEID, c.CHILD_POSITION, c.PARENTID, c.PARENTCOMMENTID "
             + "FROM CONTENT c WHERE c.SPACEID = ? AND c.CONTENTTYPE IN ('PAGE', 'BLOGPOST', 'ATTACHMENT', "
             + "'SPACEDESCRIPTION') AND (c.CONTENT_STATUS IS NULL OR c.CONTENT_STATUS NOT IN ("
             + MigrationPolicy.excludedStatusSqlLiterals() + ")) ORDER BY c.CONTENTID";
@@ -182,8 +183,13 @@ public final class ConfluenceLoader
     /**
      * 按容器批量读取评论（评论可能没有 {@code SPACEID}）。
      *
+     * <p><strong>必须递归</strong>：Confluence 把评论的层级存在 {@code PAGEID} 里——
+     * 一级评论的 {@code PAGEID} 是页面/附件，而<strong>回复的 {@code PAGEID} 是父评论的 ID</strong>
+     * （实测确认，{@code PARENTID} 对评论恒为 NULL）。只查一层的话回复根本查不到，
+     * 会被静默漏掉。</p>
+     *
      * @param containerIds 容器（页面/博客/附件）的内容 ID
-     * @return 评论行
+     * @return 这些容器下的一级评论及其所有后代回复
      * @throws SQLException 查询失败时
      */
     public List<ContentRow> loadCommentsFor(Collection<Long> containerIds) throws SQLException
@@ -191,11 +197,35 @@ public final class ConfluenceLoader
         if (containerIds.isEmpty()) {
             return List.of();
         }
+
+        List<ContentRow> all = new ArrayList<>();
+        Set<Long> seen = new LinkedHashSet<>(containerIds);
+        Collection<Long> frontier = containerIds;
+
+        // 逐层向下：先查直接挂在这些容器上的评论，再把新查到的评论 ID 当作下一层的容器。
+        // seen 同时防住「评论把自己当父级」这类脏数据导致的死循环。
+        while (!frontier.isEmpty()) {
+            List<ContentRow> batch = loadCommentsByContainer(frontier);
+            List<Long> next = new ArrayList<>();
+            for (ContentRow row : batch) {
+                if (seen.add(row.id())) {
+                    all.add(row);
+                    next.add(row.id());
+                }
+            }
+            frontier = next;
+        }
+
+        return all;
+    }
+
+    private List<ContentRow> loadCommentsByContainer(Collection<Long> containerIds) throws SQLException
+    {
         String tail = " AND c.CONTENTTYPE = 'COMMENT' ORDER BY c.CONTENTID";
         return queryByChunk(
             "SELECT c.CONTENTID, c.CONTENTTYPE, c.TITLE, c.LOWERTITLE, c.HIBERNATEVERSION, c.VERSION, "
                 + "c.CREATOR, c.CREATIONDATE, c.LASTMODIFIER, c.LASTMODDATE, c.VERSIONCOMMENT, c.CONTENT_STATUS, "
-                + "c.PAGEID, c.SPACEID, c.CHILD_POSITION, c.PARENTID FROM CONTENT c WHERE c.PAGEID IN (",
+                + "c.PAGEID, c.SPACEID, c.CHILD_POSITION, c.PARENTID, c.PARENTCOMMENTID FROM CONTENT c WHERE c.PAGEID IN (",
             ")", tail, containerIds, ConfluenceLoader::mapContent);
     }
 
@@ -325,7 +355,8 @@ public final class ConfluenceLoader
             nullableLong(rs, "PAGEID"),
             nullableLong(rs, "SPACEID"),
             nullableInt(rs, "CHILD_POSITION"),
-            nullableLong(rs, "PARENTID"));
+            nullableLong(rs, "PARENTID"),
+            nullableLong(rs, "PARENTCOMMENTID"));
     }
 
     /**
