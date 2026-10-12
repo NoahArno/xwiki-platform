@@ -35,6 +35,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.xwiki.contrib.confluence.migration.attach.AttachmentPathRule;
@@ -77,6 +79,12 @@ public final class SpaceExporter
 
     /** 描述文件名。 */
     public static final String DESCRIPTOR_FILE = "exportDescriptor.properties";
+
+    /** 正文里的提及（Confluence 本地版 / 7.x 用 userkey）。 */
+    private static final Pattern MENTION_USER_KEY = Pattern.compile("ri:userkey=\"([^\"]+)\"");
+
+    /** 正文里的提及（Confluence Cloud / 新版本用 account-id）。 */
+    private static final Pattern MENTION_ACCOUNT_ID = Pattern.compile("ri:account-id=\"([^\"]+)\"");
 
     private final ConfluenceDb db;
 
@@ -199,6 +207,10 @@ public final class SpaceExporter
         LabellingData labellings = loader.loadLabellings(contentIds);
 
         Set<String> userKeys = collectUserKeys(space, contents, labellings);
+        // 正文里被 @ 到的人也要收进来：他们可能既不是作者也不是修改者，
+        // 不收就写不出 ConfluenceUserImpl 实体，导入时那个用户的 key 解析不出来，
+        // 提及会退化成一个不存在的用户引用（而且不报错）。
+        userKeys.addAll(collectMentionedUserKeys(bodies));
         Map<String, String> userNames = loader.loadUserNames(userKeys);
 
         // 页面与博客的 parent 若不在包内，层级会断，需要显式告警而不是静默变成根页面
@@ -653,6 +665,46 @@ public final class SpaceExporter
      * <p>实测发现真实实例中 {@code CONTENT.CREATOR} 可能整列为 {@code NULL}，
      * 因此不能只从内容行收集——空间、附件以及标签的 owner 同样会引用用户。</p>
      */
+    /**
+     * 从正文里收集被 @ 到的用户 key。
+     *
+     * <p>Confluence 的提及写在正文的 storage format 里：
+     * {@code <ac:link><ri:user ri:userkey="..."/></ac:link>}。导入器会把 {@code <ri:user>}
+     * 转成 {@code {{mention}}}，再按 key 反查用户名（{@code MentionMacroConverter} →
+     * {@code convertUserReference} → {@code ConfluenceXMLPackage.resolveUserName}）。
+     * 反查依赖包里的 {@code ConfluenceUserImpl} 实体，所以这里必须把提到的人补进用户集合。</p>
+     *
+     * <p>顺带收 {@code ri:account-id}：Confluence Cloud / 新版本用它，本地 7.3.3 用
+     * {@code ri:userkey}。收进来但 {@code user_mapping} 里查不到时会被自然丢掉，不会写出坏实体。</p>
+     *
+     * @param bodies 内容 ID 到正文行的映射
+     * @return 正文中提到、但可能没有被作者/标签引用过的用户 key
+     */
+    static Set<String> collectMentionedUserKeys(Map<Long, List<BodyRow>> bodies)
+    {
+        Set<String> keys = new LinkedHashSet<>();
+        for (List<BodyRow> rows : bodies.values()) {
+            for (BodyRow row : rows) {
+                if (row.body() != null) {
+                    collectAttributeValues(MENTION_USER_KEY, row.body(), keys);
+                    collectAttributeValues(MENTION_ACCOUNT_ID, row.body(), keys);
+                }
+            }
+        }
+        return keys;
+    }
+
+    private static void collectAttributeValues(Pattern pattern, String body, Set<String> target)
+    {
+        Matcher matcher = pattern.matcher(body);
+        while (matcher.find()) {
+            String value = matcher.group(1).trim();
+            if (!value.isEmpty()) {
+                target.add(value);
+            }
+        }
+    }
+
     private static Set<String> collectUserKeys(SpaceRow space, List<ContentRow> contents, LabellingData labellings)
     {
         Set<String> keys = new LinkedHashSet<>(ConfluenceLoader.collectUserKeys(contents));

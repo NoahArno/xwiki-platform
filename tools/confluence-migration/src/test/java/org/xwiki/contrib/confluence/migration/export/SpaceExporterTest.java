@@ -38,6 +38,7 @@ import org.xml.sax.InputSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * {@link SpaceExporter} 的实体写出测试。
@@ -230,6 +231,37 @@ class SpaceExporterTest
         contentById.put(201L, row(201L, "COMMENT", 100L, 200L));
 
         assertEquals(Long.valueOf(100L), SpaceExporter.resolveOwningPage(contentById.get(201L), contentById));
+    }
+
+    /**
+     * 正文里被 @ 到的人必须收进用户集合，否则写不出 {@code ConfluenceUserImpl} 实体，
+     * 导入时那个 key 解析不出来，提及会变成一个不存在的用户引用。
+     */
+    @Test
+    @DisplayName("从正文里收集被提及的用户 key")
+    void collectsMentionedUserKeys()
+    {
+        String body = "<p>你好 <ac:link><ri:user ri:userkey=\"KEY-A\"/></ac:link>，"
+            + "还有 <ac:link><ri:user ri:userkey=\"KEY-B\"/></ac:link></p>"
+            + "<p>重复提一次 <ri:user ri:userkey=\"KEY-A\"/> 不应重复收集</p>"
+            + "<p>Cloud 写法 <ri:user ri:account-id=\"ACC-1\"/></p>";
+
+        Set<String> keys = SpaceExporter.collectMentionedUserKeys(
+            Map.of(1L, List.of(new ConfluenceLoader.BodyRow(1L, 1L, body, 2))));
+
+        assertEquals(Set.of("KEY-A", "KEY-B", "ACC-1"), keys);
+    }
+
+    /** 正文为 null 或没有提及时不能炸，也不能凭空造用户。 */
+    @Test
+    @DisplayName("正文没有提及时收集为空")
+    void collectsNoMentionedUserKeys()
+    {
+        assertTrue(SpaceExporter.collectMentionedUserKeys(Map.of()).isEmpty());
+        assertTrue(SpaceExporter.collectMentionedUserKeys(
+            Map.of(1L, List.of(new ConfluenceLoader.BodyRow(1L, 1L, null, 2)))).isEmpty());
+        assertTrue(SpaceExporter.collectMentionedUserKeys(
+            Map.of(1L, List.of(new ConfluenceLoader.BodyRow(1L, 1L, "<p>没有提及</p>", 2)))).isEmpty());
     }
 
     private static Document writeComment(Long parentCommentId) throws Exception
