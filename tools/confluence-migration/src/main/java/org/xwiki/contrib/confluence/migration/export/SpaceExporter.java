@@ -280,7 +280,11 @@ public final class SpaceExporter
         xml.endObject();
     }
 
-    private void writePage(EntitiesXmlWriter xml, ContentRow page, String className, Map<Long, List<BodyRow>> bodies,
+    /**
+     * 写出一个页面或博客。包级可见是为了让 {@code SpaceExporterTest} 能在没有数据库的情况下
+     * 直接验证「作者字段有没有写出来」——本方法的实现不依赖任何实例状态。
+     */
+    void writePage(EntitiesXmlWriter xml, ContentRow page, String className, Map<Long, List<BodyRow>> bodies,
         Map<Long, List<PropertyRow>> properties, Map<Long, List<AncestorRow>> ancestors, Set<Long> includedIds)
         throws IOException
     {
@@ -304,6 +308,9 @@ public final class SpaceExporter
         }
         writeAncestors(xml, ancestors, page.id(), includedIds);
         writeBodyReferences(xml, bodies, page.id());
+        // 页面与博客的作者必须写出来：不写，导入器拿不到 creator，
+        // 会把作者回退成「执行导入的人」，迁移后所有内容都变成同一个人创建的。
+        writeCreatorAndLastModifier(xml, page);
         xml.endObject();
     }
 
@@ -345,7 +352,10 @@ public final class SpaceExporter
         xml.endObject();
     }
 
-    private void writeComment(EntitiesXmlWriter xml, ContentRow comment, Map<Long, List<BodyRow>> bodies,
+    /**
+     * 写出一个评论。包级可见的理由同 {@link #writePage}。
+     */
+    void writeComment(EntitiesXmlWriter xml, ContentRow comment, Map<Long, List<BodyRow>> bodies,
         Map<Long, List<PropertyRow>> properties, Set<Long> includedIds, Map<Long, String> contentTypeById)
         throws IOException
     {
@@ -367,6 +377,8 @@ public final class SpaceExporter
                 packageOf(contentTypeById, comment.containerId()),
                 comment.containerId());
         }
+        // 评论作者同理：不写就全挂在执行导入的人名下
+        writeCreatorAndLastModifier(xml, comment);
         xml.endObject();
     }
 
