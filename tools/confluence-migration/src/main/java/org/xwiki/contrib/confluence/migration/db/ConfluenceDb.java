@@ -127,14 +127,6 @@ public final class ConfluenceDb implements AutoCloseable
         }
     }
 
-    /**
-     * @return 底层连接，供少量需要自定义 JDBC 行为的调用方使用
-     */
-    public Connection connection()
-    {
-        return connection;
-    }
-
     @Override
     public void close() throws SQLException
     {

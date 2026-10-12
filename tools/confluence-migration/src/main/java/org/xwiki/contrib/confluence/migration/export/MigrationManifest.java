@@ -27,7 +27,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -44,9 +43,9 @@ import java.util.TreeMap;
  * 因此只记录相对于输出根目录的路径，由 B 侧拼上自己的根目录。</p>
  *
  * <h2>为什么清单里没有状态列</h2>
- * <p>清单是 A 的产物、描述"应该导入什么"，是一次性写定的；导入状态由 B 侧的台账
- * （{@code ledger.csv}）维护。两者分开，B 就不需要回写 A 的文件，
- * 也就不存在两边同时改同一份文件的问题。</p>
+ * <p>清单是 A 的产物、描述"应该导入什么"，是一次性写定的；导入进度不写回清单，
+ * 而是由 B 侧在导入后用这里预期的数量与 XWiki 现状实时对账。两者分开，
+ * B 就不需要回写 A 的文件，也就不存在两边同时改同一份文件的问题。</p>
  */
 public final class MigrationManifest
 {
@@ -195,14 +194,5 @@ public final class MigrationManifest
         values.add(current.toString());
 
         return values.toArray(new String[0]);
-    }
-
-    /**
-     * @param attachmentBytes 字节数
-     * @return 便于阅读的 MiB 字符串
-     */
-    public static String formatMiB(long attachmentBytes)
-    {
-        return String.format(Locale.ROOT, "%.2f", attachmentBytes / 1024.0 / 1024.0);
     }
 }

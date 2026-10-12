@@ -1,179 +1,128 @@
-# confluence-db-migration
+# Confluence → XWiki 迁移工具
 
-绕开 Confluence 自己的导出引擎，**直接从 Confluence 数据库 + 附件存储生成 XWiki 导入器可读的导出包**。
+从 Confluence 数据库 + 附件目录直接生成 XWiki 可导入的包，再手动导入到 XWiki。
 
-## 为什么不用 Confluence 的导出
+流程：**A 侧指定空间 → 导出到目录 → 人工拷到 B → 在 B 上导入**。
 
-原有流程是"在 Confluence 里逐个空间导出 XML → 通过 XWiki 的 Filter Streams Converter 上传导入"。在
-Confluence 7.3.3 上，大空间导出会以各种方式失败（内存问题为主），且**不能靠调大堆内存解决**；
-Confluence 官方也没有"导出时排除附件"的选项（[CONFSERVER-104157](https://jira.atlassian.com/browse/CONFSERVER-104157) 至今未实现）。
-加上 100+ 公共空间、300+ 个人空间的规模，人工逐个操作不可行。
+---
 
-本工具把导出侧整体替换为对数据库的只读访问，从而获得完全可控的分片、重试与断点能力。
+## 一、A 侧：导出
 
-## 前置条件
+前置：JDK 17+；对 Confluence 数据库与附件目录的**只读**访问。
 
-- JDK 17+
-- 对 Confluence 数据库的**只读**访问
-- 对 Confluence 附件目录的**只读**访问
-
-> ⚠️ **务必对数据库快照运行，不要直接连生产库。**
-> Confluence 是活的：开发过程中实测到一整棵草稿子树（含 5 个附件）在几分钟内被 Confluence
-> 自身的清理任务删除。若在导出过程中源数据发生变化，产出的包会出现"页面引用了尚未生成的附件"
-> 这类**内部自相矛盾**，而导入器不会报错——这是静默丢数据。
->
-> 推荐做法：`mysqldump --single-transaction` 生产库 → 恢复到一台临时 MySQL → 让本工具连它。
-> 这样同时省掉了长事务撑大 undo log 的问题。
-
-## 构建与运行
+> ⚠️ 对**数据库快照**跑，不要直连生产库。Confluence 是活的，导出期间源数据变化会产出
+> "页面引用了尚未生成的附件"这类包，而导入器不会报错——这是静默丢数据。
 
 ```bash
 cd tools/confluence-migration
-mvn -o test        # 跑测试
-mvn -o package     # 打包
-```
+mvn -o package
 
-运行（`mysql-connector-j` 只在运行期需要）：
-
-```bash
 MYSQL=$HOME/.m2/repository/com/mysql/mysql-connector-j/8.0.33/mysql-connector-j-8.0.33.jar
 CP="target/classes:$MYSQL"
+ALIAS=org.xwiki.contrib.confluence.migration.cli.Main
 ```
 
-### 1. 数据体检
-
-在动任何迁移之前先跑这个。它一次性回答三个决定方案形状的问题。
+**1. 看有哪些空间**（可选，但建议先跑）
 
 ```bash
-java -cp "$CP" org.xwiki.contrib.confluence.migration.cli.Main inventory \
+java -cp "$CP" $ALIAS inventory --confluence-home /data/confluence --csv /tmp/inventory.csv
+```
+
+**2. 导出指定的空间**
+
+```bash
+# 用 --spaces 指定（逗号分隔）
+java -cp "$CP" $ALIAS export \
   --confluence-home /data/confluence \
-  --threshold-mib 500 \
-  --csv /tmp/inventory.csv
+  --spaces DS,SPC \
+  --output /mnt/migration
+
+# --space 可重复书写；--all 导全部；--space-file 从文件读（可直接喂上面的 CSV）
 ```
 
-输出包含：
+也可以排除某些空间：`--exclude-spaces ARCHIVE,TEST`。
 
-| 输出 | 用途 |
-|---|---|
-| `CONTENT_STATUS` 取值分布 | 确认回收站/草稿的排除规则是否命中真实的取值 |
-| `ATTACHMENTDATA` 行数 | 判断附件在数据库还是文件系统；非 0 会告警 |
-| 每空间页面数 / 附件数 / 附件体积 | 分片阈值与装箱策略的输入 |
-| 空间分类 | 判断"为全部空间做 DB 直读生成器"是否划算 |
-
-### 2. 导出
+**3. 校验产出**
 
 ```bash
-# 单个空间
-java -cp "$CP" ...Main export \
-  --confluence-home /data/confluence --space DS --output /mnt/migration
-
-# 全部空间（单个空间失败不会中断整批）
-java -cp "$CP" ...Main export \
-  --confluence-home /data/confluence --all --output /mnt/migration
+java -cp "$CP" $ALIAS validate --package /mnt/migration
 ```
 
-产出的是**已解压目录**而不是 zip：
+输出：
 
 ```
-/mnt/migration/<SPACEKEY>/
-  entities.xml
-  exportDescriptor.properties
-  attachments/<容器ID>/<附件ID>/<版本>
+/mnt/migration/
+  manifest.csv                      # A 写定、B 只读；导入后按它对账
+  <SPACEKEY>/
+    entities.xml
+    exportDescriptor.properties
+    attachments/<容器ID>/<附件ID>/<版本>
 ```
 
-**为什么不打包成 zip**：XWiki 导入器的 `ConfluenceXMLPackage.fromFile` 对目录是**就地读取**，
-对 zip 则会先 `FileUtils.copyInputStreamToFile` 全量解压到临时目录。用目录形式可以省掉
-打包与解压两次全量 IO，也省掉 XWiki 服务器上等量的临时磁盘。
-
-导入时让 XWiki 用 `file:` 源指向该目录即可，例如
-`source=file:/mnt/migration/DS`，无需经过浏览器上传，因此不受 500M 上传限制。
-
-### 3. 校验
-
-**每次导出后都应该跑。** 它检查引用完整性与附件文件齐全——这是"静默丢数据"的主要防线。
+## 二、搬运到 B
 
 ```bash
-java -cp "$CP" ...Main validate --package /mnt/migration
+rsync -av --delete /mnt/migration/ user@B:<permanentDir>/migration/
 ```
 
-## 设计要点
+`<permanentDir>` 见 `webapps/xwiki/WEB-INF/xwiki.properties` 的 `environment.permanentDirectory`。
 
-### 迁移范围
+## 三、B 侧：导入
 
-按既定策略，**草稿（`draft`）与回收站（`trashed`）一律不导出**。理由见
-`MigrationPolicy` 的类注释：导入器本身就会丢弃它们；它们不是稳定的数据；
-草稿页可能没有空间归属，而这是导入器注释里点名的已知问题。
+前置（一次性）：XWiki 上已装 **Confluence 导入器**（`confluence+xml`）和
+**Filter Streams Converter** 应用。以管理员打开 `/xwiki/bin/view/Filter/`，Input type 里能看到
+`Confluence XML input stream (confluence+xml)` 即可。
 
-体检与导出共用 `MigrationPolicy` 这一份判定，因此体检报出的体量与导出实际产出始终一致。
+浏览器打开 `/xwiki/bin/view/Filter/`，一个空间导一次：
 
-### 附件定位
-
-附件字节存放在文件系统的 `attachments.dir` 下，而路径**不是存在数据库里的**，是由 ID 计算出来的
-（这正是 `ATTACHMENTDATA` 表为空的原因）。算错一个字符，附件就会静默丢失。
-
-规则复刻自 `confluence-7.3.3.jar` 的
-`HierarchicalContentFileSystemHelper`（内部使用 `IdMultiPartHashGenerator(3, 250, 2)`），
-见 `AttachmentPathRule`，并由 31 条真实样本构成的回归测试保护。
-
-附件所属的"容器"取自 `CONTENT.PAGEID`——**不是** `PARENTID`（那是页面层级父节点），
-也**不是** `PARENTCCID`（7.3.3 中为空）。
-
-### 引用完整性
-
-只写出指向"本包内包含的实体"的引用。指向被排除对象（草稿页上的附件、不在本空间的页面）的
-引用会被丢弃并记为告警。`PackageValidator` 会在导出后把这件事再验证一遍。
-
-### 当前未覆盖的范围
-
-| 项 | 说明 |
+| 字段 | 填什么 |
 |---|---|
-| 用户与组 | `InternalUser` / `InternalGroup` / `HibernateMembership` 未生成；导入时用 `usersEnabled=false` |
-| 权限 | `SpacePermission` / `ContentPermission` 未生成；导入时用 `rightsEnabled=false` |
-| 历史版本 | 只导出当前版本；导入时用 `historyEnabled=false` |
-| 博客 | 代码路径已支持，但本地实例无博客数据可验证 |
-| 增量同步 | 尚未实现（属于第二阶段） |
+| Input type | `Confluence XML input stream (confluence+xml)` |
+| Input configuration → source | `file:<permanentDir>/migration/<SPACEKEY>` |
+| Output type | `XWiki instance output stream (xwiki+instance)` |
+| `historyEnabled` / `usersEnabled` / `groupsEnabled` / `rightsEnabled` | 都改成 `false` |
+| `archivedDocumentsEnabled` / `archivedSpacesEnabled` | 都改成 `false` |
+| 其余 | 保持默认 |
 
-> 以上四项**按当前迁移范围已明确不需要**：本工具只负责把数据迁过去。
+点 **Convert**，进度看页面上的 *Current conversion*。
 
-## B 侧：自动导入
+包多的时候，把 [`xwiki-side/ImportPage.groovy`](xwiki-side/ImportPage.groovy) 全文粘到一个新页面
+（建议 `Migration.Import`，语法 `xwiki/2.1`，用有编程权限的用户保存）当索引用：它会列出所有包、
+显示 manifest 的期望值 vs XWiki 现状，并给出**参数已预填**的转换链接，点一下就到上面那张表。
 
-A 侧产出包之后，B 侧（XWiki）需要一个东西把它导进去。见 [`xwiki-side/`](xwiki-side/README.md)：
+## 四、对账
 
-- 生成器跑在 A（Confluence 那台，读本机 MySQL + 本机附件目录）
-- 包经 `rsync` 到 B 的 `<permanentDir>/migration/`
-- B 上的一个 Scheduler (Groovy) 作业定时扫描该目录并逐个导入，写 `ledger.csv` 台账
-
-**为什么不从 A 远程调 B 的接口**：触发导入需要 `Right.PROGRAM`，而你们的 XWiki 走自定义 OA SSO，
-让 A 去 HTTP 触发 B 需要额外的服务账号并打通 SSO。"往目录丢文件、XWiki 自己扫"不需要任何外部认证。
-
-## A、B 之间的契约
-
-`export` 会在输出根目录写 `manifest.csv`：
+刷新索引页，或直接拿 `manifest.csv` 对：
 
 ```csv
 spaceKey,packageDir,pageCount,blogPostCount,attachmentCount,attachmentBytes,exportedAt
-ds,ds,10,0,20,785398,2026-10-08 10:59:38
+SPC,SPC,2,0,6,121718,2026-10-10 16:13:42
+ds,ds,10,0,20,785398,2026-10-10 16:13:42
 ```
 
-- `packageDir` 是**相对路径**：包从 A 搬到 B 后绝对路径必然不同，相对路径才不会失效
-- 清单由 A 写定、B 只读；导入状态记在 B 自己的 `ledger.csv` 里，两边互不覆盖
-- 清单里的预期数量用于导入后核对——否则"导进去了但少了一半页面"没有任何信号
+导入器把一个 Confluence 页面落成一个**嵌套空间** `<SpaceKey>.<PageTitle>`，内容在该空间的
+`WebHome`，所以「页面数」= 该前缀下 `*.WebHome` 文档数（不含自动生成的 `<SpaceKey>.WebPreferences`）。
+数字对不上就是没导完或导坏了。重导是幂等的（导入器会先清掉上次导入产生的页面）。
 
-## 配置来源
+## 五、排错
 
-`--confluence-home` 指向包含 `confluence.cfg.xml` 的目录，本工具从中读取
-`hibernate.connection.url` / `username` / `password` 与 `attachments.dir`。
+| 现象 | 处理 |
+|---|---|
+| 报错"数据库密码看起来是加密的" | 用 `--password` 传明文 |
+| `inventory` 报 `ATTACHMENTDATA` 行数不为 0 | 附件在数据库里而非文件系统，本工具的附件定位规则不适用 |
+| `validate` 报附件文件缺失 | 附件目录指错，或 Confluence 清理过数据，用快照重导 |
+| Filter 页面里没有 `confluence+xml` | 导入器没装 |
+| 「管理 → 扩展」搜不到扩展 | `xwiki.properties` 的 `extension.repositories` 是空的，只能手工装 `WEB-INF/lib` |
 
-若该文件中的密码被 Confluence 加密（形如 `{...}`），本工具会明确报错并要求改用
-`--password` 显式传入，而不是拿一个解不开的密文去连库。
-
-## 开发环境备忘
-
-本工具是在一个本地 Confluence 7.3.3（MySQL 8.0.46，附件在文件系统）上开发并验证的。
-Confluence 自带的 MySQL 驱动可直接复用，无需安装 `mysql` 客户端：
+## 附：完整参数
 
 ```bash
-CF=/path/to/confluence
-java -cp $CF/atlassian-confluence-7.3.3/confluence/WEB-INF/lib/mysql-connector-j-8.0.33.jar \
-     Probe.java
+java -cp "$CP" $ALIAS help
 ```
+
+配置来源：`--confluence-home` 指向含 `confluence.cfg.xml` 的目录，本工具从中读取
+`hibernate.connection.url` / `username` / `password` 与 `attachments.dir`。
+
+## 附：当前不迁移的内容
+
+用户与组、权限、历史版本、增量同步（导入时对应开关关掉）。草稿与回收站按策略一律不导出。

@@ -172,18 +172,4 @@ public final class InventoryRenderer
         }
         return '"' + value.replace("\"", "\"\"") + '"';
     }
-
-    /**
-     * 便于调用方直接取用分类计数。
-     *
-     * @param report 体检结果
-     * @param thresholdBytes 分片体积阈值（字节）
-     * @param manyAttachmentsThreshold 附件数阈值
-     * @return 分类计数
-     */
-    public static Map<ExportClass, Long> summarize(
-        InventoryReport report, long thresholdBytes, long manyAttachmentsThreshold)
-    {
-        return countByClass(report, thresholdBytes, manyAttachmentsThreshold);
-    }
 }

@@ -19,14 +19,12 @@
  */
 package org.xwiki.contrib.confluence.migration.db;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Objects;
 
 /**
  * 连接 Confluence 数据库所需的配置。
  *
- * <p>从 {@code confluence.cfg.xml} 读取请用 {@link ConfluenceHome#read(Path)}；
+ * <p>从 {@code confluence.cfg.xml} 读取请用 {@link ConfluenceHome}；
  * 也可以直接构造以显式指定 JDBC 参数（生产环境的密码可能是加密的，此时只能显式传入）。</p>
  *
  * @param jdbcUrl JDBC 连接串
@@ -40,19 +38,6 @@ public record DbConfig(String jdbcUrl, String username, String password)
         Objects.requireNonNull(jdbcUrl, "jdbcUrl");
         Objects.requireNonNull(username, "username");
         Objects.requireNonNull(password, "password");
-    }
-
-    /**
-     * 从 Confluence Home 的 {@code confluence.cfg.xml} 读取数据库配置。
-     *
-     * @param confluenceHome Confluence Home 目录
-     * @return 数据库配置
-     * @throws IOException 读取失败时
-     * @see ConfluenceHome#read(Path)
-     */
-    public static DbConfig fromConfluenceHome(Path confluenceHome) throws IOException
-    {
-        return ConfluenceHome.read(confluenceHome).dbConfig();
     }
 
     /**

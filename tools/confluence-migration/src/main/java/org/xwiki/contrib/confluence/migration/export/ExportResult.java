@@ -43,11 +43,4 @@ public record ExportResult(
     long userCount,
     List<String> warnings)
 {
-    /**
-     * @return 可迁移内容（页面 + 博客）总数
-     */
-    public long contentCount()
-    {
-        return pageCount + blogPostCount;
-    }
 }
