@@ -9,9 +9,6 @@
 
 前置：JDK 17+；对 Confluence 数据库与附件目录的**只读**访问。
 
-> ⚠️ 对**数据库快照**跑，不要直连生产库。Confluence 是活的，导出期间源数据变化会产出
-> "页面引用了尚未生成的附件"这类包，而导入器不会报错——这是静默丢数据。
-
 ```bash
 cd tools/confluence-migration
 mvn -o package
@@ -70,7 +67,8 @@ rsync -av --delete /mnt/migration/ user@B:<permanentDir>/migration/
 
 包多时把 [`xwiki-side/ImportPage.groovy`](xwiki-side/ImportPage.groovy) 粘到一个新页面
 （建议 `Migration.Import`，语法 `xwiki/2.1`，用有编程权限的用户保存）：它列出所有包、
-显示 manifest 期望值 vs XWiki 现状、给出**参数已预填**的转换链接，对账通过后还能一键注册空间。
+显示 manifest 期望值 vs XWiki 现状、给出**参数已预填**的转换链接，对账通过后还能一键注册空间，
+`~` 开头的个人空间包会多一步「准备个人空间包」（原因见第六节）。
 
 ## 四、对账 + 注册空间
 
@@ -81,6 +79,8 @@ Confluence 博客 → `<SpaceKey>.Blog.<标题>`（普通文档）。导入器�
 **对账**：期望值来自 `manifest.csv`（`pageCount` / `blogPostCount` / `attachmentCount` /
 `attachmentBytes`），现状按上面的落点口径数（页面数要排掉 `.Blog` 那个博客空间）。
 数字对不上就是没导完或导坏了。重导是幂等的（导入器会先清掉上次导入产生的页面）。
+个人空间的「现状」只数导入器建的文档（带 `Confluence.Code.ConfluencePageClass`），
+用户自己在那个空间里的页面单列一行提示、不计入对账。
 
 **注册空间**：Confluence 空间导入后的落点就是顶层空间 `<SpaceKey>.WebHome`，
 **不需要移动任何内容**，只差一个标记对象。判定口径与 `Spaces` 空间目录、`SpaceManager` 一致：
@@ -89,7 +89,7 @@ Confluence 博客 → `<SpaceKey>.Blog.<标题>`（普通文档）。导入器�
 | 项 | 规则 |
 |---|---|
 | 空间名 | 取 `<SpaceKey>.WebHome` 的标题（导入器从 Confluence 带来）；没有则用空间 Key |
-| 类型 | 默认 `public`；Key 以 `~` 开头（Confluence 个人空间）记 `personal` |
+| 类型 | 默认 `public`；`~` 开头的个人空间见第六节 |
 | owner | 记当前操作者（不迁账号，无法还原原 owner） |
 | 前提 | **只有现状与 manifest 完全一致**才允许注册，避免把没导完的空间标成已完成 |
 | 幂等 | 已注册的跳过 |
@@ -130,14 +130,42 @@ Confluence 用户名 → XWiki 用户引用的规则（`ConfluenceConverter`）�
 
 > 导出依赖 `CONTENT.PARENTCOMMENTID` 列（7.3.3 实测存在）。
 
-## 六、评论与 @提及
+## 六、个人空间（Confluence 的 `~user`）
 
-评论（正文、作者、时间、**回复层级**）与 **@提及** 都会一起迁移：
+Confluence 里以 `~` 开头的空间是个人空间。本 fork 的个人空间不是 `<SpaceKey>`，而是
+**`<用户名>的个人空间`**：`XWiki.<用户名>` 资料页上的「进入我的个人空间」按钮，判定的是
+`<用户名>的个人空间.WebHome` 存在、且上面 `SpaceCode.SpaceClass.type == 'personal'`
+（见 `Spaces.UserProfilePersonalSpaceUIX` / `Spaces.MyPersonalSpace`）。
 
-- 挂在**附件**上的评论会归到附件所属的页面上——导入器只认页面作评论宿主，
-  不这样处理评论会被静默丢弃；
-- 提及会被转成 XWiki 的 `{{mention}}`；导出时会扫一遍正文，把"只被提及、不是任何作者"的人
-  也写进包，否则提及会退化成一个不存在的用户引用（且不报错）。
+导入器不认识这个约定，只会把 `~test01` 的内容落在空间 `~test01`；它也没有参数能换目标空间
+（`rootSpace` 只是父空间前缀，`spaceRenamingFormat` 是防覆盖改名用的）。所以分三步：
+
+1. 在索引页点 **「准备个人空间包」**。它只改包里的空间身份两处：`entities.xml` 里 `Space` 对象的
+   `key`/`lowerKey`、`exportDescriptor.properties` 的 `spaceKey`，`~test01` → `test01的个人空间`。
+   页面/博客/附件都是按空间 id 引用的，所以不用改任何内容或链接，也不需要导入后的改名作业。
+   这一步幂等，并在包目录留下标记文件 `.xwiki-personal-space`；A 侧重新导出并 `rsync --delete`
+   覆盖后标记会消失，页面自动回到「未准备」。
+2. 点「导入 →」走 Convert。个人空间包会**额外带 `overwriteProtectionMode=NONE`**：导入器默认
+   在目标空间发现非 Confluence 内容时会把这次导入改名（`test01的个人空间_`）而不是写进去，
+   而个人空间天生就「已经有东西」（fork 建的空间标记页、用户自己的笔记），不关掉就合并不了。
+3. 对账通过后点「注册为空间」，它按 fork 的口径写：
+
+| 项 | 值 |
+|---|---|
+| 文档 | `<用户名>的个人空间.WebHome`，标题也是 `<用户名>的个人空间` |
+| name / key | 都是 `<用户名>的个人空间` |
+| type | `personal` |
+| owner | `xwiki:XWiki.<用户名>`（**用户还不存在也照写**：内网账号由 OA 同步，先迁内容后建人是常态） |
+| description | `<用户名> 的个人空间`（走翻译键 `spaces.personal.description`） |
+
+三条边界：
+
+- **用户名**就是 Confluence 空间 key 去掉 `~`、原样大小写，不跟随 `userFormat` / `userIdMapping`
+  （内网是纯字母数字工号，两者本来就一致）。
+- **合并**：目标个人空间已存在（用户点过「开通我的个人空间」，或上次迁移留下的）时直接写进去——
+  同名页面以 Confluence 为准，用户自己不同名的页面保留。
+- **旧的 `~user` 空间**：早期用旧脚本导过的内容会留在 `~user` 里成孤儿，页面会提示
+  「检测到旧的 `~user` 空间……请手工清理」。工具不删数据。
 
 ## 七、排错
 
@@ -149,6 +177,10 @@ Confluence 用户名 → XWiki 用户引用的规则（`ConfluenceConverter`）�
 | Filter 页面里没有 `confluence+xml` | 导入器没装 |
 | 「管理 → 扩展」搜不到扩展 | `xwiki.properties` 的 `extension.repositories` 是空的，只能手工装 `WEB-INF/lib` |
 | 注册报"现状与 manifest 不一致" | 包还没导完或导坏了，先按第四节对账 |
+| 点「注册为空间」跳到 `/bin/view/<空间>.<页面>` 显示找不到页面 | 页面里自己拼了 `doc.fullName`。`/bin/view/` 的路径只认 `<空间>/<页面>` 两段，`<空间>.<页面>` 会被当成空间名。自链接一律用 `xwiki.getURL(doc.documentReference, 'view', ...)` |
+| 个人空间包没准备就点了「导入」 | 内容会落到旧的 `~test01`（导入器不认识个人空间约定）。点「准备个人空间包」后重导，旧的 `~test01` 空间手工清理 |
+| 合并后个人空间变成了 `test01的个人空间_` | 这个包没带 `overwriteProtectionMode=NONE`（旧版页面，或手工在 Filter 页填的参数）。删掉带下划线的空间，用索引页生成的链接重导 |
+| 资料页上「进入我的个人空间」不出现 | 该按钮只对已登录用户渲染，且要求 `<用户名>的个人空间.WebHome` 上的 `SpaceCode.SpaceClass.type == 'personal'`；在索引页点一次「注册为空间」会补齐 |
 | 注册成功但页面顶部不显示空间信息 | 类 sheet `SpaceCode.SpaceSheet` 在本 fork 里不存在，对象不会被渲染；不影响"是不是空间" |
 
 ## 附：完整参数
